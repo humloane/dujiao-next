@@ -89,8 +89,8 @@ export const useAppStore = defineStore('app', () => {
             }
             applySEO()
             applyCustomScripts(config.value?.scripts)
-            // Print version to console
-            if (config.value?.app_version) {
+            // Print version to console (dev only)
+            if (import.meta.env.DEV && config.value?.app_version) {
                 console.log(
                     '%c Version %c ' + config.value.app_version + ' %c',
                     'background:#34c759;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:bold;',

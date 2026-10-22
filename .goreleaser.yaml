@@ -13,6 +13,8 @@ project_name: dujiao-next
 before:
   hooks:
     - go mod tidy
+    # 落地页文案由前台 locale 生成；发布前重新导出，避免内嵌文案与页面不一致。
+    - go generate ./internal/web/lpcontent
     - sh -c 'cd frontend/admin && pnpm install --frozen-lockfile'
     - sh -c 'cd frontend/user  && pnpm install --frozen-lockfile'
     # admin 用 fullstack 模式构建：base 为 './' 且注入 __DJ_ADMIN_BASE__ 占位符，

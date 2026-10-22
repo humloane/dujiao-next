@@ -53,6 +53,9 @@ RUN go mod download
 
 COPY . .
 
+# 落地页文案由前台 locale 生成，构建前重新导出，避免服务端 SEO 文案与页面漂移。
+RUN go generate ./internal/web/lpcontent
+
 # go:embed 只能读取包目录内的文件，所以前端产物必须落到 internal/web/dist/ 下
 COPY --from=frontend /src/admin/dist ./internal/web/dist/admin
 COPY --from=frontend /src/user/dist  ./internal/web/dist/user

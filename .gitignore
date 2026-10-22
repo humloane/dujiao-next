@@ -26,3 +26,6 @@ config.docker.yml
 # Agents 配置
 .agents/
 skills-lock.json
+
+# 本地资料/计划文档（不随仓库提交）
+openclaw/

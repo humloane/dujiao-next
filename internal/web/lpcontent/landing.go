@@ -4,6 +4,8 @@
 // landing_test.go 会在两边不一致时失败，避免服务端 SEO 输出和页面文案漂移。
 package lpcontent
 
+//go:generate go run ../../../cmd/gen-lp-content
+
 import (
 	_ "embed"
 	"encoding/json"

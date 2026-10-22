@@ -67,6 +67,13 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      # 落地页文案来自前台 locale：重新生成并检查是否提交了最新副本。
+      - name: Regenerate LP content
+        run: go generate ./internal/web/lpcontent
+
+      - name: Check LP content drift
+        run: git diff --exit-code -- internal/web/lpcontent/landing.json
+
       # 用 git ls-files 限定范围，避免 gofmt 递归遍历 frontend/*/node_modules
       - name: Check formatting
         shell: bash
