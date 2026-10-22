@@ -29,6 +29,10 @@ func (stub *productRepositoryStub) List(filter productcontract.ListFilter) ([]pr
 	return stub.rows, stub.total, nil
 }
 
+func (stub *productRepositoryStub) ListFilterOptions([]uint) (productcontract.FilterOptions, error) {
+	return productcontract.FilterOptions{}, nil
+}
+
 func (stub *productRepositoryStub) GetBySlug(string, bool) (*productdomain.Product, error) {
 	return stub.bySlug, nil
 }

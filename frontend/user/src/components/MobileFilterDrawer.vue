@@ -30,11 +30,11 @@
         </header>
 
         <div class="mfd-body">
-          <div v-for="group in groups" :key="group.key" class="mfd-group">
+          <div v-for="group in renderedGroups" :key="group.key" class="mfd-group">
             <p class="mfd-group-title">{{ group.title }}</p>
 
             <input
-              v-if="group.options.length > 8"
+              v-if="group.searchable"
               v-model="searchTerms[group.key]"
               type="search"
               class="mfd-search"
@@ -43,20 +43,22 @@
             />
 
             <div role="listbox" :aria-label="group.title" class="mfd-options">
-              <button
-                v-for="option in visibleOptions(group)"
-                :key="`${group.key}-${option.value || 'all'}`"
-                type="button"
-                role="option"
-                :aria-selected="isSelected(group.key, option.value)"
-                class="mfd-option"
-                :class="{ 'is-selected': isSelected(group.key, option.value) }"
-                @click="select(group.key, option.value)"
-              >
-                <span class="mfd-option-label">{{ option.label }}</span>
-                <Check v-if="isSelected(group.key, option.value)" class="mfd-check" aria-hidden="true" />
-              </button>
-              <p v-if="visibleOptions(group).length === 0" class="mfd-empty">
+              <template v-for="(row, index) in group.rows" :key="`${group.key}-${index}`">
+                <p v-if="row.type === 'section'" class="mfd-section">{{ row.label }}</p>
+                <button
+                  v-else
+                  type="button"
+                  role="option"
+                  :aria-selected="row.active"
+                  class="mfd-option"
+                  :class="{ 'is-selected': row.active }"
+                  @click="select(group.key, row.value)"
+                >
+                  <span class="mfd-option-label">{{ row.label }}</span>
+                  <Check v-if="row.active" class="mfd-check" aria-hidden="true" />
+                </button>
+              </template>
+              <p v-if="group.optionCount === 0" class="mfd-empty">
                 {{ t('productFilters.noResults') }}
               </p>
             </div>
@@ -84,14 +86,19 @@ import {
   PRODUCT_LINE_TYPES,
   PRODUCT_SCENARIOS,
   PRODUCT_SORTS,
+  resolveMetaOptionCodes,
   type ProductMetaFilter,
+  type ProductMetaOptions,
 } from '../constants/productMeta'
+import { createRegionNamer } from '../utils/regionLabel'
 
 const props = defineProps<{
   open: boolean
   modelValue: ProductMetaFilter
   /** 当前结果总数；父组件拿不到真实值时传 null，抽屉里就不显示数字。 */
   total?: number | null
+  /** 后端按在售商品聚合的筛选取值；未加载时回落到常量。 */
+  metaOptions?: ProductMetaOptions
 }>()
 
 const emit = defineEmits<{
@@ -100,7 +107,7 @@ const emit = defineEmits<{
   reset: []
 }>()
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 const CLOSE_DURATION = 180
 
@@ -110,30 +117,21 @@ const panelRef = ref<HTMLElement | null>(null)
 const closeBtnRef = ref<HTMLButtonElement | null>(null)
 const searchTerms = reactive<Record<string, string>>({})
 let closeTimer: ReturnType<typeof setTimeout> | null = null
+let enterFrame: number | null = null
 let lastFocused: HTMLElement | null = null
 let savedScrollY = 0
 let savedOverflow = ''
 let savedPaddingRight = ''
 
-const regionNames = computed<{ of: (code: string) => string | undefined } | null>(() => {
-  try {
-    const DisplayNames = (Intl as unknown as { DisplayNames?: new (locales: string[], options: { type: string }) => { of: (code: string) => string | undefined } }).DisplayNames
-    return DisplayNames ? new DisplayNames([locale.value], { type: 'region' }) : null
-  } catch {
-    return null
-  }
-})
-
-const countryLabel = (code: string) => {
-  if (code === 'SHARED') return t('productFilters.shared')
-  return regionNames.value?.of(code) || code
-}
+const countryLabel = computed(() => createRegionNamer(locale.value, t('productFilters.shared')))
 
 type GroupKey = 'country' | 'scenario' | 'ipType' | 'lineType' | 'sort'
 
 interface GroupOption {
   value: string
   label: string
+  /** 分组小标题：国家/地区里「常用 / 其他 / 共享」分开显示。 */
+  section?: string
 }
 
 interface Group {
@@ -142,21 +140,54 @@ interface Group {
   options: GroupOption[]
 }
 
+// 用非联合类型，避免模板里 v-if/v-else 无法收窄字段。
+interface RenderRow {
+  type: 'section' | 'option'
+  label: string
+  value: string
+  active: boolean
+}
+
+const COUNTRY_PRESETS: string[] = PRODUCT_COUNTRY_CODES.filter((code) => code !== 'SHARED')
+
+const countryOptionRows = computed<GroupOption[]>(() => {
+  const common = t('productFilters.countrySectionCommon')
+  const other = t('productFilters.countrySectionOther')
+  const shared = t('productFilters.countrySectionShared')
+  const rows: GroupOption[] = [{ value: '', label: t('productFilters.allCountries') }]
+  const available = resolveMetaOptionCodes(
+    props.metaOptions,
+    'countries',
+    PRODUCT_COUNTRY_CODES,
+    props.modelValue.country,
+  )
+  const codes = new Set(available)
+  COUNTRY_PRESETS.forEach((code) => {
+    if (codes.has(code)) rows.push({ value: code, label: countryLabel.value(code), section: common })
+  })
+  available
+    .filter((code) => code !== 'SHARED' && !COUNTRY_PRESETS.includes(code))
+    .forEach((code) => rows.push({ value: code, label: countryLabel.value(code), section: other }))
+  if (codes.has('SHARED')) {
+    rows.push({ value: 'SHARED', label: countryLabel.value('SHARED'), section: shared })
+  }
+  return rows
+})
+
+const localizedLabel = (group: 'scenarios' | 'ipTypes' | 'lineTypes', value: string): string => {
+  const key = `productFilters.${group}.${value}`
+  return te(key) ? t(key) : value
+}
+
 const groups = computed<Group[]>(() => [
-  {
-    key: 'country',
-    title: t('productFilters.country'),
-    options: [
-      { value: '', label: t('productFilters.allCountries') },
-      ...PRODUCT_COUNTRY_CODES.map((code) => ({ value: code as string, label: countryLabel(code) })),
-    ],
-  },
+  { key: 'country', title: t('productFilters.country'), options: countryOptionRows.value },
   {
     key: 'scenario',
     title: t('productFilters.scenario'),
     options: [
       { value: '', label: t('productFilters.allScenarios') },
-      ...PRODUCT_SCENARIOS.map((value) => ({ value, label: t(`productFilters.scenarios.${value}`) })),
+      ...resolveMetaOptionCodes(props.metaOptions, 'scenarios', PRODUCT_SCENARIOS, props.modelValue.scenario)
+        .map((value) => ({ value, label: localizedLabel('scenarios', value) })),
     ],
   },
   {
@@ -164,7 +195,8 @@ const groups = computed<Group[]>(() => [
     title: t('productFilters.ipType'),
     options: [
       { value: '', label: t('productFilters.allIpTypes') },
-      ...PRODUCT_IP_TYPES.map((value) => ({ value, label: t(`productFilters.ipTypes.${value}`) })),
+      ...resolveMetaOptionCodes(props.metaOptions, 'ipTypes', PRODUCT_IP_TYPES, props.modelValue.ipType)
+        .map((value) => ({ value, label: localizedLabel('ipTypes', value) })),
     ],
   },
   {
@@ -172,7 +204,8 @@ const groups = computed<Group[]>(() => [
     title: t('productFilters.lineType'),
     options: [
       { value: '', label: t('productFilters.allLineTypes') },
-      ...PRODUCT_LINE_TYPES.map((value) => ({ value, label: t(`productFilters.lineTypes.${value}`) })),
+      ...resolveMetaOptionCodes(props.metaOptions, 'lineTypes', PRODUCT_LINE_TYPES, props.modelValue.lineType)
+        .map((value) => ({ value, label: localizedLabel('lineTypes', value) })),
     ],
   },
   {
@@ -192,6 +225,31 @@ const visibleOptions = (group: Group): GroupOption[] => {
   if (!term) return group.options
   return group.options.filter((option) => option.label.toLowerCase().includes(term))
 }
+
+// 把选项展开成「小标题 + 选项」的行序列，搜索时只保留命中的选项。
+const renderedGroups = computed(() => groups.value.map((group) => {
+  const rows: RenderRow[] = []
+  let lastSection = ''
+  visibleOptions(group).forEach((option) => {
+    if (option.section && option.section !== lastSection) {
+      rows.push({ type: 'section', label: option.section, value: '', active: false })
+      lastSection = option.section
+    }
+    rows.push({
+      type: 'option',
+      label: option.label,
+      value: option.value,
+      active: isSelected(group.key, option.value),
+    })
+  })
+  return {
+    key: group.key,
+    title: group.title,
+    optionCount: rows.filter((row) => row.type === 'option').length,
+    searchable: group.options.length > 8,
+    rows,
+  }
+}))
 
 const select = (key: GroupKey, value: string) => {
   // 「全部」行在筛选组里等价于清空该字段。
@@ -260,12 +318,27 @@ const enter = async () => {
   lockScroll()
   document.addEventListener('keydown', onKeydown)
   await nextTick()
-  // 下一帧再置为 active，保证 translateX 过渡能跑起来。
-  requestAnimationFrame(() => { active.value = true })
+  // 等待挂载期间用户可能已经关闭（例如连点触发器），这时不要再补入场动画。
+  if (!props.open) return
+  // 下一帧再置为 active，保证 translateX 过渡能跑起来；关闭时要能取消，
+  // 否则「打开后立刻关闭」会在关闭动画中重新播放入场。
+  cancelEnterFrame()
+  enterFrame = requestAnimationFrame(() => {
+    enterFrame = null
+    if (mounted.value && props.open) active.value = true
+  })
   closeBtnRef.value?.focus()
 }
 
+const cancelEnterFrame = () => {
+  if (enterFrame !== null) {
+    cancelAnimationFrame(enterFrame)
+    enterFrame = null
+  }
+}
+
 const leave = () => {
+  cancelEnterFrame()
   active.value = false
   document.removeEventListener('keydown', onKeydown)
   unlockScroll()
@@ -291,6 +364,7 @@ watch(
 
 onBeforeUnmount(() => {
   if (closeTimer) clearTimeout(closeTimer)
+  cancelEnterFrame()
   document.removeEventListener('keydown', onKeydown)
   if (mounted.value) unlockScroll()
 })
@@ -429,6 +503,20 @@ onBeforeUnmount(() => {
 .mfd-options {
   display: grid;
   gap: 2px;
+}
+
+.mfd-section {
+  margin-top: 10px;
+  margin-bottom: 2px;
+  padding-inline: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(248, 250, 252, 0.42);
+}
+
+.mfd-section:first-child {
+  margin-top: 0;
 }
 
 .mfd-option {

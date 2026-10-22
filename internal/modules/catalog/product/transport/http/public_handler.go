@@ -32,6 +32,7 @@ type PublicProductQueries interface {
 	ListPublicForTenant(tenant reseller.TenantContext, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error)
 	ListPublicForTenantFiltered(tenant reseller.TenantContext, filter productcontract.PublicFilter, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error)
 	GetPublicBySlugForTenant(tenant reseller.TenantContext, slug string) (*productdomain.Product, error)
+	ListFilterOptionsForTenant(tenant reseller.TenantContext) (productcontract.FilterOptions, error)
 	ApplyAutoStockCounts(products []productdomain.Product) error
 }
 
@@ -163,6 +164,47 @@ func (h *PublicHandler) GetProducts(c *gin.Context) {
 
 	pagination := response.BuildPagination(page, pageSize, total)
 	response.SuccessWithPage(c, decorated, pagination)
+}
+
+// filterOptionsResponse 是公开筛选器的响应体。字段名与前台查询参数保持一致风格。
+type filterOptionsResponse struct {
+	Countries []string `json:"countries"`
+	Scenarios []string `json:"scenarios"`
+	IPTypes   []string `json:"ip_types"`
+	LineTypes []string `json:"line_types"`
+}
+
+// GetFilterOptions 返回当前租户可见商品的筛选取值。
+// 国家/地区由在售商品实时聚合，新增地区不需要改代码或重新发布前端。
+func (h *PublicHandler) GetFilterOptions(c *gin.Context) {
+	tenant := tenantFromRequest(c)
+	options, err := h.products.ListFilterOptionsForTenant(tenant)
+	if err != nil {
+		if errors.Is(err, productcontract.ErrResellerProductNotListed) {
+			ginutil.RespondError(c, response.CodeNotFound, "error.product_not_found", nil)
+			return
+		}
+		ginutil.RespondError(c, response.CodeInternal, "error.product_fetch_failed", err)
+		return
+	}
+	if options.Countries == nil {
+		options.Countries = []string{}
+	}
+	if options.Scenarios == nil {
+		options.Scenarios = []string{}
+	}
+	if options.IPTypes == nil {
+		options.IPTypes = []string{}
+	}
+	if options.LineTypes == nil {
+		options.LineTypes = []string{}
+	}
+	response.Success(c, filterOptionsResponse{
+		Countries: options.Countries,
+		Scenarios: options.Scenarios,
+		IPTypes:   options.IPTypes,
+		LineTypes: options.LineTypes,
+	})
 }
 
 // GetProductBySlug 根据 slug 获取商品详情

@@ -21,6 +21,7 @@ import {
   ADMIN_IP_TYPES,
   ADMIN_LINE_TYPES,
   ADMIN_SCENARIOS,
+  mergeAdminCountryCodes,
 } from '@/constants/productMeta'
 import { getLocalizedText } from '@/utils/format'
 import { buildAdminCategoryPath, createAdminCategoryChildCountMap, createAdminCategoryMap, flattenAdminCategories, isAdminProductCategorySelectable } from '@/utils/category'
@@ -44,6 +45,8 @@ const isEditing = ref(false)
 const originalManualStockTotal = ref<number | null>(null)
 const paymentChannels = ref<AdminPaymentChannel[]>([])
 const editingIsMapped = ref(false)
+const countryFacetCodes = ref<string[]>([])
+const countryFacetsLoaded = ref(false)
 const initialCategoryID = ref<number | null>(null)
 const newTag = ref('')
 const currentLang = ref('zh-CN')
@@ -62,10 +65,15 @@ const countryOptions = computed(() => {
   } catch {
     displayNames = null
   }
-  return ADMIN_COUNTRY_CODES.map((code) => ({
-    value: code,
-    label: code === 'SHARED' ? t('admin.products.form.countryShared') : (displayNames?.of(code) || code),
-  }))
+  const presets = new Set<string>(ADMIN_COUNTRY_CODES)
+  return mergeAdminCountryCodes(form.country, countryFacetCodes.value).map((code) => {
+    const base = code === 'SHARED'
+      ? t('admin.products.form.countryShared')
+      : (displayNames?.of(code) || code)
+    // 不在推荐列表里的取值标注「已有」，提示它不是预设项但会被保留。
+    const label = presets.has(code) ? base : `${base}${t('admin.products.form.countryExisting')}`
+    return { value: code, label }
+  })
 })
 
 const scenarioOptions = computed(() => ADMIN_SCENARIOS.map((value) => ({
@@ -229,6 +237,27 @@ const loadPaymentChannels = async () => {
   } catch {
     paymentChannels.value = []
   }
+}
+
+// 国家/地区建议项来自在售商品；后台仍允许直接填写新代码，避免新增地区必须改代码。
+// 失败时不置 loaded，下次打开弹窗会重试。
+const loadCountryFacets = async () => {
+  if (countryFacetsLoaded.value) return
+  try {
+    const res = await adminAPI.getProductFilterOptions()
+    const countries = res.data?.data?.countries
+    countryFacetCodes.value = Array.isArray(countries)
+      ? countries.map((code: unknown) => String(code || '').trim().toUpperCase()).filter(Boolean)
+      : []
+    countryFacetsLoaded.value = true
+  } catch {
+    countryFacetCodes.value = []
+    countryFacetsLoaded.value = false
+  }
+}
+
+const normalizeCountryInput = () => {
+  form.country = String(form.country || '').trim().toUpperCase()
 }
 
 const parsePaymentChannelIDs = (raw: string | number[] | null | undefined): number[] => {
@@ -604,7 +633,7 @@ const populateForm = (product: AdminProduct) => {
     cost_price_amount: Number(product.cost_price_amount || 0),
     images: imagesList,
     tags: tagsList,
-    country: String(product.country || ''),
+    country: String(product.country || '').trim().toUpperCase(),
     scenario: Array.isArray(product.scenario) ? [...product.scenario] : [],
     ip_type: String(product.ip_type || ''),
     line_type: String(product.line_type || ''),
@@ -659,6 +688,11 @@ const handleSubmit = async () => {
     if (minPurchaseQuantityValue > 0 && maxPurchaseQuantityValue > 0 && minPurchaseQuantityValue > maxPurchaseQuantityValue) {
       throw new Error(t('admin.products.form.purchaseLimitInvalid'))
     }
+    // 后端会静默丢弃非法国家代码，这里先拦住，避免保存后字段被清空。
+    const countryValue = String(form.country || '').trim().toUpperCase()
+    if (countryValue && !/^[A-Z0-9]{1,8}$/.test(countryValue)) {
+      throw new Error(t('admin.products.form.countryInvalid'))
+    }
     const effectiveManualStockTotal = normalizedSKUs.length
       ? (() => {
           const activeRows = normalizedSKUs.filter((item) => item.is_active)
@@ -684,7 +718,7 @@ const handleSubmit = async () => {
       cost_price_amount: effectiveCostPrice,
       images: form.images,
       tags: form.tags,
-      country: form.country,
+      country: countryValue,
       scenario: form.scenario,
       ip_type: form.ip_type,
       line_type: form.line_type,
@@ -764,6 +798,9 @@ watch(
     currentLang.value = 'zh-CN'
     if (paymentChannels.value.length === 0) {
       loadPaymentChannels()
+    }
+    if (countryFacetsLoaded.value === false) {
+      loadCountryFacets()
     }
     if (props.productId != null && props.productId > 0) {
       isEditing.value = true
@@ -858,18 +895,18 @@ watch(
 
           <div class="col-span-1">
             <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.products.form.country') }}</label>
-            <Select
-              :model-value="form.country || '__none__'"
-              @update:modelValue="(value) => { form.country = value === '__none__' ? '' : String(value) }"
-            >
-              <SelectTrigger class="h-9 w-full">
-                <SelectValue :placeholder="t('admin.products.form.countryPlaceholder')" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">{{ t('admin.products.form.countryPlaceholder') }}</SelectItem>
-                <SelectItem v-for="item in countryOptions" :key="item.value" :value="item.value">{{ item.label }}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              v-model="form.country"
+              class="h-9"
+              list="admin-country-suggestions"
+              maxlength="8"
+              :placeholder="t('admin.products.form.countryPlaceholder')"
+              @blur="normalizeCountryInput"
+            />
+            <datalist id="admin-country-suggestions">
+              <option v-for="item in countryOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </datalist>
+            <p class="mt-1 text-xs text-muted-foreground">{{ t('admin.products.form.countryTip') }}</p>
           </div>
 
           <div class="col-span-1">

@@ -1,8 +1,10 @@
 package gormstore
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -289,6 +291,99 @@ func (r *ProductStore) GetAdminByID(id string) (*productdomain.Product, error) {
 		return nil, err
 	}
 	return &product, nil
+}
+
+// ListFilterOptions 汇总公开筛选器实际可用的取值。
+//
+// 国家/地区是开放取值，新增地区不应要求改前端常量，所以这里按在售商品实时聚合。
+// 场景以 JSON 数组保存，SQLite / PostgreSQL 无法共用一条 DISTINCT SQL，
+// 因此读取该列后在 Go 里去重；商品目录量级下成本可接受。
+func (r *ProductStore) ListFilterOptions(excludeProductIDs []uint) (productcontract.FilterOptions, error) {
+	options := productcontract.FilterOptions{
+		Countries: []string{},
+		Scenarios: []string{},
+		IPTypes:   []string{},
+		LineTypes: []string{},
+	}
+
+	base := func() *gorm.DB {
+		query := r.db.Model(&productdomain.Product{}).
+			Where("products.deleted_at IS NULL").
+			Where("products.is_active = ?", true).
+			Where("EXISTS (SELECT 1 FROM categories c WHERE c.id = products.category_id AND c.is_active = ? AND c.deleted_at IS NULL)", true)
+		if len(excludeProductIDs) > 0 {
+			query = query.Where("products.id NOT IN ?", excludeProductIDs)
+		}
+		return query
+	}
+
+	if err := base().Where("products.country <> ''").
+		Distinct().
+		Pluck("products.country", &options.Countries).Error; err != nil {
+		return productcontract.FilterOptions{}, err
+	}
+	if err := base().Where("products.ip_type <> ''").
+		Distinct().
+		Pluck("products.ip_type", &options.IPTypes).Error; err != nil {
+		return productcontract.FilterOptions{}, err
+	}
+	if err := base().Where("products.line_type <> ''").
+		Distinct().
+		Pluck("products.line_type", &options.LineTypes).Error; err != nil {
+		return productcontract.FilterOptions{}, err
+	}
+
+	scenarioColumn := scenarioTextColumn(r.db.Dialector.Name())
+	rawScenarios := make([]string, 0, len(options.Countries)+4)
+	if err := base().Where("products.scenario IS NOT NULL").
+		Pluck(scenarioColumn, &rawScenarios).Error; err != nil {
+		return productcontract.FilterOptions{}, err
+	}
+	rawScenarioValues := make([]string, 0, len(rawScenarios))
+	for _, raw := range rawScenarios {
+		var values []string
+		if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &values); err != nil {
+			continue
+		}
+		rawScenarioValues = append(rawScenarioValues, values...)
+	}
+
+	// 统一清洗大小写与别名：历史数据里的 "us" / "Residential" / "STORE_GROUP"
+	// 不能在筛选器里出现第二份取值。
+	options.Countries = normalizeFilterValues(options.Countries, productdomain.NormalizeCountryCode)
+	options.IPTypes = normalizeFilterValues(options.IPTypes, productdomain.NormalizeIPType)
+	options.LineTypes = normalizeFilterValues(options.LineTypes, productdomain.NormalizeLineType)
+	// 场景保留领域定义的固定顺序，未知取值丢弃（后端筛选同样会归一化掉）。
+	options.Scenarios = append([]string{}, productdomain.NormalizeScenarios(rawScenarioValues)...)
+	return options, nil
+}
+
+// scenarioTextColumn 返回把 JSON 数组列读成文本的方言表达式。
+// SQLite 的 JSON 列可能以 BLOB 存放，需要 CAST；PostgreSQL 的 jsonb 用 ::text。
+func scenarioTextColumn(dialect string) string {
+	if strings.EqualFold(strings.TrimSpace(dialect), "postgres") {
+		return "products.scenario::text"
+	}
+	return "CAST(products.scenario AS TEXT)"
+}
+
+// normalizeFilterValues 对聚合出的取值做归一化、去空并按字母序去重。
+func normalizeFilterValues(values []string, normalize func(string) string) []string {
+	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, raw := range values {
+		value := normalize(raw)
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
 }
 
 // ListByIDs 批量获取商品

@@ -8,6 +8,7 @@ func RegisterPublicRoutes(public gin.IRoutes, handler *PublicHandler) {
 		panic("catalog product public routes: required dependency is nil")
 	}
 	public.GET("/products", handler.GetProducts)
+	public.GET("/product-filter-options", handler.GetFilterOptions)
 	public.GET("/products/:slug", handler.GetProductBySlug)
 }
 

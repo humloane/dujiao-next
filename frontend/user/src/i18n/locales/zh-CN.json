@@ -1790,7 +1790,10 @@
     "close": "关闭",
     "resetAll": "重置全部",
     "resultCount": "{count} 个结果",
-    "selectedLabel": "已选条件"
+    "selectedLabel": "已选条件",
+    "countrySectionCommon": "常用地区",
+    "countrySectionOther": "其他地区",
+    "countrySectionShared": "共享"
   },
   "landing": {
     "nav": {

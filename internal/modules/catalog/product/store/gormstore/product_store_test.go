@@ -2,6 +2,7 @@ package gormstore
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -749,5 +750,134 @@ func TestProductRepositoryListUpdatedAfterIncludesStockChanges(t *testing.T) {
 	}
 	if !got[skuChanged.ID] || !got[cardChanged.ID] || got[untouched.ID] {
 		t.Fatalf("unexpected incremental rows: sku=%v card=%v untouched=%v", got[skuChanged.ID], got[cardChanged.ID], got[untouched.ID])
+	}
+}
+
+func TestListFilterOptionsAggregatesActiveProducts(t *testing.T) {
+	repo, db := setupProductStoreTest(t)
+
+	inactiveCategory := &categorydomain.Category{
+		ID:       2,
+		Slug:     "inactive-test-category",
+		NameJSON: jsonmap.JSON{"zh-CN": "停用分类"},
+		IsActive: true,
+	}
+	if err := db.Create(inactiveCategory).Error; err != nil {
+		t.Fatalf("seed inactive category failed: %v", err)
+	}
+	// is_active 带 default:true，Create 时显式置 true 后再停用，避免默认值覆盖。
+	if err := db.Model(inactiveCategory).Update("is_active", false).Error; err != nil {
+		t.Fatalf("disable category failed: %v", err)
+	}
+
+	createProduct := func(slug, country, ipType, lineType string, scenarios []string, categoryID uint, active bool) *productdomain.Product {
+		t.Helper()
+		item := &productdomain.Product{
+			CategoryID:      categoryID,
+			Slug:            slug,
+			TitleJSON:       jsonmap.JSON{"zh-CN": slug},
+			PriceAmount:     money.FromDecimal(decimal.NewFromInt(10)),
+			PurchaseType:    constants.ProductPurchaseMember,
+			FulfillmentType: constants.FulfillmentTypeManual,
+			Country:         country,
+			Scenario:        scenarios,
+			IPType:          ipType,
+			LineType:        lineType,
+			IsActive:        active,
+		}
+		if err := repo.Create(item); err != nil {
+			t.Fatalf("create product %s failed: %v", slug, err)
+		}
+		return item
+	}
+
+	sg := createProduct("sg-live", "SG", "residential", "iepl", []string{"live", "ads"}, 1, true)
+	createProduct("us-live", "US", "datacenter", "direct", []string{"live"}, 1, true)
+	// 下架商品、停用分类下的商品、没有任何结构化字段的商品都不应进入筛选项。
+	createProduct("th-inactive", "TH", "isp", "shared", []string{"test"}, 1, false)
+	createProduct("vn-inactive-category", "VN", "isp", "shared", []string{"test"}, 2, true)
+	createProduct("no-meta", "", "", "", nil, 1, true)
+
+	options, err := repo.ListFilterOptions(nil)
+	if err != nil {
+		t.Fatalf("list filter options: %v", err)
+	}
+	if !slices.Equal(options.Countries, []string{"SG", "US"}) {
+		t.Fatalf("unexpected countries: %v", options.Countries)
+	}
+	if !slices.Equal(options.Scenarios, []string{"live", "ads"}) {
+		t.Fatalf("unexpected scenarios: %v", options.Scenarios)
+	}
+	if !slices.Equal(options.IPTypes, []string{"datacenter", "residential"}) {
+		t.Fatalf("unexpected ip types: %v", options.IPTypes)
+	}
+	if !slices.Equal(options.LineTypes, []string{"direct", "iepl"}) {
+		t.Fatalf("unexpected line types: %v", options.LineTypes)
+	}
+
+	// 分销租户隐藏的商品不能通过筛选项暴露。
+	options, err = repo.ListFilterOptions([]uint{sg.ID})
+	if err != nil {
+		t.Fatalf("list filter options with exclusions: %v", err)
+	}
+	if !slices.Equal(options.Countries, []string{"US"}) {
+		t.Fatalf("hidden product leaked into countries: %v", options.Countries)
+	}
+}
+
+// 历史数据里的小写/别名取值必须归一化，避免筛选器出现两份取值。
+func TestListFilterOptionsNormalizesLegacyValues(t *testing.T) {
+	repo, _ := setupProductStoreTest(t)
+
+	create := func(slug, country, ipType, lineType string, scenarios []string) {
+		t.Helper()
+		item := &productdomain.Product{
+			CategoryID:      1,
+			Slug:            slug,
+			TitleJSON:       jsonmap.JSON{"zh-CN": slug},
+			PriceAmount:     money.FromDecimal(decimal.NewFromInt(10)),
+			PurchaseType:    constants.ProductPurchaseMember,
+			FulfillmentType: constants.FulfillmentTypeManual,
+			Country:         country,
+			IPType:          ipType,
+			LineType:        lineType,
+			Scenario:        scenarios,
+			IsActive:        true,
+		}
+		if err := repo.Create(item); err != nil {
+			t.Fatalf("create product %s failed: %v", slug, err)
+		}
+	}
+	create("legacy-sg", "sg", "Residential", "IEPL", []string{"Live"})
+	create("legacy-th", "th", "dc", "iplc", []string{"STORE_GROUP", "unknown-scenario"})
+
+	options, err := repo.ListFilterOptions(nil)
+	if err != nil {
+		t.Fatalf("list filter options: %v", err)
+	}
+	if !slices.Equal(options.Countries, []string{"SG", "TH"}) {
+		t.Fatalf("countries not normalized: %v", options.Countries)
+	}
+	if !slices.Equal(options.IPTypes, []string{"datacenter", "residential"}) {
+		t.Fatalf("ip types not normalized: %v", options.IPTypes)
+	}
+	if !slices.Equal(options.LineTypes, []string{"iepl"}) {
+		t.Fatalf("line types not normalized: %v", options.LineTypes)
+	}
+	// 场景保留领域固定顺序，未知取值被丢弃。
+	if !slices.Equal(options.Scenarios, []string{"live", "store-group"}) {
+		t.Fatalf("scenarios not normalized: %v", options.Scenarios)
+	}
+}
+
+func TestScenarioTextColumnUsesDialectSpecificCast(t *testing.T) {
+	if got := scenarioTextColumn("postgres"); got != "products.scenario::text" {
+		t.Fatalf("postgres expression = %q", got)
+	}
+	if got := scenarioTextColumn("POSTGRES"); got != "products.scenario::text" {
+		t.Fatalf("postgres expression (uppercase dialect) = %q", got)
+	}
+	if got := scenarioTextColumn("sqlite"); got != "CAST(products.scenario AS TEXT)" {
+		t.Fatalf("sqlite expression = %q", got)
 	}
 }

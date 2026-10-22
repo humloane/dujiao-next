@@ -38,6 +38,7 @@
         <ProductMetaFilters
           :model-value="metaFilter"
           :total="totalCount"
+          :meta-options="metaOptions"
           @update:model-value="setMetaFilter"
           @reset="clearMetaFilters"
         />
@@ -119,6 +120,7 @@ const {
   loading,
   products,
   totalCount,
+  metaOptions,
   selectedCategory,
   searchQuery,
   currentPage,
@@ -136,7 +138,7 @@ const {
   clearSearch,
   initialize,
   cleanup,
-} = useProductList({ pageSize: 12, homeRouteName: 'products' })
+} = useProductList({ pageSize: 12, homeRouteName: 'products', withMetaOptions: true })
 
 const catName = (cat: PublicCategory) => getLocalizedText(cat.name) || cat.slug || ''
 

@@ -45,6 +45,15 @@ func (s staticPublicProductQueries) GetPublicBySlugForTenant(reseller.TenantCont
 	return &product, nil
 }
 
+func (s staticPublicProductQueries) ListFilterOptionsForTenant(reseller.TenantContext) (productcontract.FilterOptions, error) {
+	return productcontract.FilterOptions{
+		Countries: []string{s.product.Country},
+		Scenarios: s.product.ScenarioValues(),
+		IPTypes:   []string{s.product.IPType},
+		LineTypes: []string{s.product.LineType},
+	}, nil
+}
+
 func (staticPublicProductQueries) ApplyAutoStockCounts([]productdomain.Product) error {
 	return nil
 }
@@ -127,5 +136,49 @@ func TestPublicProductHTTPPromotionUsesDisplayPrice(t *testing.T) {
 	}
 	if !envelope.Data.PromotionPriceAmount.Decimal.Equal(expectedPromotion) {
 		t.Fatalf("expected promotion display price %s, got %s", expectedPromotion, envelope.Data.PromotionPriceAmount.String())
+	}
+}
+
+// 公开筛选项接口：国家/地区等取值直接来自在售商品，新增地区不需要改前端。
+func TestPublicProductFilterOptionsUsesProductData(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	queries := staticPublicProductQueries{product: productdomain.Product{
+		ID:       1,
+		Slug:     "sg-product",
+		Country:  "SG",
+		IPType:   "residential",
+		LineType: "iepl",
+		Scenario: []string{"live", "ads"},
+	}}
+	handler := producthttp.NewPublicHandler(queries, nil, nil, nil, nil, nil, emptyRelatedPostReader{})
+
+	router := gin.New()
+	producthttp.RegisterPublicRoutes(router, handler)
+	request := httptest.NewRequest(http.MethodGet, "/product-filter-options", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+	var body struct {
+		Data struct {
+			Countries []string `json:"countries"`
+			Scenarios []string `json:"scenarios"`
+			IPTypes   []string `json:"ip_types"`
+			LineTypes []string `json:"line_types"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data.Countries) != 1 || body.Data.Countries[0] != "SG" {
+		t.Fatalf("unexpected countries: %v", body.Data.Countries)
+	}
+	if len(body.Data.IPTypes) != 1 || body.Data.IPTypes[0] != "residential" {
+		t.Fatalf("unexpected ip types: %v", body.Data.IPTypes)
+	}
+	if len(body.Data.Scenarios) != 2 {
+		t.Fatalf("unexpected scenarios: %v", body.Data.Scenarios)
 	}
 }

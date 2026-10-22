@@ -42,6 +42,17 @@ type PublicFilter struct {
 	Sort     string
 }
 
+// FilterOptions 是公开筛选器当前实际可用的取值。
+//
+// 国家/地区是开放取值（NormalizeCountryCode 允许任意国家代码与 SHARED），
+// 不能在代码里写死；这里由在售商品聚合得到，新增地区无需改前端。
+type FilterOptions struct {
+	Countries []string
+	Scenarios []string
+	IPTypes   []string
+	LineTypes []string
+}
+
 // Repository 定义商品领域需要的持久化能力；事务适配保留在 GORM Store。
 type Repository interface {
 	List(filter ListFilter) ([]productdomain.Product, int64, error)
@@ -53,6 +64,9 @@ type Repository interface {
 	Update(item *productdomain.Product) error
 	Delete(id string) error
 	CountBySlug(slug string, excludeID *string) (int64, error)
+	// ListFilterOptions 汇总公开筛选器的可用取值；excludeProductIDs 用于剔除
+	// 当前分销租户不可见的商品，避免筛选项暴露未开放商品。
+	ListFilterOptions(excludeProductIDs []uint) (FilterOptions, error)
 	ReserveManualStock(productID uint, quantity int) (int64, error)
 	ReleaseManualStock(productID uint, quantity int) (int64, error)
 	ConsumeManualStock(productID uint, quantity int) (int64, error)

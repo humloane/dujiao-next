@@ -1790,7 +1790,10 @@
     "close": "Close",
     "resetAll": "Reset all",
     "resultCount": "{count} results",
-    "selectedLabel": "Active filters"
+    "selectedLabel": "Active filters",
+    "countrySectionCommon": "Common regions",
+    "countrySectionOther": "Other regions",
+    "countrySectionShared": "Shared"
   },
   "landing": {
     "nav": {

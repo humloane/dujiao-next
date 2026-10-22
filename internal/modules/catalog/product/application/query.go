@@ -17,6 +17,7 @@ import (
 // ProductRepository 是读取应用服务所需的最小商品持久化端口。
 type ProductRepository interface {
 	List(filter productcontract.ListFilter) ([]productdomain.Product, int64, error)
+	ListFilterOptions(excludeProductIDs []uint) (productcontract.FilterOptions, error)
 	GetBySlug(slug string, onlyActive bool) (*productdomain.Product, error)
 	GetAdminByID(id string) (*productdomain.Product, error)
 }
@@ -114,6 +115,22 @@ func (s *Service) ListPublicForTenantFiltered(tenant reseller.TenantContext, res
 	filter.WithCategory = true
 	filter.ExcludeProductIDs = hiddenIDs
 	return s.products.List(filter)
+}
+
+// ListFilterOptionsForTenant 返回当前租户可见商品的筛选项。
+// 筛选器取值完全来自在售商品，新增国家/地区不需要改前端常量。
+func (s *Service) ListFilterOptionsForTenant(tenant reseller.TenantContext, resellerRepo HiddenProductRepository) (productcontract.FilterOptions, error) {
+	if !tenant.IsReseller() {
+		return s.products.ListFilterOptions(nil)
+	}
+	if tenant.ResellerID == nil || resellerRepo == nil {
+		return productcontract.FilterOptions{}, productcontract.ErrResellerProductNotListed
+	}
+	hiddenIDs, err := resellerRepo.ListHiddenProductIDs(*tenant.ResellerID)
+	if err != nil {
+		return productcontract.FilterOptions{}, err
+	}
+	return s.products.ListFilterOptions(hiddenIDs)
 }
 
 // buildPublicListFilter 把 HTTP 层传入的原始筛选值规范化为领域取值。

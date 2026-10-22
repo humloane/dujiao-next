@@ -359,6 +359,8 @@ export const adminAPI = {
 
   getProducts: (params?: Record<string, unknown>) => api.get('/admin/products', { params }),
   getProduct: (id: number) => api.get(`/admin/products/${id}`),
+  // 公开筛选取值：国家/地区等由在售商品聚合，用于后台下拉建议，避免手填大小写不一致。
+  getProductFilterOptions: () => api.get('/public/product-filter-options'),
   createProduct: (data: Partial<AdminProduct>) => api.post('/admin/products', data),
   updateProduct: (id: number, data: Partial<AdminProduct>) => api.put(`/admin/products/${id}`, data),
   patchProduct: (id: number, data: { is_active?: boolean; sort_order?: number; category_id?: number }) => api.patch(`/admin/products/${id}`, data),

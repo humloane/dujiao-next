@@ -62,7 +62,15 @@
         @change="update('country', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">{{ t('productFilters.allCountries') }}</option>
-        <option v-for="code in PRODUCT_COUNTRY_CODES" :key="code" :value="code">{{ countryLabel(code) }}</option>
+        <optgroup v-if="countryGroups.presets.length" :label="t('productFilters.countrySectionCommon')">
+          <option v-for="code in countryGroups.presets" :key="code" :value="code">{{ countryLabel(code) }}</option>
+        </optgroup>
+        <optgroup v-if="countryGroups.extras.length" :label="t('productFilters.countrySectionOther')">
+          <option v-for="code in countryGroups.extras" :key="code" :value="code">{{ countryLabel(code) }}</option>
+        </optgroup>
+        <optgroup v-if="countryGroups.hasShared" :label="t('productFilters.countrySectionShared')">
+          <option value="SHARED">{{ countryLabel('SHARED') }}</option>
+        </optgroup>
       </select>
 
       <select
@@ -72,8 +80,8 @@
         @change="update('scenario', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">{{ t('productFilters.allScenarios') }}</option>
-        <option v-for="value in PRODUCT_SCENARIOS" :key="value" :value="value">
-          {{ t(`productFilters.scenarios.${value}`) }}
+        <option v-for="value in scenarioCodes" :key="value" :value="value">
+          {{ scenarioLabel(value) }}
         </option>
       </select>
 
@@ -84,8 +92,8 @@
         @change="update('ipType', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">{{ t('productFilters.allIpTypes') }}</option>
-        <option v-for="value in PRODUCT_IP_TYPES" :key="value" :value="value">
-          {{ t(`productFilters.ipTypes.${value}`) }}
+        <option v-for="value in ipTypeCodes" :key="value" :value="value">
+          {{ ipTypeLabel(value) }}
         </option>
       </select>
 
@@ -96,8 +104,8 @@
         @change="update('lineType', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">{{ t('productFilters.allLineTypes') }}</option>
-        <option v-for="value in PRODUCT_LINE_TYPES" :key="value" :value="value">
-          {{ t(`productFilters.lineTypes.${value}`) }}
+        <option v-for="value in lineTypeCodes" :key="value" :value="value">
+          {{ lineTypeLabel(value) }}
         </option>
       </select>
 
@@ -128,6 +136,7 @@
       v-model:open="drawerOpen"
       :model-value="modelValue"
       :total="total ?? null"
+      :meta-options="metaOptions"
       @update:model-value="emit('update:modelValue', $event)"
       @reset="emit('reset')"
     />
@@ -147,14 +156,19 @@ import {
   PRODUCT_SCENARIOS,
   PRODUCT_SORTS,
   hasProductMetaFilter,
+  resolveMetaOptionCodes,
   type ProductMetaFilter,
   type ProductMetaFilterKey,
+  type ProductMetaOptions,
 } from '../constants/productMeta'
+import { createRegionNamer } from '../utils/regionLabel'
 
 const props = defineProps<{
   modelValue: ProductMetaFilter
   /** 父组件的真实结果总数；没有就不展示数字。 */
   total?: number | null
+  /** 后端按在售商品聚合的筛选取值；未加载时回落到常量。 */
+  metaOptions?: ProductMetaOptions
 }>()
 
 const emit = defineEmits<{
@@ -162,7 +176,7 @@ const emit = defineEmits<{
   reset: []
 }>()
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 const drawerOpen = ref(false)
 const isPhone = ref(false)
@@ -183,30 +197,67 @@ onBeforeUnmount(() => {
   mediaQuery?.removeEventListener('change', syncPhone)
 })
 
-const regionNames = computed<{ of: (code: string) => string | undefined } | null>(() => {
-  try {
-    const DisplayNames = (Intl as unknown as { DisplayNames?: new (locales: string[], options: { type: string }) => { of: (code: string) => string | undefined } }).DisplayNames
-    return DisplayNames ? new DisplayNames([locale.value], { type: 'region' }) : null
-  } catch {
-    return null
+const countryLabel = computed(() => createRegionNamer(locale.value, t('productFilters.shared')))
+
+const COUNTRY_PRESETS: string[] = PRODUCT_COUNTRY_CODES.filter((code) => code !== 'SHARED')
+
+const countryCodes = computed(() => resolveMetaOptionCodes(
+  props.metaOptions,
+  'countries',
+  PRODUCT_COUNTRY_CODES,
+  props.modelValue.country,
+))
+
+// 国家分组：常用地区按预设顺序，其余按字母序，SHARED 单独一组。
+const countryGroups = computed(() => {
+  const available = new Set(countryCodes.value)
+  return {
+    presets: COUNTRY_PRESETS.filter((code) => available.has(code)),
+    extras: countryCodes.value.filter((code) => code !== 'SHARED' && !COUNTRY_PRESETS.includes(code)),
+    hasShared: available.has('SHARED'),
   }
 })
 
-const countryLabel = (code: string) => {
-  if (code === 'SHARED') return t('productFilters.shared')
-  return regionNames.value?.of(code) || code
+const scenarioCodes = computed(() => resolveMetaOptionCodes(
+  props.metaOptions,
+  'scenarios',
+  PRODUCT_SCENARIOS,
+  props.modelValue.scenario,
+))
+
+const ipTypeCodes = computed(() => resolveMetaOptionCodes(
+  props.metaOptions,
+  'ipTypes',
+  PRODUCT_IP_TYPES,
+  props.modelValue.ipType,
+))
+
+const lineTypeCodes = computed(() => resolveMetaOptionCodes(
+  props.metaOptions,
+  'lineTypes',
+  PRODUCT_LINE_TYPES,
+  props.modelValue.lineType,
+))
+
+const localizedLabel = (group: 'scenarios' | 'ipTypes' | 'lineTypes', value: string): string => {
+  const key = `productFilters.${group}.${value}`
+  return te(key) ? t(key) : value
 }
+
+const scenarioLabel = (value: string) => localizedLabel('scenarios', value)
+const ipTypeLabel = (value: string) => localizedLabel('ipTypes', value)
+const lineTypeLabel = (value: string) => localizedLabel('lineTypes', value)
 
 const valueLabel = (key: ProductMetaFilterKey, value: string): string => {
   switch (key) {
     case 'country':
-      return countryLabel(value)
+      return countryLabel.value(value)
     case 'scenario':
-      return t(`productFilters.scenarios.${value}`)
+      return scenarioLabel(value)
     case 'ipType':
-      return t(`productFilters.ipTypes.${value}`)
+      return ipTypeLabel(value)
     case 'lineType':
-      return t(`productFilters.lineTypes.${value}`)
+      return lineTypeLabel(value)
     default:
       return value
   }

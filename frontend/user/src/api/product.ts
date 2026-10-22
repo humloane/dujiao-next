@@ -2,6 +2,7 @@ import { api } from './client'
 
 export const productAPI = {
     list: (params?: any, options?: Record<string, any>) => api.get('/public/products', { params, ...options }),
+    filterOptions: () => api.get('/public/product-filter-options'),
     detail: (slug: string) => api.get(`/public/products/${slug}`),
 }
 

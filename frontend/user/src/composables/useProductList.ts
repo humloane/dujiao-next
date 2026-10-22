@@ -5,14 +5,19 @@ import { buildCategoryGroups, createCategoryMap, normalizeCategoryParentId, type
 import { debounceAsync } from '../utils/debounce'
 import {
   emptyProductMetaFilter,
+  emptyProductMetaOptions,
   hasProductMetaFilter,
+  normalizeOptionCodes,
   type ProductMetaFilter,
+  type ProductMetaOptions,
 } from '../constants/productMeta'
 
 export interface UseProductListOptions {
   pageSize?: number
   homeRouteName?: string
   categoryRouteName?: string
+  /** 是否拉取后端聚合的筛选取值；只有真正渲染筛选器的页面需要。 */
+  withMetaOptions?: boolean
 }
 
 export function useProductList(options: UseProductListOptions = {}) {
@@ -20,6 +25,7 @@ export function useProductList(options: UseProductListOptions = {}) {
     pageSize: defaultPageSize = 20,
     homeRouteName = 'home',
     categoryRouteName = 'category-products',
+    withMetaOptions = false,
   } = options
 
   const router = useRouter()
@@ -28,6 +34,8 @@ export function useProductList(options: UseProductListOptions = {}) {
   const loading = ref(true)
   const products = ref<any[]>([])
   const totalCount = ref(0)
+  // 后端按在售商品聚合的筛选取值；请求失败时回落到常量。
+  const metaOptions = reactive<ProductMetaOptions>(emptyProductMetaOptions())
   const categories = ref<PublicCategory[]>([])
   const selectedCategory = ref<number | null>(null)
   const searchQuery = ref('')
@@ -148,6 +156,21 @@ export function useProductList(options: UseProductListOptions = {}) {
     }
   }
 
+  // 筛选取值来自后端商品数据：新增国家/地区不需要改前端常量。
+  const loadMetaOptions = async () => {
+    try {
+      const response = await productAPI.filterOptions()
+      const data = response.data.data || {}
+      metaOptions.countries = normalizeOptionCodes(data.countries)
+      metaOptions.scenarios = normalizeOptionCodes(data.scenarios)
+      metaOptions.ipTypes = normalizeOptionCodes(data.ip_types)
+      metaOptions.lineTypes = normalizeOptionCodes(data.line_types)
+      metaOptions.loaded = true
+    } catch (error) {
+      console.error('Failed to load product filter options:', error)
+    }
+  }
+
   const debouncedLoadProducts = debounceAsync(loadProducts, 300)
 
   const changePage = (page: number) => {
@@ -173,11 +196,6 @@ export function useProductList(options: UseProductListOptions = {}) {
     if (!initializing) {
       syncMetaFilterToRoute()
     }
-  }
-
-  const removeMetaFilter = (key: keyof ProductMetaFilter) => {
-    if (key === 'sort') return
-    setMetaFilter({ ...metaFilter, [key]: '' })
   }
 
   const clearMetaFilters = () => {
@@ -284,7 +302,11 @@ export function useProductList(options: UseProductListOptions = {}) {
 
   const initialize = async () => {
     applyInitialMetaFilter()
-    await loadCategories()
+    const pending: Promise<unknown>[] = [loadCategories()]
+    if (withMetaOptions) {
+      pending.push(loadMetaOptions())
+    }
+    await Promise.all(pending)
     if (syncSelectedCategoryFromRoute()) {
       syncExpandedCategoryState()
     }
@@ -302,6 +324,7 @@ export function useProductList(options: UseProductListOptions = {}) {
     loading,
     products,
     totalCount,
+    metaOptions,
     categories,
     selectedCategory,
     searchQuery,
@@ -316,7 +339,6 @@ export function useProductList(options: UseProductListOptions = {}) {
     metaFilter,
     hasMetaFilters,
     setMetaFilter,
-    removeMetaFilter,
     clearMetaFilters,
     isParentExpanded,
     toggleParentCategory,

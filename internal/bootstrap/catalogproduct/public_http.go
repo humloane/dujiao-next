@@ -52,6 +52,10 @@ func (adapter publicProductAdapter) GetPublicBySlugForTenant(
 	return adapter.products.GetPublicBySlugForTenant(tenant, adapter.hidden, slug)
 }
 
+func (adapter publicProductAdapter) ListFilterOptionsForTenant(tenant reseller.TenantContext) (productcontract.FilterOptions, error) {
+	return adapter.products.ListFilterOptionsForTenant(tenant, adapter.hidden)
+}
+
 func (adapter publicProductAdapter) ApplyAutoStockCounts(products []productdomain.Product) error {
 	return adapter.products.ApplyAutoStockCounts(products)
 }
