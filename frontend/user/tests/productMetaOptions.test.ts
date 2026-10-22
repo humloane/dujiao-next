@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import {
   PRODUCT_COUNTRY_CODES,
   PRODUCT_IP_TYPES,
-  PRODUCT_SCENARIOS,
   normalizeOptionCodes,
   resolveMetaOptionCodes,
   type ProductMetaOptions,
@@ -12,7 +11,6 @@ import {
 const loadedOptions = (overrides: Partial<ProductMetaOptions> = {}): ProductMetaOptions => ({
   loaded: true,
   countries: [],
-  scenarios: [],
   ipTypes: [],
   lineTypes: [],
   ...overrides,
@@ -29,29 +27,21 @@ test('unloaded country options stay empty instead of showing presets', () => {
     [],
   )
   assert.deepEqual(
-    resolveMetaOptionCodes({ loaded: false, countries: ['SG'], scenarios: [], ipTypes: [], lineTypes: [] }, 'countries', PRODUCT_COUNTRY_CODES),
+    resolveMetaOptionCodes({ loaded: false, countries: ['SG'], ipTypes: [], lineTypes: [] }, 'countries', PRODUCT_COUNTRY_CODES),
     [],
-  )
-  assert.deepEqual(
-    resolveMetaOptionCodes(undefined, 'scenarios', PRODUCT_SCENARIOS),
-    [...PRODUCT_SCENARIOS],
   )
 })
 
 test('loaded options come from product data, not the constants', () => {
-  const options = loadedOptions({ countries: ['SG', 'TH'], scenarios: ['live'] })
+  const options = loadedOptions({ countries: ['SG', 'TH'] })
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
     ['SG', 'TH'],
   )
-  assert.deepEqual(
-    resolveMetaOptionCodes(options, 'scenarios', PRODUCT_SCENARIOS),
-    ['live'],
-  )
 })
 
 test('empty structured data stays empty for data-driven groups', () => {
-  const options = loadedOptions({ countries: [], scenarios: [] })
+  const options = loadedOptions({ countries: [] })
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
     [],
@@ -93,16 +83,11 @@ test('known values keep the canonical order, new values follow alphabetically', 
 test('option codes are normalised per group', () => {
   const options = loadedOptions({
     countries: [' sg ', 'TH'],
-    scenarios: ['Live'],
     ipTypes: ['Residential'],
   })
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
     ['SG', 'TH'],
-  )
-  assert.deepEqual(
-    resolveMetaOptionCodes(options, 'scenarios', PRODUCT_SCENARIOS),
-    ['live'],
   )
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'ipTypes', PRODUCT_IP_TYPES),

@@ -1,7 +1,6 @@
 package gormstore
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -296,12 +295,10 @@ func (r *ProductStore) GetAdminByID(id string) (*productdomain.Product, error) {
 // ListFilterOptions 汇总公开筛选器实际可用的取值。
 //
 // 国家/地区是开放取值，新增地区不应要求改前端常量，所以这里按在售商品实时聚合。
-// 场景以 JSON 数组保存，SQLite / PostgreSQL 无法共用一条 DISTINCT SQL，
-// 因此读取该列后在 Go 里去重；商品目录量级下成本可接受。
+// 场景已在商品筛选中移除（只作为商品详情展示字段），因此不再聚合。
 func (r *ProductStore) ListFilterOptions(excludeProductIDs []uint) (productcontract.FilterOptions, error) {
 	options := productcontract.FilterOptions{
 		Countries: []string{},
-		Scenarios: []string{},
 		IPTypes:   []string{},
 		LineTypes: []string{},
 	}
@@ -333,23 +330,7 @@ func (r *ProductStore) ListFilterOptions(excludeProductIDs []uint) (productcontr
 		return productcontract.FilterOptions{}, err
 	}
 
-	scenarioColumn := scenarioTextColumn(r.db.Dialector.Name())
-	rawScenarios := make([]string, 0, len(options.Countries)+4)
-	if err := base().Where("products.scenario IS NOT NULL").
-		Pluck(scenarioColumn, &rawScenarios).Error; err != nil {
-		return productcontract.FilterOptions{}, err
-	}
-	rawScenarioValues := make([]string, 0, len(rawScenarios))
-	for _, raw := range rawScenarios {
-		var values []string
-		if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &values); err != nil {
-			continue
-		}
-		rawScenarioValues = append(rawScenarioValues, values...)
-	}
-
-	// 统一清洗大小写与别名：历史数据里的 "us" / "Residential" / "STORE_GROUP"
-	// 不能在筛选器里出现第二份取值。
+	// 统一清洗大小写与别名：历史数据里的 "us" / "Residential" 不能在筛选器里出现第二份取值。
 	options.Countries = normalizeFilterValues(options.Countries, productdomain.NormalizeCountryCode)
 	// SHARED 是历史遗留的“共享节点”占位值，不是国家/地区代码。
 	// 数据里即使还有存量值，也不要在公开筛选器里暴露成国家选项。
@@ -365,18 +346,7 @@ func (r *ProductStore) ListFilterOptions(excludeProductIDs []uint) (productcontr
 	}
 	options.IPTypes = normalizeFilterValues(options.IPTypes, productdomain.NormalizeIPType)
 	options.LineTypes = normalizeFilterValues(options.LineTypes, productdomain.NormalizeLineType)
-	// 场景保留领域定义的固定顺序，未知取值丢弃（后端筛选同样会归一化掉）。
-	options.Scenarios = append([]string{}, productdomain.NormalizeScenarios(rawScenarioValues)...)
 	return options, nil
-}
-
-// scenarioTextColumn 返回把 JSON 数组列读成文本的方言表达式。
-// SQLite 的 JSON 列可能以 BLOB 存放，需要 CAST；PostgreSQL 的 jsonb 用 ::text。
-func scenarioTextColumn(dialect string) string {
-	if strings.EqualFold(strings.TrimSpace(dialect), "postgres") {
-		return "products.scenario::text"
-	}
-	return "CAST(products.scenario AS TEXT)"
 }
 
 // normalizeFilterValues 对聚合出的取值做归一化、去空并按字母序去重。

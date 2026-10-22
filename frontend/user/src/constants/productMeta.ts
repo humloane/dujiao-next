@@ -1,12 +1,8 @@
 /** 商品结构化筛选项。取值与后端 productdomain 常量保持一致。
  *  实际可用取值以后端 /public/product-filter-options 返回的商品数据为准，
- *  这里的常量只用于「接口未返回/失败」时的兜底与排序基准。 */
+ *  这里的常量只用于「常用取值优先」的排序基准。 */
 export const PRODUCT_COUNTRY_CODES = [
   'US', 'GB', 'DE', 'JP', 'TW', 'PH',
-] as const
-
-export const PRODUCT_SCENARIOS = [
-  'live', 'ecommerce', 'store-group', 'ads', 'enterprise', 'test',
 ] as const
 
 export const PRODUCT_IP_TYPES = ['residential', 'datacenter', 'isp', 'shared'] as const
@@ -27,12 +23,11 @@ export type ProductMetaFilterKey = (typeof PRODUCT_META_FILTER_KEYS)[number]
 
 /**
  * 后端按在售商品聚合出的筛选取值。
- * loaded=false 表示尚未拿到或请求失败，此时前端回落到常量列表。
+ * loaded=false 表示尚未拿到或请求失败，此时不展示任何筛选项。
  */
 export interface ProductMetaOptions {
   loaded: boolean
   countries: string[]
-  scenarios: string[]
   ipTypes: string[]
   lineTypes: string[]
 }
@@ -40,7 +35,6 @@ export interface ProductMetaOptions {
 export const emptyProductMetaOptions = (): ProductMetaOptions => ({
   loaded: false,
   countries: [],
-  scenarios: [],
   ipTypes: [],
   lineTypes: [],
 })
@@ -61,44 +55,35 @@ export const normalizeOptionCodes = (value: unknown, transform?: (code: string) 
   return result
 }
 
-/** 国家/地区统一大写；场景、IP 类型、线路类型是固定小写枚举。 */
+/** 国家/地区统一大写；IP 类型、线路类型是固定小写枚举。 */
 const optionTransform = (
-  key: 'countries' | 'scenarios' | 'ipTypes' | 'lineTypes',
+  key: 'countries' | 'ipTypes' | 'lineTypes',
 ): ((code: string) => string) => key === 'countries'
   ? (code) => code.toUpperCase()
   : (code) => code.toLowerCase()
 
 /**
  * 解析某个筛选组的选项：
- * - 国家、IP 类型、线路类型只使用商品数据，接口没数据时不显示假选项；
- * - 其它固定枚举在没有商品数据时可以回落到常量；
+ * - 只使用商品数据，接口没数据时不显示假选项；
  * - 取值统一清洗大小写，避免历史数据里的 us / Residential 变成第二份选项；
- * - URL 上带的选择即使没有商品命中也要保留，否则下拉框无法回显。
+ * - URL 上带的选择即使没有商品命中也要保留，否则下拉框无法回显；
+ * - fallback 只用于把常用取值排在前面。
  */
 export const resolveMetaOptionCodes = (
   options: ProductMetaOptions | undefined,
-  key: 'countries' | 'scenarios' | 'ipTypes' | 'lineTypes',
+  key: 'countries' | 'ipTypes' | 'lineTypes',
   fallback: readonly string[],
   selected = '',
 ): string[] => {
   const transform = optionTransform(key)
-  const dynamic = normalizeOptionCodes(options?.[key], transform)
-    .filter((code) => key !== 'countries' || code !== 'SHARED')
-  let source: string[]
-  if (key === 'countries' || key === 'ipTypes' || key === 'lineTypes') {
-    // 这些筛选项必须和商品数据一致：接口加载成功后只使用商品里真实出现的取值，
-    // 即使结果为空也不回落到预设列表，避免选中一个没有任何商品匹配的假选项。
-    source = options?.loaded === true ? dynamic : []
-  } else {
-    source = options?.loaded === true && dynamic.length > 0
-      ? dynamic
-      : normalizeOptionCodes(fallback, transform)
-  }
-  const result = [...source]
+  const source = options?.loaded === true ? normalizeOptionCodes(options[key], transform) : []
+  const result = source.filter((code) => key !== 'countries' || code !== 'SHARED')
   const current = normalizeOptionCodes([selected], transform)[0] || ''
-  if (current && (key !== 'countries' || current !== 'SHARED') && !result.includes(current)) result.push(current)
+  if (current && (key !== 'countries' || current !== 'SHARED') && !result.includes(current)) {
+    result.push(current)
+  }
 
-  // 常量里的标准顺序优先，动态新增项按字母序排在后面。
+  // 常量里的常用取值优先，其余按字母序排在后面。
   const rank = new Map<string, number>(
     normalizeOptionCodes(fallback, transform).map((code, index) => [code, index]),
   )

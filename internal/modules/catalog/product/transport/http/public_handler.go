@@ -169,7 +169,6 @@ func (h *PublicHandler) GetProducts(c *gin.Context) {
 // filterOptionsResponse 是公开筛选器的响应体。字段名与前台查询参数保持一致风格。
 type filterOptionsResponse struct {
 	Countries []string `json:"countries"`
-	Scenarios []string `json:"scenarios"`
 	IPTypes   []string `json:"ip_types"`
 	LineTypes []string `json:"line_types"`
 }
@@ -190,9 +189,6 @@ func (h *PublicHandler) GetFilterOptions(c *gin.Context) {
 	if options.Countries == nil {
 		options.Countries = []string{}
 	}
-	if options.Scenarios == nil {
-		options.Scenarios = []string{}
-	}
 	if options.IPTypes == nil {
 		options.IPTypes = []string{}
 	}
@@ -201,7 +197,6 @@ func (h *PublicHandler) GetFilterOptions(c *gin.Context) {
 	}
 	response.Success(c, filterOptionsResponse{
 		Countries: options.Countries,
-		Scenarios: options.Scenarios,
 		IPTypes:   options.IPTypes,
 		LineTypes: options.LineTypes,
 	})

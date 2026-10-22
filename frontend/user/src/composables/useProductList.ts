@@ -161,7 +161,6 @@ export function useProductList(options: UseProductListOptions = {}) {
       const response = await productAPI.filterOptions()
       const data = response.data.data || {}
       metaOptions.countries = normalizeOptionCodes(data.countries)
-      metaOptions.scenarios = normalizeOptionCodes(data.scenarios)
       metaOptions.ipTypes = normalizeOptionCodes(data.ip_types)
       metaOptions.lineTypes = normalizeOptionCodes(data.line_types)
       metaOptions.loaded = true

@@ -807,9 +807,6 @@ func TestListFilterOptionsAggregatesActiveProducts(t *testing.T) {
 	if !slices.Equal(options.Countries, []string{"SG", "US"}) {
 		t.Fatalf("unexpected countries: %v", options.Countries)
 	}
-	if !slices.Equal(options.Scenarios, []string{"live", "ads"}) {
-		t.Fatalf("unexpected scenarios: %v", options.Scenarios)
-	}
 	if !slices.Equal(options.IPTypes, []string{"datacenter", "residential"}) {
 		t.Fatalf("unexpected ip types: %v", options.IPTypes)
 	}
@@ -865,21 +862,5 @@ func TestListFilterOptionsNormalizesLegacyValues(t *testing.T) {
 	}
 	if !slices.Equal(options.LineTypes, []string{"iepl"}) {
 		t.Fatalf("line types not normalized: %v", options.LineTypes)
-	}
-	// 场景保留领域固定顺序，未知取值被丢弃。
-	if !slices.Equal(options.Scenarios, []string{"live", "store-group"}) {
-		t.Fatalf("scenarios not normalized: %v", options.Scenarios)
-	}
-}
-
-func TestScenarioTextColumnUsesDialectSpecificCast(t *testing.T) {
-	if got := scenarioTextColumn("postgres"); got != "products.scenario::text" {
-		t.Fatalf("postgres expression = %q", got)
-	}
-	if got := scenarioTextColumn("POSTGRES"); got != "products.scenario::text" {
-		t.Fatalf("postgres expression (uppercase dialect) = %q", got)
-	}
-	if got := scenarioTextColumn("sqlite"); got != "CAST(products.scenario AS TEXT)" {
-		t.Fatalf("sqlite expression = %q", got)
 	}
 }

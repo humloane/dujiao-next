@@ -48,7 +48,6 @@ type PublicFilter struct {
 // 不能在代码里写死；这里由在售商品聚合得到，新增地区无需改前端。
 type FilterOptions struct {
 	Countries []string
-	Scenarios []string
 	IPTypes   []string
 	LineTypes []string
 }

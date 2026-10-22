@@ -48,7 +48,6 @@ func (s staticPublicProductQueries) GetPublicBySlugForTenant(reseller.TenantCont
 func (s staticPublicProductQueries) ListFilterOptionsForTenant(reseller.TenantContext) (productcontract.FilterOptions, error) {
 	return productcontract.FilterOptions{
 		Countries: []string{s.product.Country},
-		Scenarios: s.product.ScenarioValues(),
 		IPTypes:   []string{s.product.IPType},
 		LineTypes: []string{s.product.LineType},
 	}, nil
@@ -164,7 +163,6 @@ func TestPublicProductFilterOptionsUsesProductData(t *testing.T) {
 	var body struct {
 		Data struct {
 			Countries []string `json:"countries"`
-			Scenarios []string `json:"scenarios"`
 			IPTypes   []string `json:"ip_types"`
 			LineTypes []string `json:"line_types"`
 		} `json:"data"`
@@ -177,8 +175,5 @@ func TestPublicProductFilterOptionsUsesProductData(t *testing.T) {
 	}
 	if len(body.Data.IPTypes) != 1 || body.Data.IPTypes[0] != "residential" {
 		t.Fatalf("unexpected ip types: %v", body.Data.IPTypes)
-	}
-	if len(body.Data.Scenarios) != 2 {
-		t.Fatalf("unexpected scenarios: %v", body.Data.Scenarios)
 	}
 }
