@@ -140,6 +140,10 @@ func inferMeta(slug string) productdomain.ProductMeta {
 			ipType = productdomain.IPTypeResidential
 			lineType = productdomain.LineTypeDirect
 			scenarios = []string{productdomain.ScenarioLive, productdomain.ScenarioEcommerce}
+		case strings.Contains(lower, "isp"):
+			ipType = productdomain.IPTypeISP
+			lineType = productdomain.LineTypeDirect
+			scenarios = []string{productdomain.ScenarioLive, productdomain.ScenarioEcommerce, productdomain.ScenarioStoreGroup}
 		case strings.HasSuffix(lower, "-ip"):
 			ipType = productdomain.IPTypeResidential
 			lineType = productdomain.LineTypeDirect
@@ -162,6 +166,10 @@ func countryFromSlug(slug string) string {
 	code := strings.ToUpper(strings.TrimSpace(parts[0]))
 	if len(code) != 2 {
 		return ""
+	}
+	// UK 是常见写法，但筛选和 Intl 展示使用 ISO 的 GB，避免出现两个“英国”。
+	if code == "UK" {
+		code = "GB"
 	}
 	for _, r := range code {
 		if r < 'A' || r > 'Z' {
