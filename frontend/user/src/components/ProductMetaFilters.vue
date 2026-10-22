@@ -71,18 +71,6 @@
       </select>
 
       <select
-        :value="modelValue.scenario"
-        class="h-11 min-w-[132px] flex-none rounded-xl border border-border bg-background px-3 text-base font-medium text-foreground outline-none focus:border-primary"
-        :aria-label="t('productFilters.scenario')"
-        @change="update('scenario', ($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">{{ t('productFilters.allScenarios') }}</option>
-        <option v-for="value in scenarioCodes" :key="value" :value="value">
-          {{ scenarioLabel(value) }}
-        </option>
-      </select>
-
-      <select
         :value="modelValue.ipType"
         class="h-11 min-w-[132px] flex-none rounded-xl border border-border bg-background px-3 text-base font-medium text-foreground outline-none focus:border-primary"
         :aria-label="t('productFilters.ipType')"
@@ -150,7 +138,6 @@ import {
   PRODUCT_IP_TYPES,
   PRODUCT_LINE_TYPES,
   PRODUCT_META_FILTER_KEYS,
-  PRODUCT_SCENARIOS,
   PRODUCT_SORTS,
   hasProductMetaFilter,
   resolveMetaOptionCodes,
@@ -214,13 +201,6 @@ const countryGroups = computed(() => {
   }
 })
 
-const scenarioCodes = computed(() => resolveMetaOptionCodes(
-  props.metaOptions,
-  'scenarios',
-  PRODUCT_SCENARIOS,
-  props.modelValue.scenario,
-))
-
 const ipTypeCodes = computed(() => resolveMetaOptionCodes(
   props.metaOptions,
   'ipTypes',
@@ -235,12 +215,11 @@ const lineTypeCodes = computed(() => resolveMetaOptionCodes(
   props.modelValue.lineType,
 ))
 
-const localizedLabel = (group: 'scenarios' | 'ipTypes' | 'lineTypes', value: string): string => {
+const localizedLabel = (group: 'ipTypes' | 'lineTypes', value: string): string => {
   const key = `productFilters.${group}.${value}`
   return te(key) ? t(key) : value
 }
 
-const scenarioLabel = (value: string) => localizedLabel('scenarios', value)
 const ipTypeLabel = (value: string) => localizedLabel('ipTypes', value)
 const lineTypeLabel = (value: string) => localizedLabel('lineTypes', value)
 
@@ -248,8 +227,6 @@ const valueLabel = (key: ProductMetaFilterKey, value: string): string => {
   switch (key) {
     case 'country':
       return countryLabel.value(value)
-    case 'scenario':
-      return scenarioLabel(value)
     case 'ipType':
       return ipTypeLabel(value)
     case 'lineType':

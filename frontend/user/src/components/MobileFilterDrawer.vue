@@ -84,7 +84,6 @@ import {
   PRODUCT_COUNTRY_CODES,
   PRODUCT_IP_TYPES,
   PRODUCT_LINE_TYPES,
-  PRODUCT_SCENARIOS,
   PRODUCT_SORTS,
   resolveMetaOptionCodes,
   type ProductMetaFilter,
@@ -125,7 +124,7 @@ let savedPaddingRight = ''
 
 const countryLabel = computed(() => createRegionNamer(locale.value))
 
-type GroupKey = 'country' | 'scenario' | 'ipType' | 'lineType' | 'sort'
+type GroupKey = 'country' | 'ipType' | 'lineType' | 'sort'
 
 interface GroupOption {
   value: string
@@ -170,22 +169,13 @@ const countryOptionRows = computed<GroupOption[]>(() => {
   return rows
 })
 
-const localizedLabel = (group: 'scenarios' | 'ipTypes' | 'lineTypes', value: string): string => {
+const localizedLabel = (group: 'ipTypes' | 'lineTypes', value: string): string => {
   const key = `productFilters.${group}.${value}`
   return te(key) ? t(key) : value
 }
 
 const groups = computed<Group[]>(() => [
   { key: 'country', title: t('productFilters.country'), options: countryOptionRows.value },
-  {
-    key: 'scenario',
-    title: t('productFilters.scenario'),
-    options: [
-      { value: '', label: t('productFilters.allScenarios') },
-      ...resolveMetaOptionCodes(props.metaOptions, 'scenarios', PRODUCT_SCENARIOS, props.modelValue.scenario)
-        .map((value) => ({ value, label: localizedLabel('scenarios', value) })),
-    ],
-  },
   {
     key: 'ipType',
     title: t('productFilters.ipType'),

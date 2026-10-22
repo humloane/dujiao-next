@@ -124,7 +124,6 @@ export function useProductList(options: UseProductListOptions = {}) {
         params.search = keyword
       }
       if (metaFilter.country) params.country = metaFilter.country
-      if (metaFilter.scenario) params.scenario = metaFilter.scenario
       if (metaFilter.ipType) params.ip_type = metaFilter.ipType
       if (metaFilter.lineType) params.line = metaFilter.lineType
       if (metaFilter.sort && metaFilter.sort !== 'recommended') params.sort = metaFilter.sort
@@ -213,7 +212,6 @@ export function useProductList(options: UseProductListOptions = {}) {
     const query = { ...route.query }
     const mapping: Array<[keyof ProductMetaFilter, string]> = [
       ['country', 'country'],
-      ['scenario', 'scenario'],
       ['ipType', 'ip_type'],
       ['lineType', 'line'],
       ['sort', 'sort'],
@@ -236,7 +234,6 @@ export function useProductList(options: UseProductListOptions = {}) {
     }
     Object.assign(metaFilter, {
       country: read('country').toUpperCase(),
-      scenario: read('scenario'),
       ipType: read('ip_type'),
       lineType: read('line'),
       sort: read('sort') || 'recommended',

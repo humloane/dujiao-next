@@ -15,14 +15,13 @@ export const PRODUCT_SORTS = ['recommended', 'price_asc', 'price_desc', 'newest'
 
 export type ProductMetaFilter = {
   country: string
-  scenario: string
   ipType: string
   lineType: string
   sort: string
 }
 
 /** 筛选抽屉与 chips 使用的字段顺序。 */
-export const PRODUCT_META_FILTER_KEYS = ['country', 'scenario', 'ipType', 'lineType'] as const
+export const PRODUCT_META_FILTER_KEYS = ['country', 'ipType', 'lineType'] as const
 
 export type ProductMetaFilterKey = (typeof PRODUCT_META_FILTER_KEYS)[number]
 
@@ -71,8 +70,8 @@ const optionTransform = (
 
 /**
  * 解析某个筛选组的选项：
- * - 接口成功且商品里确实有数据时，完全使用商品数据，新增取值不需要改前端；
- * - 商品还没有填这些字段（新站）或请求失败时，回落到常量，避免筛选器整体空掉；
+ * - 国家、IP 类型、线路类型只使用商品数据，接口没数据时不显示假选项；
+ * - 其它固定枚举在没有商品数据时可以回落到常量；
  * - 取值统一清洗大小写，避免历史数据里的 us / Residential 变成第二份选项；
  * - URL 上带的选择即使没有商品命中也要保留，否则下拉框无法回显。
  */
@@ -86,9 +85,9 @@ export const resolveMetaOptionCodes = (
   const dynamic = normalizeOptionCodes(options?.[key], transform)
     .filter((code) => key !== 'countries' || code !== 'SHARED')
   let source: string[]
-  if (key === 'countries') {
-    // 国家/地区是开放取值：接口加载成功后只使用商品里真实出现的代码，
-    // 即使结果为空也不回落到预设列表，避免前台出现没有商品的国家。
+  if (key === 'countries' || key === 'ipTypes' || key === 'lineTypes') {
+    // 这些筛选项必须和商品数据一致：接口加载成功后只使用商品里真实出现的取值，
+    // 即使结果为空也不回落到预设列表，避免选中一个没有任何商品匹配的假选项。
     source = options?.loaded === true ? dynamic : []
   } else {
     source = options?.loaded === true && dynamic.length > 0
@@ -114,12 +113,11 @@ export const resolveMetaOptionCodes = (
 
 export const emptyProductMetaFilter = (): ProductMetaFilter => ({
   country: '',
-  scenario: '',
   ipType: '',
   lineType: '',
   sort: 'recommended',
 })
 
 export const hasProductMetaFilter = (filter: ProductMetaFilter): boolean => {
-  return Boolean(filter.country || filter.scenario || filter.ipType || filter.lineType)
+  return Boolean(filter.country || filter.ipType || filter.lineType)
 }

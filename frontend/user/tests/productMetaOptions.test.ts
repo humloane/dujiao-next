@@ -50,7 +50,7 @@ test('loaded options come from product data, not the constants', () => {
   )
 })
 
-test('empty country data stays empty; other groups keep their fallback', () => {
+test('empty structured data stays empty for data-driven groups', () => {
   const options = loadedOptions({ countries: [], scenarios: [] })
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
@@ -58,7 +58,11 @@ test('empty country data stays empty; other groups keep their fallback', () => {
   )
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'ipTypes', ['residential', 'datacenter']),
-    ['residential', 'datacenter'],
+    [],
+  )
+  assert.deepEqual(
+    resolveMetaOptionCodes(options, 'lineTypes', ['direct', 'iepl']),
+    [],
   )
 })
 
