@@ -1,0 +1,391 @@
+/*
+ * Landing-page design tokens.
+ *
+ * Scoped to `.lp` on purpose: the storefront keeps its light/dark --ui-* theme,
+ * while ad landing pages use a fixed dark palette so paid traffic never sees a
+ * half-themed page. Every value below is exported as a CSS variable so pages and
+ * components never hardcode colors, radii or shadows.
+ */
+
+.lp {
+  /* surfaces */
+  --lp-bg: #0a0f1e;
+  --lp-panel: #0f1730;
+  --lp-panel-soft: #131c38;
+  --lp-border: rgba(148, 163, 184, 0.18);
+  --lp-border-strong: rgba(148, 163, 184, 0.34);
+
+  /* text: #F8FAFC on #0A0F1E = 17.9:1, #94A3B8 on #0A0F1E = 7.4:1 */
+  --lp-ink: #f8fafc;
+  --lp-ink-muted: #94a3b8;
+
+  /* accent gradient: cyan -> blue -> violet */
+  --lp-cyan: #22d3ee;
+  --lp-blue: #3b82f6;
+  --lp-violet: #8b5cf6;
+  --lp-gradient: linear-gradient(120deg, var(--lp-cyan) 0%, var(--lp-blue) 52%, var(--lp-violet) 100%);
+  --lp-gradient-soft: linear-gradient(120deg, rgba(34, 211, 238, 0.16), rgba(59, 130, 246, 0.14), rgba(139, 92, 246, 0.16));
+
+  /* type scale (body never below 16px on mobile) */
+  --lp-font: Inter, "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --lp-text-xs: 0.8125rem; /* 13px - auxiliary only */
+  --lp-text-sm: 0.9375rem; /* 15px - captions inside desktop cards */
+  --lp-text-base: 1rem;    /* 16px */
+  --lp-text-lg: 1.0625rem; /* 17px */
+  --lp-leading: 1.7;
+
+  /* spacing: section rhythm 48px mobile / 96px desktop */
+  --lp-space-section: 3rem;
+  --lp-space-gap: 1rem;
+
+  /* radii & shadow */
+  --lp-radius-btn: 12px;
+  --lp-radius-card: 16px;
+  --lp-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 40px -24px rgba(2, 6, 23, 0.9);
+  --lp-shadow-glow: 0 20px 60px -28px rgba(59, 130, 246, 0.65);
+}
+
+@media (min-width: 768px) {
+  .lp {
+    --lp-space-section: 6rem; /* 96px */
+    --lp-space-gap: 1.5rem;
+  }
+}
+
+@layer components {
+  .lp {
+    color: var(--lp-ink);
+    background-color: var(--lp-bg);
+    font-family: var(--lp-font);
+    font-size: var(--lp-text-base);
+    line-height: var(--lp-leading);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Section wrapper: one vertical rhythm for all 12 sections. */
+  .lp-section {
+    padding-block: var(--lp-space-section);
+    border-top: 1px solid var(--lp-border);
+  }
+
+  .lp-section--plain {
+    border-top: 0;
+  }
+
+  .lp-section--tint {
+    background: linear-gradient(180deg, rgba(15, 23, 48, 0) 0%, rgba(15, 23, 48, 0.85) 18%, rgba(15, 23, 48, 0.85) 82%, rgba(15, 23, 48, 0) 100%);
+  }
+
+  .lp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 999px;
+    padding: 0.375rem 0.75rem;
+    font-size: var(--lp-text-xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lp-ink-muted);
+  }
+
+  .lp-h1 {
+    margin-top: 1.25rem;
+    font-size: clamp(1.875rem, 1.35rem + 2.4vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    /* long English terms (IEPL / residential) must wrap instead of overflowing */
+    overflow-wrap: anywhere;
+  }
+
+  .lp-h2 {
+    font-size: clamp(1.5rem, 1.2rem + 1.1vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .lp-lead {
+    margin-top: 1rem;
+    max-width: 46rem;
+    font-size: var(--lp-text-base);
+    line-height: var(--lp-leading);
+    color: var(--lp-ink-muted);
+  }
+
+  .lp-card {
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-card);
+    background-color: var(--lp-panel);
+    box-shadow: var(--lp-shadow-card);
+    padding: 1.25rem;
+  }
+
+  .lp-card--soft {
+    background-color: var(--lp-panel-soft);
+  }
+
+  .lp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1px solid var(--lp-border);
+    border-radius: 999px;
+    background-color: rgba(15, 23, 48, 0.7);
+    padding: 0.3125rem 0.75rem;
+    font-size: var(--lp-text-xs);
+    font-weight: 600;
+    color: var(--lp-ink-muted);
+  }
+
+  .lp-btn {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--lp-radius-btn);
+    padding-inline: 1.25rem;
+    font-size: var(--lp-text-base);
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .lp-btn:active {
+    transform: translateY(1px);
+  }
+
+  .lp-btn--primary {
+    background-image: var(--lp-gradient);
+    color: #050b1a;
+    box-shadow: var(--lp-shadow-glow);
+  }
+
+  .lp-btn--primary:hover {
+    opacity: 0.92;
+  }
+
+  .lp-btn--ghost {
+    border: 1px solid var(--lp-border-strong);
+    background-color: rgba(15, 23, 48, 0.6);
+    color: var(--lp-ink);
+  }
+
+  .lp-btn--ghost:hover {
+    border-color: var(--lp-cyan);
+  }
+
+  /* Full-width primary button on phones only. */
+  @media (max-width: 639px) {
+    .lp-btn--block-mobile {
+      width: 100%;
+    }
+  }
+
+  .lp-gradient-text {
+    background-image: var(--lp-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lp-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lp-border-strong), transparent);
+  }
+
+  /* Numeric step badge (01 / 02 ...) */
+  .lp-step {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--lp-gradient-soft);
+    border: 1px solid var(--lp-border);
+    font-size: var(--lp-text-xs);
+    font-weight: 800;
+    color: var(--lp-cyan);
+  }
+
+  /* ---------- landing page structure ---------- */
+
+  /* Bottom padding clears the mobile sticky CTA; desktop has no sticky bar. */
+  .lp {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 768px) {
+    .lp {
+      padding-bottom: 0;
+    }
+  }
+
+  .lp-section--flush {
+    padding-block: 0;
+    border-top: 0;
+  }
+
+  .lp-topbar {
+    border-bottom: 1px solid var(--lp-border);
+    background: rgba(10, 15, 30, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  /* 桌面端吸顶；手机端让位给底部 sticky CTA，避免上下两条固定栏夹住内容。 */
+  @media (min-width: 768px) {
+    .lp-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+  }
+
+  /* Hero glow is a decorative layer inside the hero, never a page-level overflow mask. */
+  .lp-hero-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 18% 8%, rgba(34, 211, 238, 0.18), transparent 70%),
+      radial-gradient(50% 45% at 88% 22%, rgba(139, 92, 246, 0.16), transparent 72%);
+  }
+
+  .lp-visual {
+    position: relative;
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+
+  .lp-visual__map {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-card);
+    background:
+      radial-gradient(70% 60% at 50% 30%, rgba(59, 130, 246, 0.14), transparent 70%),
+      var(--lp-panel);
+  }
+
+  .lp-visual__card {
+    border: 1px solid var(--lp-border-strong);
+    border-radius: var(--lp-radius-card);
+    background: linear-gradient(160deg, rgba(19, 28, 56, 0.96), rgba(15, 23, 48, 0.96));
+    box-shadow: var(--lp-shadow-card);
+    padding: 1rem;
+  }
+
+  .lp-trust {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem 1rem;
+    border-block: 1px solid var(--lp-border);
+    padding-block: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .lp-trust {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-block: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .lp-trust {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+
+  .lp-trust__item {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: var(--lp-text-xs);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--lp-ink-muted);
+  }
+
+  @media (min-width: 768px) {
+    .lp-trust__item {
+      font-size: var(--lp-text-sm);
+    }
+  }
+
+  .lp-card--accent {
+    border-color: rgba(59, 130, 246, 0.55);
+    background: linear-gradient(165deg, rgba(59, 130, 246, 0.14), rgba(15, 23, 48, 0.96) 55%);
+  }
+
+  .lp-faq {
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-card);
+    background-color: var(--lp-panel);
+  }
+
+  .lp-faq__summary {
+    display: flex;
+    min-height: 56px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    font-size: var(--lp-text-base);
+    font-weight: 600;
+    line-height: 1.4;
+    list-style: none;
+  }
+
+  .lp-faq__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .lp-faq__chevron {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: var(--lp-ink-muted);
+    transition: transform 160ms ease;
+  }
+
+  .lp-faq[open] .lp-faq__chevron {
+    transform: rotate(180deg);
+  }
+
+  .lp-faq__body {
+    padding: 0 1rem 1rem;
+    font-size: var(--lp-text-base);
+    line-height: var(--lp-leading);
+    color: var(--lp-ink-muted);
+  }
+
+  .lp-final {
+    border-block: 1px solid var(--lp-border);
+    background: linear-gradient(150deg, rgba(34, 211, 238, 0.12), rgba(59, 130, 246, 0.1) 45%, rgba(139, 92, 246, 0.14));
+    padding-block: var(--lp-space-section);
+  }
+
+  .lp-sticky-cta {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    gap: 0.625rem;
+    border-top: 1px solid var(--lp-border);
+    background: rgba(10, 15, 30, 0.94);
+    padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
+    backdrop-filter: blur(14px);
+  }
+}

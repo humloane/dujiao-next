@@ -12,6 +12,7 @@ import (
 	promotiondomain "github.com/dujiao-next/internal/modules/promotion/domain"
 
 	"github.com/dujiao-next/internal/constants"
+	productcontract "github.com/dujiao-next/internal/modules/catalog/product/contract"
 	productdomain "github.com/dujiao-next/internal/modules/catalog/product/domain"
 	producthttp "github.com/dujiao-next/internal/modules/catalog/product/transport/http"
 	productpresenter "github.com/dujiao-next/internal/modules/catalog/product/transport/presenter"
@@ -32,6 +33,10 @@ type staticPublicProductQueries struct {
 }
 
 func (s staticPublicProductQueries) ListPublicForTenant(reseller.TenantContext, string, string, int, int) ([]productdomain.Product, int64, error) {
+	return []productdomain.Product{s.product}, 1, nil
+}
+
+func (s staticPublicProductQueries) ListPublicForTenantFiltered(reseller.TenantContext, productcontract.PublicFilter, string, string, int, int) ([]productdomain.Product, int64, error) {
 	return []productdomain.Product{s.product}, 1, nil
 }
 

@@ -274,6 +274,11 @@ const router = createRouter({
             component: templateView('Notice', noticeViewLoader),
         },
         {
+            path: '/lp/:slug',
+            name: 'landing-page',
+            component: () => import('../views/LandingPage.vue'),
+        },
+        {
             path: '/about',
             name: 'about',
             component: templateView('About', () => import('../views/About.vue')),

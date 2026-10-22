@@ -6,6 +6,7 @@
       <span class="min-w-0 truncate text-foreground">{{ pageTitle }}</span>
     </nav>
     <h1 class="mb-3.5 break-words text-3xl font-extrabold">{{ pageTitle }}</h1>
+    <p v-if="categoryDescription" class="mb-4 max-w-3xl text-sm leading-7 text-muted-foreground">{{ categoryDescription }}</p>
 
     <div class="grid items-start gap-7 py-1.5 pb-9 lg:grid-cols-[248px_1fr]">
       <!-- 筛选侧栏：桌面竖排 + 移动端横向 chips -->
@@ -34,6 +35,8 @@
 
       <!-- 商品区 -->
       <section>
+        <ProductMetaFilters :model-value="metaFilter" @update:model-value="setMetaFilter" />
+
         <div v-if="loading" class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(228px,1fr))]">
           <div v-for="i in 9" :key="i" class="h-[280px] rounded-lg border bg-card"></div>
         </div>
@@ -92,9 +95,12 @@ import type { PublicCategory } from '../../utils/category'
 import VaultProductCard from './components/VaultProductCard.vue'
 import VaultCategorySidebar from './components/VaultCategorySidebar.vue'
 import ProductQuickBuy from '../../components/ProductQuickBuy.vue'
+import ProductMetaFilters from '../../components/ProductMetaFilters.vue'
+import { useAppStore } from '../../stores/app'
 
 const { t } = useI18n()
 const route = useRoute()
+const appStore = useAppStore()
 const { getLocalizedText } = useLocalized()
 
 const quickBuyProduct = ref<any>(null)
@@ -114,6 +120,10 @@ const {
   expandedParentIds,
   categoryGroups,
   categoryMap,
+  selectedCategoryData,
+  metaFilter,
+  setMetaFilter,
+  clearMetaFilters,
   selectCategory,
   toggleParentCategory,
   changePage,
@@ -135,6 +145,23 @@ const pageTitle = computed(() => {
   return t('nav.products')
 })
 
+const categoryDescription = computed(() => {
+  const cat = selectedCategoryData.value
+  if (!cat?.description) return ''
+  return getLocalizedText(cat.description)
+})
+
+const categorySeo = computed<Record<string, unknown>>(() => {
+  const raw = selectedCategoryData.value?.seo_meta
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
+})
+
+const siteBase = computed(() => {
+  const configured = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+  if (configured) return configured
+  return typeof window !== 'undefined' ? window.location.origin : ''
+})
+
 // 分页窗口：当前页前后各 2 页
 const pageWindow = computed(() => {
   const total = totalPages.value
@@ -150,11 +177,42 @@ const pageWindow = computed(() => {
 const resetFilters = () => {
   clearSearch()
   selectCategory(null)
+  clearMetaFilters()
 }
 
 usePageSeo({
   canonicalPath: () => route.path,
-  title: () => pageTitle.value,
+  title: () => {
+    if (route.name === 'category-products') {
+      return getLocalizedText(categorySeo.value.title) || pageTitle.value
+    }
+    return pageTitle.value
+  },
+  description: () => getLocalizedText(categorySeo.value.description)
+    || categoryDescription.value
+    || t('products.subtitle'),
+  keywords: () => getLocalizedText(categorySeo.value.keywords),
+  jsonLd: () => {
+    const breadcrumbs = [
+      { '@type': 'ListItem', position: 1, name: appStore.config?.brand?.site_name || 'Dujiao-Next', item: siteBase.value + '/' },
+      { '@type': 'ListItem', position: 2, name: t('nav.products'), item: siteBase.value + '/products' },
+    ]
+    if (selectedCategoryName.value) {
+      breadcrumbs.push({ '@type': 'ListItem', position: 3, name: selectedCategoryName.value, item: siteBase.value + route.path })
+    }
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name: pageTitle.value,
+          description: categoryDescription.value || t('products.subtitle'),
+          url: siteBase.value + route.path,
+        },
+        { '@type': 'BreadcrumbList', itemListElement: breadcrumbs },
+      ],
+    }
+  },
 })
 
 onMounted(() => { void initialize() })

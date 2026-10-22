@@ -60,29 +60,38 @@ func NewService(options Options) *Service {
 	}
 }
 
-// ListPublic 获取公开商品列表
+// ListPublic 获取公开商品列表。
 func (s *Service) ListPublic(categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error) {
+	return s.ListPublicFiltered(categoryID, search, productcontract.PublicFilter{}, page, pageSize)
+}
+
+// ListPublicFiltered 获取带结构化筛选的公开商品列表。
+func (s *Service) ListPublicFiltered(categoryID, search string, publicFilter productcontract.PublicFilter, page, pageSize int) ([]productdomain.Product, int64, error) {
 	categoryIDs, err := expandPublicCategoryIDs(s.categories, categoryID)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	filter := productcontract.ListFilter{
-		Page:         page,
-		PageSize:     pageSize,
-		CategoryID:   categoryID,
-		CategoryIDs:  categoryIDs,
-		Search:       search,
-		OnlyActive:   true,
-		WithCategory: true,
-	}
+	filter := buildPublicListFilter(publicFilter)
+	filter.Page = page
+	filter.PageSize = pageSize
+	filter.CategoryID = categoryID
+	filter.CategoryIDs = categoryIDs
+	filter.Search = search
+	filter.OnlyActive = true
+	filter.WithCategory = true
 	return s.products.List(filter)
 }
 
 // ListPublicForTenant 获取当前租户上下文的公开商品列表。
 func (s *Service) ListPublicForTenant(tenant reseller.TenantContext, resellerRepo HiddenProductRepository, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error) {
+	return s.ListPublicForTenantFiltered(tenant, resellerRepo, productcontract.PublicFilter{}, categoryID, search, page, pageSize)
+}
+
+// ListPublicForTenantFiltered 获取当前租户上下文、带结构化筛选的公开商品列表。
+func (s *Service) ListPublicForTenantFiltered(tenant reseller.TenantContext, resellerRepo HiddenProductRepository, publicFilter productcontract.PublicFilter, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error) {
 	if !tenant.IsReseller() {
-		return s.ListPublic(categoryID, search, page, pageSize)
+		return s.ListPublicFiltered(categoryID, search, publicFilter, page, pageSize)
 	}
 	if tenant.ResellerID == nil || resellerRepo == nil {
 		return nil, 0, productcontract.ErrResellerProductNotListed
@@ -95,17 +104,40 @@ func (s *Service) ListPublicForTenant(tenant reseller.TenantContext, resellerRep
 	if err != nil {
 		return nil, 0, err
 	}
-	filter := productcontract.ListFilter{
-		Page:              page,
-		PageSize:          pageSize,
-		CategoryID:        categoryID,
-		CategoryIDs:       categoryIDs,
-		Search:            search,
-		OnlyActive:        true,
-		WithCategory:      true,
-		ExcludeProductIDs: hiddenIDs,
-	}
+	filter := buildPublicListFilter(publicFilter)
+	filter.Page = page
+	filter.PageSize = pageSize
+	filter.CategoryID = categoryID
+	filter.CategoryIDs = categoryIDs
+	filter.Search = search
+	filter.OnlyActive = true
+	filter.WithCategory = true
+	filter.ExcludeProductIDs = hiddenIDs
 	return s.products.List(filter)
+}
+
+// buildPublicListFilter 把 HTTP 层传入的原始筛选值规范化为领域取值。
+// 未识别的值会被丢弃，避免筛选条件把整个商品列表清空。
+func buildPublicListFilter(input productcontract.PublicFilter) productcontract.ListFilter {
+	filter := productcontract.ListFilter{
+		Country:  productdomain.NormalizeCountryCode(input.Country),
+		IPType:   productdomain.NormalizeIPType(input.IPType),
+		LineType: productdomain.NormalizeLineType(input.LineType),
+	}
+	if scenarios := productdomain.NormalizeScenarios([]string{input.Scenario}); len(scenarios) > 0 {
+		filter.Scenario = scenarios[0]
+	}
+	switch strings.ToLower(strings.TrimSpace(input.Sort)) {
+	case "price_asc", "price-asc":
+		filter.Sort = "price_asc"
+	case "price_desc", "price-desc":
+		filter.Sort = "price_desc"
+	case "newest", "latest":
+		filter.Sort = "newest"
+	default:
+		filter.Sort = "recommended"
+	}
+	return filter
 }
 
 // ListForUpstreamSync 上游同步专用：可选包含已下架商品，便于下游识别下架状态

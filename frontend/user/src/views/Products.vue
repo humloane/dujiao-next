@@ -4,8 +4,11 @@
       <!-- Page Header -->
       <div class="mb-12 mt-12 text-center">
         <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-foreground">{{ t('nav.products') }}</h1>
-        <p class="text-muted-foreground max-w-2xl mx-auto text-lg border-b pb-8">
+        <p class="text-muted-foreground max-w-2xl mx-auto text-lg">
           {{ t('products.subtitle') }}
+        </p>
+        <p v-if="categoryDescription" class="mx-auto mt-4 max-w-3xl border-b pb-8 text-sm leading-7 text-muted-foreground">
+          {{ categoryDescription }}
         </p>
       </div>
 
@@ -26,6 +29,8 @@
 
         <!-- Main Content - Products Grid -->
         <main class="flex-1">
+          <ProductMetaFilters :model-value="metaFilter" @update:model-value="setMetaFilter" />
+
           <!-- Loading Skeleton -->
           <div v-if="loading" class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 lg:grid-cols-4">
             <div v-for="i in 6" :key="i"
@@ -80,7 +85,7 @@
             :title="(searchQuery || selectedCategory) ? t('products.emptyFiltered') : t('products.empty')"
           >
             <template v-if="searchQuery || selectedCategory" #action>
-              <Button variant="secondary" @click="clearSearch(); selectCategory(null)">
+              <Button variant="secondary" @click="clearSearch(); selectCategory(null); clearMetaFilters()">
                 {{ t('products.clearFilters') }}
               </Button>
             </template>
@@ -107,7 +112,9 @@ import { usePageSeo } from '../composables/usePageSeo'
 import { useLocalized } from '../composables/useProduct'
 import ProductCard from '../components/ProductCard.vue'
 import ProductQuickBuy from '../components/ProductQuickBuy.vue'
+import ProductMetaFilters from '../components/ProductMetaFilters.vue'
 import CategorySidebar from '../components/CategorySidebar.vue'
+import { useAppStore } from '../stores/app'
 import PaginationNav from '../components/PaginationNav.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { Button } from '@/components/ui/button'
@@ -126,6 +133,10 @@ const {
   expandedParentIds,
   categoryGroups,
   categoryMap,
+  selectedCategoryData,
+  metaFilter,
+  setMetaFilter,
+  clearMetaFilters,
   selectCategory,
   toggleParentCategory,
   changePage,
@@ -136,19 +147,63 @@ const {
 
 // ==================== SEO ====================
 const route = useRoute()
+const appStore = useAppStore()
 const { getLocalizedText } = useLocalized()
 const seoCategoryName = computed(() => {
   if (!selectedCategory.value) return ''
   const cat = categoryMap.value.get(selectedCategory.value)
   return cat ? getLocalizedText(cat.name) : ''
 })
+const categoryDescription = computed(() => {
+  const cat = selectedCategoryData.value
+  if (!cat?.description) return ''
+  return getLocalizedText(cat.description)
+})
+const categorySeo = computed<Record<string, unknown>>(() => {
+  const raw = selectedCategoryData.value?.seo_meta
+  return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
+})
+const siteBase = computed(() => {
+  const configured = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+  if (configured) return configured
+  return typeof window !== 'undefined' ? window.location.origin : ''
+})
 usePageSeo({
   canonicalPath: () => route.path,
   title: () => {
+    const seoTitle = getLocalizedText(categorySeo.value.title)
     if (route.name === 'category-products') {
-      return seoCategoryName.value || t('nav.products')
+      return seoTitle || seoCategoryName.value || t('nav.products')
     }
     return t('nav.products')
+  },
+  description: () => {
+    return getLocalizedText(categorySeo.value.description)
+      || categoryDescription.value
+      || t('products.subtitle')
+  },
+  keywords: () => getLocalizedText(categorySeo.value.keywords),
+  jsonLd: () => {
+    const name = seoCategoryName.value || t('nav.products')
+    const breadcrumbs = [
+      { '@type': 'ListItem', position: 1, name: appStore.config?.brand?.site_name || 'Dujiao-Next', item: siteBase.value + '/' },
+      { '@type': 'ListItem', position: 2, name: t('nav.products'), item: siteBase.value + '/products' },
+    ]
+    if (seoCategoryName.value) {
+      breadcrumbs.push({ '@type': 'ListItem', position: 3, name: seoCategoryName.value, item: siteBase.value + route.path })
+    }
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name,
+          description: categoryDescription.value || t('products.subtitle'),
+          url: siteBase.value + route.path,
+        },
+        { '@type': 'BreadcrumbList', itemListElement: breadcrumbs },
+      ],
+    }
   },
 })
 

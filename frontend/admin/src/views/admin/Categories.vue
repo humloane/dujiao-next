@@ -7,6 +7,7 @@ import type { AdminCategory, LocalizedText } from '@/api/types'
 import IdCell from '@/components/IdCell.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogScrollContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -38,6 +39,12 @@ const form = reactive({
   id: 0,
   parent_id: 0,
   name: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as LocalizedText,
+  description: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as LocalizedText,
+  seo_meta: {
+    title: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as LocalizedText,
+    description: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as LocalizedText,
+    keywords: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as LocalizedText,
+  },
   slug: '',
   icon: '',
   sort_order: 0,
@@ -105,6 +112,12 @@ const openCreateModal = () => {
     id: 0,
     parent_id: 0,
     name: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+    description: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+    seo_meta: {
+      title: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+      description: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+      keywords: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+    },
     slug: '',
     icon: '',
     sort_order: 0,
@@ -118,11 +131,23 @@ const openEditModal = (category: AdminCategory) => {
 
   const defaultName = { 'zh-CN': '', 'zh-TW': '', 'en-US': '' }
   const name = { ...defaultName, ...(category.name || {}) }
+  const description = { ...defaultName, ...(category.description || {}) }
+  const seoMeta = category.seo_meta || {}
+  const localizedSeo = (field: 'title' | 'description' | 'keywords') => {
+    const value = (seoMeta as Record<string, unknown>)[field]
+    return typeof value === 'string' ? { ...defaultName, 'zh-CN': value } : { ...defaultName, ...(value as LocalizedText || {}) }
+  }
 
   Object.assign(form, {
     id: category.id,
     parent_id: category.parent_id || 0,
     name,
+    description,
+    seo_meta: {
+      title: localizedSeo('title'),
+      description: localizedSeo('description'),
+      keywords: localizedSeo('keywords'),
+    },
     slug: category.slug,
     icon: category.icon || '',
     sort_order: category.sort_order,
@@ -307,6 +332,28 @@ watch(
             <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.categories.form.name', { lang: getCurrentLangName() }) }}</label>
             <Input v-model="form.name[currentLang]" :placeholder="t('admin.categories.form.namePlaceholder')" />
             <p v-if="errors.name" class="text-xs text-destructive mt-1">{{ errors.name }}</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.categories.form.description', { lang: getCurrentLangName() }) }}</label>
+            <Textarea v-model="form.description[currentLang]" :placeholder="t('admin.categories.form.descriptionPlaceholder')" class="min-h-[96px]" />
+            <p class="text-xs text-muted-foreground mt-1">{{ t('admin.categories.form.descriptionTip') }}</p>
+          </div>
+
+          <div class="grid gap-3 rounded-xl border border-border bg-muted/20 p-4">
+            <div class="text-sm font-semibold">{{ t('admin.categories.form.seoSection') }}</div>
+            <div>
+              <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.categories.form.seoTitle', { lang: getCurrentLangName() }) }}</label>
+              <Input v-model="form.seo_meta.title[currentLang]" :placeholder="t('admin.categories.form.seoTitlePlaceholder')" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.categories.form.seoDescription', { lang: getCurrentLangName() }) }}</label>
+              <Textarea v-model="form.seo_meta.description[currentLang]" :placeholder="t('admin.categories.form.seoDescriptionPlaceholder')" class="min-h-[72px]" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.categories.form.seoKeywords', { lang: getCurrentLangName() }) }}</label>
+              <Input v-model="form.seo_meta.keywords[currentLang]" :placeholder="t('admin.categories.form.seoKeywordsPlaceholder')" />
+            </div>
           </div>
 
           <div>

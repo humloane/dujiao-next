@@ -46,6 +46,13 @@ func (s *WriteService) Update(id string, input CreateProductInput) (*productdoma
 	product.DescriptionJSON = jsonmap.JSON(input.DescriptionJSON)
 	product.ContentJSON = jsonmap.JSON(input.ContentJSON)
 	product.InstructionsJSON = jsonmap.JSON(input.InstructionsJSON)
+	meta := normalizeMetaInput(productMetaInput{
+		Country:  input.Country,
+		Scenario: input.Scenario,
+		IPType:   input.IPType,
+		LineType: input.LineType,
+	}, *product)
+	applyMetaToProduct(product, meta)
 	// 对接商品的交付表单由上游同步维护，后台编辑不得清空。
 	if !product.IsMapped {
 		product.ManualFormSchemaJSON = jsonmap.JSON{}

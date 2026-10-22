@@ -227,6 +227,37 @@ Or with Docker:
 docker run -d -p 8080:8080 -v $PWD/config.yml:/app/config.yml:ro dujiaonext/dujiao-next:latest
 ```
 
+### Local Docker test stack
+
+For local regression testing, the repository ships a compose stack with the app and Redis:
+
+```bash
+scripts/docker-local.sh up        # generate config.docker.yml, build and start
+scripts/docker-local.sh logs      # follow app logs
+scripts/docker-local.sh rebuild   # rebuild after code changes
+scripts/docker-local.sh down      # stop containers, keep data
+scripts/docker-local.sh reset     # wipe test data and start over
+```
+
+The first run generates `config.docker.yml` with random JWT/encryption secrets and prints
+the bootstrap admin password. Runtime data (SQLite, uploads, logs) lives in `.docker-data/`.
+Both paths are gitignored. The storefront is at `http://localhost:8080`, the admin panel at
+`http://localhost:8080/admin`.
+
+Analytics IDs are compiled into the frontends at build time:
+
+```bash
+VITE_GA4_ID=G-XXXXXXXXXX VITE_CLARITY_ID=xxxxxxxxxx scripts/docker-local.sh rebuild
+```
+
+Backfill structured product metadata (`country` / `scenario` / `ip_type` / `line_type`)
+from existing slugs with the one-off command:
+
+```bash
+go run ./cmd/backfill-product-meta                 # dry-run, prints planned changes
+go run ./cmd/backfill-product-meta -dry-run=false  # apply
+```
+
 ## Quick Start (Develop)
 
 Run the backend and the two frontends separately for hot reload:

@@ -219,6 +219,10 @@ type CreateProductRequest struct {
 	DescriptionJSON     map[string]interface{}   `json:"description"`
 	ContentJSON         map[string]interface{}   `json:"content"`
 	InstructionsJSON    map[string]interface{}   `json:"instructions"`
+	Country             *string                  `json:"country"`
+	Scenario            *[]string                `json:"scenario"`
+	IPType              *string                  `json:"ip_type"`
+	LineType            *string                  `json:"line_type"`
 	ManualFormSchema    map[string]interface{}   `json:"manual_form_schema"`
 	PriceAmount         float64                  `json:"price_amount" binding:"required"`
 	CostPriceAmount     float64                  `json:"cost_price_amount"`
@@ -292,6 +296,10 @@ func (h *AdminProductHandler) CreateProduct(c *gin.Context) {
 		DescriptionJSON:      req.DescriptionJSON,
 		ContentJSON:          req.ContentJSON,
 		InstructionsJSON:     req.InstructionsJSON,
+		Country:              req.Country,
+		Scenario:             req.Scenario,
+		IPType:               req.IPType,
+		LineType:             req.LineType,
 		ManualFormSchemaJSON: req.ManualFormSchema,
 		PriceAmount:          decimal.NewFromFloat(req.PriceAmount),
 		CostPriceAmount:      decimal.NewFromFloat(req.CostPriceAmount),
@@ -384,6 +392,10 @@ func (h *AdminProductHandler) UpdateProduct(c *gin.Context) {
 		DescriptionJSON:      req.DescriptionJSON,
 		ContentJSON:          req.ContentJSON,
 		InstructionsJSON:     req.InstructionsJSON,
+		Country:              req.Country,
+		Scenario:             req.Scenario,
+		IPType:               req.IPType,
+		LineType:             req.LineType,
 		ManualFormSchemaJSON: req.ManualFormSchema,
 		PriceAmount:          decimal.NewFromFloat(req.PriceAmount),
 		CostPriceAmount:      decimal.NewFromFloat(req.CostPriceAmount),

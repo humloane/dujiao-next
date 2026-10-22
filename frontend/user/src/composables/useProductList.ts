@@ -1,8 +1,13 @@
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { productAPI, categoryAPI } from '../api'
 import { buildCategoryGroups, createCategoryMap, normalizeCategoryParentId, type PublicCategory } from '../utils/category'
 import { debounceAsync } from '../utils/debounce'
+import {
+  emptyProductMetaFilter,
+  hasProductMetaFilter,
+  type ProductMetaFilter,
+} from '../constants/productMeta'
 
 export interface UseProductListOptions {
   pageSize?: number
@@ -30,9 +35,15 @@ export function useProductList(options: UseProductListOptions = {}) {
   const totalPages = ref(0)
   const showFilterDrawer = ref(false)
   const expandedParentIds = ref<number[]>([])
+  const metaFilter = reactive<ProductMetaFilter>(emptyProductMetaFilter())
 
   const categoryGroups = computed(() => buildCategoryGroups(categories.value))
   const categoryMap = computed(() => createCategoryMap(categories.value))
+  const selectedCategoryData = computed(() => {
+    if (!selectedCategory.value) return undefined
+    return categoryMap.value.get(selectedCategory.value)
+  })
+  const hasMetaFilters = computed(() => hasProductMetaFilter(metaFilter))
 
   let initializing = true
 
@@ -98,6 +109,11 @@ export function useProductList(options: UseProductListOptions = {}) {
       if (keyword) {
         params.search = keyword
       }
+      if (metaFilter.country) params.country = metaFilter.country
+      if (metaFilter.scenario) params.scenario = metaFilter.scenario
+      if (metaFilter.ipType) params.ip_type = metaFilter.ipType
+      if (metaFilter.lineType) params.line = metaFilter.lineType
+      if (metaFilter.sort && metaFilter.sort !== 'recommended') params.sort = metaFilter.sort
       const response = await productAPI.list(params)
       products.value = response.data.data || []
       if (response.data.pagination) {
@@ -135,6 +151,59 @@ export function useProductList(options: UseProductListOptions = {}) {
     debouncedLoadProducts()
   }
 
+  const setMetaFilter = (value: ProductMetaFilter) => {
+    Object.assign(metaFilter, value)
+    currentPage.value = 1
+    debouncedLoadProducts()
+    if (!initializing) {
+      syncMetaFilterToRoute()
+    }
+  }
+
+  const clearMetaFilters = () => {
+    if (!hasMetaFilters.value) return
+    Object.assign(metaFilter, emptyProductMetaFilter())
+    currentPage.value = 1
+    debouncedLoadProducts()
+    if (!initializing) {
+      syncMetaFilterToRoute()
+    }
+  }
+
+  const syncMetaFilterToRoute = () => {
+    const query = { ...route.query }
+    const mapping: Array<[keyof ProductMetaFilter, string]> = [
+      ['country', 'country'],
+      ['scenario', 'scenario'],
+      ['ipType', 'ip_type'],
+      ['lineType', 'line'],
+      ['sort', 'sort'],
+    ]
+    mapping.forEach(([key, queryKey]) => {
+      const value = String(metaFilter[key] || '').trim()
+      if (!value || (key === 'sort' && value === 'recommended')) {
+        delete query[queryKey]
+      } else {
+        query[queryKey] = value
+      }
+    })
+    router.replace({ query })
+  }
+
+  const applyInitialMetaFilter = () => {
+    const read = (key: string) => {
+      const value = route.query[key]
+      return typeof value === 'string' ? value.trim() : ''
+    }
+    Object.assign(metaFilter, {
+      country: read('country').toUpperCase(),
+      scenario: read('scenario'),
+      ipType: read('ip_type'),
+      lineType: read('line'),
+      sort: read('sort') || 'recommended',
+    })
+  }
+
   const onSearch = () => {
     currentPage.value = 1
     debouncedLoadProducts()
@@ -170,10 +239,10 @@ export function useProductList(options: UseProductListOptions = {}) {
     if (selectedCategory.value) {
       const matched = categories.value.find((category) => category.id === selectedCategory.value)
       if (matched?.slug && route.params.slug !== matched.slug) {
-        router.replace({ name: categoryRouteName, params: { slug: matched.slug } })
+        router.replace({ name: categoryRouteName, params: { slug: matched.slug }, query: route.query })
       }
     } else if (route.name === categoryRouteName) {
-      router.replace({ name: homeRouteName })
+      router.replace({ name: homeRouteName, query: route.query })
     }
   })
 
@@ -193,6 +262,7 @@ export function useProductList(options: UseProductListOptions = {}) {
   )
 
   const initialize = async () => {
+    applyInitialMetaFilter()
     await loadCategories()
     if (syncSelectedCategoryFromRoute()) {
       syncExpandedCategoryState()
@@ -218,6 +288,11 @@ export function useProductList(options: UseProductListOptions = {}) {
     expandedParentIds,
     categoryGroups,
     categoryMap,
+    selectedCategoryData,
+    metaFilter,
+    hasMetaFilters,
+    setMetaFilter,
+    clearMetaFilters,
     isParentExpanded,
     toggleParentCategory,
     getParentToggleButtonClass,

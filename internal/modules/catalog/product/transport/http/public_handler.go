@@ -30,6 +30,7 @@ const publicRelatedPostsLimit = 6
 // PublicProductQueries 是公开商品列表/详情所需的最小用例接口。
 type PublicProductQueries interface {
 	ListPublicForTenant(tenant reseller.TenantContext, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error)
+	ListPublicForTenantFiltered(tenant reseller.TenantContext, filter productcontract.PublicFilter, categoryID, search string, page, pageSize int) ([]productdomain.Product, int64, error)
 	GetPublicBySlugForTenant(tenant reseller.TenantContext, slug string) (*productdomain.Product, error)
 	ApplyAutoStockCounts(products []productdomain.Product) error
 }
@@ -111,8 +112,19 @@ func (h *PublicHandler) GetProducts(c *gin.Context) {
 	categoryID := c.Query("category_id")
 	search := strings.TrimSpace(c.Query("search"))
 	tenant := tenantFromRequest(c)
+	lineType := c.Query("line")
+	if strings.TrimSpace(lineType) == "" {
+		lineType = c.Query("line_type")
+	}
+	filter := productcontract.PublicFilter{
+		Country:  c.Query("country"),
+		Scenario: c.Query("scenario"),
+		IPType:   c.Query("ip_type"),
+		LineType: lineType,
+		Sort:     c.Query("sort"),
+	}
 
-	products, total, err := h.products.ListPublicForTenant(tenant, categoryID, search, page, pageSize)
+	products, total, err := h.products.ListPublicForTenantFiltered(tenant, filter, categoryID, search, page, pageSize)
 	if err != nil {
 		ginutil.RespondError(c, response.CodeInternal, "error.product_fetch_failed", err)
 		return

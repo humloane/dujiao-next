@@ -95,6 +95,13 @@ func (s *WriteService) Create(input CreateProductInput) (*productdomain.Product,
 	if err != nil {
 		return nil, err
 	}
+	metaInput := productMetaInput{
+		Country:  input.Country,
+		Scenario: input.Scenario,
+		IPType:   input.IPType,
+		LineType: input.LineType,
+	}
+	meta := normalizeMetaInput(metaInput, productdomain.Product{})
 
 	product := productdomain.Product{
 		CategoryID:           input.CategoryID,
@@ -110,6 +117,10 @@ func (s *WriteService) Create(input CreateProductInput) (*productdomain.Product,
 		WholesalePrices:      productdomain.WholesalePriceTiers{},
 		Images:               jsonslice.Strings(input.Images),
 		Tags:                 jsonslice.Strings(input.Tags),
+		Country:              meta.Country,
+		Scenario:             meta.Scenario,
+		IPType:               meta.IPType,
+		LineType:             meta.LineType,
 		PurchaseType:         purchaseType,
 		MinPurchaseQuantity:  minPurchaseQuantity,
 		MaxPurchaseQuantity:  maxPurchaseQuantity,

@@ -243,6 +243,7 @@ func SetupRouter(cfg *config.Config, c *container.Container) *gin.Engine {
 	// middleware.RequestIDMiddleware 必须前置于 middleware.RecoveryMiddleware：panic 日志与响应都依赖 request_id。
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.RecoveryMiddleware())
+	r.Use(middleware.GzipMiddleware())
 	r.Use(middleware.LoggerMiddleware(log))
 	r.Use(middleware.CORSMiddleware(cfg.CORS))
 	r.Use(middleware.CallbackRouteMiddleware(c.SettingService, paymentCallbackHandler, paymentWebhookHandler, upstreamHandler))
@@ -284,6 +285,9 @@ func SetupRouter(cfg *config.Config, c *container.Container) *gin.Engine {
 		if err := web.RegisterAdmin(r, cfg.Web.AdminPath, web.AdminFS()); err != nil {
 			log.Sugar().Fatalf("注册 admin SPA 失败: %v", err)
 		}
+		// 单二进制 embed 无法在构建期预渲染数据库内容，改为在返回 user index.html
+		// 时按路径注入 title/description/OG/hreflang/JSON-LD，爬虫无需执行 JS。
+		web.SetMetaProvider(newSEOMetaResolver(c))
 		if err := web.RegisterUser(r, web.UserFS()); err != nil {
 			log.Sugar().Fatalf("注册 user SPA 失败: %v", err)
 		}

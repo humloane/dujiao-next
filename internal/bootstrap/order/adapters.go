@@ -331,6 +331,7 @@ func (a orderCreateAdapter) CreateOrder(input ordertransport.CreateOrderInput) (
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
 		AffiliateVisitorKey: input.AffiliateVisitorKey,
+		UTM:                 input.UTM,
 		ClientIP:            input.ClientIP,
 		ManualFormData:      input.ManualFormData,
 	})
@@ -347,6 +348,7 @@ func (a orderCreateAdapter) CreateGuestOrder(input ordertransport.CreateGuestOrd
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
 		AffiliateVisitorKey: input.AffiliateVisitorKey,
+		UTM:                 input.UTM,
 		ClientIP:            input.ClientIP,
 		ManualFormData:      input.ManualFormData,
 	})
@@ -403,6 +405,7 @@ func (a orderPreviewAdapter) PreviewOrder(input ordertransport.CreateOrderInput)
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
 		AffiliateVisitorKey: input.AffiliateVisitorKey,
+		UTM:                 input.UTM,
 		ClientIP:            input.ClientIP,
 		ManualFormData:      input.ManualFormData,
 	})
@@ -422,6 +425,7 @@ func (a orderPreviewAdapter) PreviewGuestOrder(input ordertransport.CreateGuestO
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
 		AffiliateVisitorKey: input.AffiliateVisitorKey,
+		UTM:                 input.UTM,
 		ClientIP:            input.ClientIP,
 		ManualFormData:      input.ManualFormData,
 	})

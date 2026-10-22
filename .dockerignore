@@ -9,6 +9,8 @@ db/
 uploads/
 logs/
 config.yml
+config.docker.yml
+.docker-data/
 *.db
 *.log
 

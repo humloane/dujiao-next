@@ -19,6 +19,10 @@ frontend/*/*.local
 # Fullstack 嵌入产物：由前端构建拷贝而来，不进 git 历史
 internal/web/dist/
 
+# 本地 Docker 测试环境（配置含随机密钥，数据目录含数据库/上传/日志）
+config.docker.yml
+.docker-data/
+
 # Agents 配置
 .agents/
 skills-lock.json

@@ -62,6 +62,7 @@ type CreateOrderAndPayRequest struct {
 	CouponCode          string                  `json:"coupon_code"`
 	AffiliateCode       string                  `json:"affiliate_code"`
 	AffiliateVisitorKey string                  `json:"affiliate_visitor_key"`
+	UTM                 map[string]string       `json:"utm"`
 	ManualFormData      map[string]jsonmap.JSON `json:"manual_form_data"`
 	ChannelID           uint                    `json:"channel_id"`
 	UseBalance          bool                    `json:"use_balance"`
@@ -75,6 +76,7 @@ type CreateGuestOrderAndPayRequest struct {
 	CouponCode          string                            `json:"coupon_code"`
 	AffiliateCode       string                            `json:"affiliate_code"`
 	AffiliateVisitorKey string                            `json:"affiliate_visitor_key"`
+	UTM                 map[string]string                 `json:"utm"`
 	ManualFormData      map[string]jsonmap.JSON           `json:"manual_form_data"`
 	CaptchaPayload      captchahttp.CaptchaPayloadRequest `json:"captcha_payload"`
 	ChannelID           uint                              `json:"channel_id"`
@@ -115,6 +117,7 @@ func (h *CreateHandler) CreateOrder(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})
@@ -148,6 +151,7 @@ func (h *CreateHandler) CreateGuestOrder(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})
@@ -180,6 +184,7 @@ func (h *CreateHandler) CreateOrderAndPay(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})
@@ -222,6 +227,7 @@ func (h *CreateHandler) CreateGuestOrderAndPay(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})

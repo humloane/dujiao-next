@@ -7,9 +7,14 @@ import router, { warmupCommonRoutes } from './router'
 import i18n, { detectLocale, setI18nLocale, warmupLocaleMessages } from './i18n'
 import { useTelegramMiniAppStore } from './stores/telegramMiniApp'
 import { initTemplateOverride } from './templates/registry'
+import { initAnalytics, initTelegramClickTracking } from './utils/analytics'
+import { captureUTM } from './utils/utm'
 
 // 预览用：?template=vault 持久化激活模板（站长正式切换走站点配置）
 initTemplateOverride()
+captureUTM()
+initAnalytics()
+initTelegramClickTracking()
 
 const brandLog = (globalThis as any).console?.log?.bind(console)
 brandLog?.(

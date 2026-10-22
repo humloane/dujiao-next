@@ -2,6 +2,7 @@ package catalogproductbootstrap
 
 import (
 	productapplication "github.com/dujiao-next/internal/modules/catalog/product/application"
+	productcontract "github.com/dujiao-next/internal/modules/catalog/product/contract"
 	productdomain "github.com/dujiao-next/internal/modules/catalog/product/domain"
 	producthttp "github.com/dujiao-next/internal/modules/catalog/product/transport/http"
 	promotionapp "github.com/dujiao-next/internal/modules/promotion/application"
@@ -33,6 +34,15 @@ func (adapter publicProductAdapter) ListPublicForTenant(
 	page, pageSize int,
 ) ([]productdomain.Product, int64, error) {
 	return adapter.products.ListPublicForTenant(tenant, adapter.hidden, categoryID, search, page, pageSize)
+}
+
+func (adapter publicProductAdapter) ListPublicForTenantFiltered(
+	tenant reseller.TenantContext,
+	filter productcontract.PublicFilter,
+	categoryID, search string,
+	page, pageSize int,
+) ([]productdomain.Product, int64, error) {
+	return adapter.products.ListPublicForTenantFiltered(tenant, adapter.hidden, filter, categoryID, search, page, pageSize)
 }
 
 func (adapter publicProductAdapter) GetPublicBySlugForTenant(

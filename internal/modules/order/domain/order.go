@@ -4,6 +4,7 @@ import (
 	"time"
 
 	fulfillmentdomain "github.com/dujiao-next/internal/modules/fulfillment/domain"
+	"github.com/dujiao-next/internal/shared/jsonmap"
 	"github.com/dujiao-next/internal/shared/money"
 )
 
@@ -32,6 +33,7 @@ type Order struct {
 	PromotionID             *uint        `gorm:"index" json:"promotion_id,omitempty"`                                              // 活动价ID（单品订单）
 	AffiliateProfileID      *uint        `gorm:"index" json:"affiliate_profile_id,omitempty"`                                      // 推广返利关联用户ID快照
 	AffiliateCode           string       `gorm:"type:varchar(32);index" json:"affiliate_code,omitempty"`                           // 推广返利联盟ID快照
+	UTMJSON                 jsonmap.JSON `gorm:"type:json" json:"utm,omitempty"`                                                   // 广告归因快照（utm_source/medium/campaign/content/term）
 	ResellerID              *uint        `gorm:"index" json:"reseller_id,omitempty"`                                               // 分销商ID，主站订单为 NULL
 	ResellerDomain          string       `gorm:"type:varchar(255);index" json:"reseller_domain,omitempty"`                         // 下单分销域名快照
 	ResellerProfitAmount    money.Amount `gorm:"type:decimal(20,2);not null;default:0" json:"reseller_profit_amount"`              // 分销差价快照

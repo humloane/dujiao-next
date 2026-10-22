@@ -1,0 +1,56 @@
+# 本地测试用 Docker Compose：
+#   scripts/docker-local.sh up           # 推荐：自动生成配置、构建、等待健康检查
+# 或手动执行：
+#   scripts/docker-local.sh init         # 首次必须先执行，生成 config.docker.yml
+#   docker compose up -d --build
+#
+# 生产部署仍建议使用官方单二进制 / systemd 安装器；这里只是把同一份
+# Dockerfile（fullstack 单镜像）跑起来，方便在本地验证修改。
+
+name: dujiao-next-local
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - ./.docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 仅用于界面/升级信息展示，本地构建不是正式 release 产物
+        APP_VERSION: "v1.5.0-local"
+        # 可选：在宿主机设置 VITE_GA4_ID / VITE_CLARITY_ID 后重建即可启用统计
+        VITE_GA4_ID: "${VITE_GA4_ID:-}"
+        VITE_CLARITY_ID: "${VITE_CLARITY_ID:-}"
+    image: dujiao-next:local
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "${DJ_HTTP_PORT:-8080}:8080"
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      # 配置只读挂载，改完配置后 docker compose restart app 即可生效
+      - ./config.docker.yml:/app/config.yml:ro
+      # 运行数据落在仓库根目录的 .docker-data/（已 gitignore），便于备份/检查
+      - ./.docker-data/db:/app/db
+      - ./.docker-data/uploads:/app/uploads
+      - ./.docker-data/logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped

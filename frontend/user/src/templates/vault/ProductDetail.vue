@@ -44,6 +44,7 @@
         <div>
           <span v-if="categoryName" class="block truncate text-[13px] font-semibold text-muted-foreground">{{ categoryName }}</span>
           <h1 class="my-2 mb-3 text-[32px] font-extrabold">{{ getLocalizedText(product.title) }}</h1>
+          <ProductMetaInfo :product="product" />
 
           <div class="mb-1.5 flex flex-wrap gap-2">
             <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold" :class="stockPillTone">{{ getStockStatusLabel(product) }}</span>
@@ -256,6 +257,7 @@ import { Button } from '@/components/ui/button'
 import { processHtmlForDisplay } from '../../utils/content'
 import { useProductDetail } from '../../composables/useProductDetail'
 import VaultProductMobileBar from './components/VaultProductMobileBar.vue'
+import ProductMetaInfo from '../../components/ProductMetaInfo.vue'
 
 const { t } = useI18n()
 

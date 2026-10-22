@@ -147,3 +147,26 @@ func TestPruneWholesalePricesForSKUs(t *testing.T) {
 		t.Fatalf("unexpected kept tiers: %+v", got)
 	}
 }
+
+func TestNormalizeProductMeta(t *testing.T) {
+	meta := NormalizeProductMeta(" us ", []string{"Live", "store_group", "live", "unknown"}, "data", "IEPL")
+	if meta.Country != "US" {
+		t.Fatalf("country = %q, want US", meta.Country)
+	}
+	if len(meta.Scenario) != 2 || meta.Scenario[0] != ScenarioLive || meta.Scenario[1] != ScenarioStoreGroup {
+		t.Fatalf("scenario = %v, want [live store-group]", meta.Scenario)
+	}
+	if meta.IPType != IPTypeDatacenter {
+		t.Fatalf("ip_type = %q, want %s", meta.IPType, IPTypeDatacenter)
+	}
+	if meta.LineType != LineTypeIEPL {
+		t.Fatalf("line_type = %q, want %s", meta.LineType, LineTypeIEPL)
+	}
+}
+
+func TestNormalizeProductMetaDropsInvalidValues(t *testing.T) {
+	meta := NormalizeProductMeta("../../etc", []string{"<script>"}, "unknown", "unknown")
+	if meta.Country != "" || len(meta.Scenario) != 0 || meta.IPType != "" || meta.LineType != "" {
+		t.Fatalf("invalid values should be dropped, got %#v", meta)
+	}
+}

@@ -320,6 +320,36 @@ usePageSeo({
     if (route.name === 'products') return t('nav.products')
     return undefined
   },
+  jsonLd: () => {
+    const base = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+      || (typeof window !== 'undefined' ? window.location.origin : '')
+    const siteName = String(appStore.config?.brand?.site_name || 'Dujiao-Next')
+    const org: Record<string, unknown> = {
+      '@type': 'Organization',
+      name: siteName,
+      url: base,
+    }
+    const logo = String(appStore.config?.brand?.site_logo || appStore.config?.brand?.site_icon || '').trim()
+    if (logo) org.logo = logo.startsWith('http') ? logo : base + (logo.startsWith('/') ? logo : '/' + logo)
+    const telegram = String(appStore.config?.contact?.telegram || '').trim()
+    if (telegram) org.sameAs = [telegram]
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        org,
+        {
+          '@type': 'WebSite',
+          name: siteName,
+          url: base,
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: { '@type': 'EntryPoint', urlTemplate: `${base}/products?search={search_term_string}` },
+            'query-input': 'required name=search_term_string',
+          },
+        },
+      ],
+    }
+  },
 })
 
 onMounted(async () => {

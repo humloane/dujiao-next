@@ -76,6 +76,27 @@ func (r *ProductStore) List(filter productcontract.ListFilter) ([]productdomain.
 	if fulfillmentType := strings.TrimSpace(filter.FulfillmentType); fulfillmentType != "" {
 		query = query.Where("fulfillment_type = ?", fulfillmentType)
 	}
+	if country := strings.TrimSpace(filter.Country); country != "" {
+		query = query.Where("products.country = ?", country)
+	}
+	if ipType := strings.TrimSpace(filter.IPType); ipType != "" {
+		query = query.Where("products.ip_type = ?", ipType)
+	}
+	if lineType := strings.TrimSpace(filter.LineType); lineType != "" {
+		query = query.Where("products.line_type = ?", lineType)
+	}
+	if scenario := strings.TrimSpace(filter.Scenario); scenario != "" {
+		// scenario 是 JSON 数组（SQLite TEXT / PostgreSQL jsonb）。
+		// 用带引号的 LIKE 做 token 匹配，避免 live 命中 live-stream；
+		// PostgreSQL 的 jsonb 需要先转 text 才能 LIKE。
+		pattern := "%\"" + scenario + "\"%"
+		if r.db.Dialector.Name() == "postgres" {
+			query = query.Where("products.scenario::text LIKE ?", pattern)
+		} else {
+			// SQLite 的 JSON 列可能以 BLOB 存储，先 CAST 成 TEXT 再做 LIKE。
+			query = query.Where("CAST(products.scenario AS TEXT) LIKE ?", pattern)
+		}
+	}
 	if search := strings.TrimSpace(filter.Search); search != "" {
 		like := "%" + search + "%"
 		condition, argCount := gormutil.BuildLocalizedLikeCondition(r.db, []string{"slug"}, []string{"title_json", "description_json"})
@@ -120,12 +141,27 @@ func (r *ProductStore) List(filter productcontract.ListFilter) ([]productdomain.
 	}
 
 	query = gormutil.ApplyPagination(query, filter.Page, filter.PageSize)
+	query = query.Order(productListOrder(filter.Sort))
 
-	if err := query.Order("sort_order DESC, created_at DESC").Find(&products).Error; err != nil {
+	if err := query.Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
 
 	return products, total, nil
+}
+
+// productListOrder 把公开列表排序参数映射为固定 SQL，禁止直接拼接用户输入。
+func productListOrder(sort string) string {
+	switch sort {
+	case "price_asc":
+		return "products.price_amount ASC, products.sort_order DESC, products.id DESC"
+	case "price_desc":
+		return "products.price_amount DESC, products.sort_order DESC, products.id DESC"
+	case "newest":
+		return "products.created_at DESC, products.id DESC"
+	default:
+		return "products.sort_order DESC, products.created_at DESC, products.id DESC"
+	}
 }
 
 func applyStockStatusFilter(query *gorm.DB, status string, lowStockThreshold int) *gorm.DB {

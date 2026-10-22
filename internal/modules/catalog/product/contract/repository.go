@@ -19,12 +19,27 @@ type ListFilter struct {
 	Search             string
 	FulfillmentType    string
 	StockStatus        string
+	Country            string
+	Scenario           string
+	IPType             string
+	LineType           string
+	Sort               string
 	HasWholesalePrices *bool
 	LowStockThreshold  int
 	OnlyActive         bool
 	IsActive           *bool
 	WithCategory       bool
 	UpdatedAfter       *time.Time
+}
+
+// PublicFilter 是公开商品列表的结构化筛选条件。
+// 字段为空表示不筛选；调用方负责把用户输入规范化为领域取值。
+type PublicFilter struct {
+	Country  string
+	Scenario string
+	IPType   string
+	LineType string
+	Sort     string
 }
 
 // Repository 定义商品领域需要的持久化能力；事务适配保留在 GORM Store。

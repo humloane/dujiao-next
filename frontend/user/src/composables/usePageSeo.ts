@@ -14,11 +14,36 @@ export interface PageSeoOptions {
   canonicalPath?: () => string | undefined | null
   /** og:type，默认 website */
   type?: () => string | undefined | null
+  /** 页面关键词；缺省时回落到站点 SEO 关键词 */
+  keywords?: () => string | undefined | null
+  /** hreflang 映射；缺省时按 canonical + ?lang= 自动生成 */
+  alternates?: () => Record<string, string> | undefined | null
+  /** 结构化数据（Product / Article / FAQPage / CollectionPage 等） */
+  jsonLd?: () => Record<string, unknown> | Record<string, unknown>[] | undefined | null
   /** 标识页面不该被索引（私密页/动态查询页） */
   noindex?: () => boolean
 }
 
 const trimSlashEnd = (s: string) => s.replace(/\/+$/, '')
+
+/**
+ * 服务端已经把 JSON-LD 写进首屏 HTML（带 data-seo-jsonld="server"）。
+ * - 当前路径已有服务端数据：不再重复插入。
+ * - 服务端数据属于别的路径（SPA 跳转）：移除过期节点，让前端补一份。
+ */
+const resolveServerJSONLD = (path: string): boolean => {
+  if (typeof document === 'undefined') return false
+  const nodes = Array.from(document.querySelectorAll<HTMLScriptElement>('script[data-seo-jsonld="server"]'))
+  const matching = nodes.filter((node) => node.dataset.path === path)
+  if (matching.length > 0) {
+    nodes.forEach((node) => {
+      if (node.dataset.path !== path) node.remove()
+    })
+    return true
+  }
+  nodes.forEach((node) => node.remove())
+  return false
+}
 
 const resolveImage = (raw: string, baseUrl: string): string => {
   const trimmed = raw.trim()
@@ -58,7 +83,9 @@ export function usePageSeo(options: PageSeoOptions = {}) {
 
   const defaultImage = computed(() => {
     const seo = appStore.config?.seo as { default_og_image?: string } | undefined
-    return seo?.default_og_image ? String(seo.default_og_image).trim() : ''
+    const configured = seo?.default_og_image ? String(seo.default_og_image).trim() : ''
+    // 站点没配分享图时用内置 1200x630，保证 og:image / twitter:image 非空。
+    return configured || '/og-default.png'
   })
 
   const pageTitle = computed(() => {
@@ -89,6 +116,28 @@ export function usePageSeo(options: PageSeoOptions = {}) {
     return baseUrl.value + path
   })
 
+  const fullKeywords = computed(() => {
+    const pageKeywords = options.keywords?.()
+    if (pageKeywords && String(pageKeywords).trim()) return String(pageKeywords).trim()
+    const lang = appStore.locale
+    const siteKeywords = (appStore.config?.seo as { keywords?: Record<string, string> } | undefined)?.keywords?.[lang]
+    return siteKeywords ? String(siteKeywords).trim() : ''
+  })
+
+  const fullAlternates = computed<Record<string, string>>(() => {
+    const explicit = options.alternates?.()
+    if (explicit && Object.keys(explicit).length > 0) return explicit
+    if (options.noindex?.() || !fullCanonical.value) return {}
+    const base = fullCanonical.value.split('?')[0] || ''
+    const result: Record<string, string> = {
+      'zh-CN': `${base}?lang=zh-CN`,
+      'zh-TW': `${base}?lang=zh-TW`,
+      'en-US': `${base}?lang=en-US`,
+      'x-default': base,
+    }
+    return result
+  })
+
   const fullImage = computed(() => {
     const raw = options.image?.()
     if (raw && String(raw).trim()) {
@@ -103,8 +152,15 @@ export function usePageSeo(options: PageSeoOptions = {}) {
   useHead({
     title: () => fullTitle.value,
     link: () => {
-      if (!fullCanonical.value) return []
-      return [{ key: 'canonical', rel: 'canonical', href: fullCanonical.value }]
+      const links: Array<{ key?: string; rel: string; href: string; hreflang?: string }> = []
+      if (fullCanonical.value) {
+        links.push({ key: 'canonical', rel: 'canonical', href: fullCanonical.value })
+      }
+      Object.entries(fullAlternates.value).forEach(([lang, href]) => {
+        if (!href) return
+        links.push({ key: `alternate-${lang}`, rel: 'alternate', hreflang: lang, href })
+      })
+      return links
     },
     meta: () => {
       const tags: Array<{ name?: string; property?: string; content: string }> = []
@@ -115,6 +171,9 @@ export function usePageSeo(options: PageSeoOptions = {}) {
 
       if (fullDescription.value) {
         tags.push({ name: 'description', content: fullDescription.value })
+      }
+      if (fullKeywords.value) {
+        tags.push({ name: 'keywords', content: fullKeywords.value })
       }
 
       const ogType = (options.type?.() && String(options.type()).trim()) || 'website'
@@ -131,6 +190,20 @@ export function usePageSeo(options: PageSeoOptions = {}) {
       if (fullImage.value) tags.push({ name: 'twitter:image', content: fullImage.value })
 
       return tags
+    },
+    script: () => {
+      // 服务端首屏已注入同一路径的 JSON-LD 时跳过，避免同一页面出现两份结构化数据。
+      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname)) {
+        return []
+      }
+      const jsonLd = options.jsonLd?.()
+      if (!jsonLd) return []
+      const items = Array.isArray(jsonLd) ? jsonLd : [jsonLd]
+      return items.filter(Boolean).map((item) => ({
+        key: `jsonld-${JSON.stringify(item).length}-${JSON.stringify(item).slice(0, 32)}`,
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(item),
+      }))
     },
   })
 }

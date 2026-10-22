@@ -21,6 +21,10 @@ type Product struct {
 	Title                jsonmap.JSON      `json:"title"`
 	Description          jsonmap.JSON      `json:"description"`
 	Content              jsonmap.JSON      `json:"content"`
+	Country              string            `json:"country,omitempty"`
+	Scenario             []string          `json:"scenario"`
+	IPType               string            `json:"ip_type,omitempty"`
+	LineType             string            `json:"line_type,omitempty"`
 	PriceAmount          money.Amount      `json:"price_amount"`
 	WholesalePrices      []WholesalePrice  `json:"wholesale_prices,omitempty"`
 	Images               jsonslice.Strings `json:"images"`

@@ -75,6 +75,8 @@
                   {{ getLocalizedText(product.title) }}
                 </h1>
 
+                <ProductMetaInfo :product="product" />
+
                 <div class="mb-6 flex flex-wrap items-center gap-2">
                   <Badge :variant="product.purchase_type === 'guest' ? 'warning' : 'success'">
                     <UserPlus v-if="product.purchase_type === 'guest'" class="h-3 w-3" />
@@ -418,6 +420,7 @@ import { getImageUrl } from '../utils/image'
 import { processHtmlForDisplay } from '../utils/content'
 import { useProductDetail } from '../composables/useProductDetail'
 import ProductImageGallery from '../components/product/ProductImageGallery.vue'
+import ProductMetaInfo from '../components/ProductMetaInfo.vue'
 import ProductMobileBar from '../components/product/ProductMobileBar.vue'
 import BreadcrumbNav from '../components/BreadcrumbNav.vue'
 import EmptyState from '../components/EmptyState.vue'

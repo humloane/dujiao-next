@@ -1,0 +1,1553 @@
+{
+  "en-US": {
+    "nav": {
+      "home": "Back to home",
+      "products": "View all products",
+      "consult": "Telegram support"
+    },
+    "cta": {
+      "consult": "Telegram support",
+      "viewProducts": "View products \u0026 pricing",
+      "quote": "Get a quote",
+      "finalFallback": "Test first, then choose a long-term plan."
+    },
+    "sections": {
+      "pains": "What you may be facing",
+      "solutions": "How we solve it",
+      "process": "Getting started",
+      "specs": "Specs \u0026 delivery",
+      "compare": "Compare options",
+      "scenarios": "Use cases",
+      "pricing": "Pricing",
+      "cases": "Typical setups",
+      "faq": "FAQ",
+      "final": "Next step",
+      "trust": "Delivery standards"
+    },
+    "labels": {
+      "example": "Example",
+      "caseDisclaimer": "Illustrative setups only. They describe delivery, not real customer testimonials.",
+      "specRegion": "Regions",
+      "specType": "Line type",
+      "specProtocol": "Protocol",
+      "specDevices": "Devices",
+      "specDelivery": "Delivery",
+      "specBilling": "Billing",
+      "specSupport": "Support",
+      "compareFit": "Best for",
+      "included": "Includes",
+      "note": "Final configuration and pricing are confirmed on the order page or with support.",
+      "trustPayment": "Payment methods follow checkout",
+      "trustTelegram": "Direct Telegram support",
+      "priceNote": "Unconfirmed prices are quoted on request",
+      "stickyHint": "Need a region or a comparison? Ask support."
+    },
+    "process": [
+      "Tell us the region, platform and volume; we confirm stock.",
+      "Get a test line and run a real workload.",
+      "Place the order and receive the manual configuration.",
+      "Renewal reminders arrive before expiry; plans can be adjusted."
+    ],
+    "compare": {
+      "intro": "Three common setups. Pick by stage, not by the most expensive option.",
+      "items": [
+        {
+          "name": "Shared residential IP",
+          "detail": "Several users share one egress. Cheap and instant, but bandwidth and reputation vary.",
+          "fit": "Light testing, non-real-time work"
+        },
+        {
+          "name": "Dedicated static residential IP",
+          "detail": "Fixed egress with a verifiable ASN. Higher unit price; popular regions may wait for stock.",
+          "fit": "Live streaming, store admin, long sessions"
+        },
+        {
+          "name": "IEPL line",
+          "detail": "Fixed path with predictable peak-hour latency and loss. Priced by bandwidth, so plan your peak first.",
+          "fit": "Live uplink, real-time support, critical work"
+        }
+      ]
+    },
+    "pricing": {
+      "intro": "Pricing follows region and stock. Below is the plan structure; support confirms the actual quote.",
+      "contactQuote": "Quote on request",
+      "tiers": [
+        {
+          "name": "Trial",
+          "cycle": "per test",
+          "features": [
+            "One test line",
+            "30-minute real workload",
+            "ASN and region shared before delivery"
+          ]
+        },
+        {
+          "name": "Monthly",
+          "cycle": "per month",
+          "features": [
+            "Dedicated egress, renewed monthly",
+            "Manual delivery during business hours",
+            "Replacement if the line fails"
+          ]
+        },
+        {
+          "name": "Enterprise / annual",
+          "cycle": "per year",
+          "features": [
+            "Store and region planning",
+            "Contracts, invoices and reconciliation",
+            "Named contact and response target"
+          ]
+        }
+      ]
+    },
+    "cases": {
+      "intro": "Typical setups",
+      "disclaimer": "Illustrative setups only. They describe delivery, not real customer testimonials.",
+      "items": [
+        {
+          "title": "Cross-border live team",
+          "quote": "Once the egress and line were fixed, peak-hour drops dropped sharply and we stopped retuning bitrate daily.",
+          "meta": "6 regions · dedicated residential + IEPL"
+        },
+        {
+          "title": "Multi-store operations",
+          "quote": "One line per store. Handovers follow the configuration sheet, so new staff do not re-learn the network.",
+          "meta": "12 dedicated lines · monthly"
+        },
+        {
+          "title": "Enterprise procurement",
+          "quote": "One inventory and one renewal calendar beats everyone buying separately, and finance can reconcile it.",
+          "meta": "30 lines · annual contract"
+        }
+      ]
+    },
+    "pages": {
+      "us-residential-ip": {
+        "eyebrow": "US · Static residential · Dedicated egress",
+        "title": "US static residential IPs with a fixed network identity",
+        "subtitle": "Real carrier residential ranges with a dedicated egress, not shared with other users. City availability depends on stock, delivery is manual during business hours, and you test before you buy.",
+        "keywords": "US static residential IP,dedicated US IP,residential egress,live streaming network",
+        "trust": [
+          "Real residential ASN",
+          "Dedicated egress",
+          "Six regions",
+          "Chinese-language support"
+        ],
+        "pains": [
+          "The stream drops halfway through, viewers leave and the ad spend is wasted.",
+          "Peak-hour stutter caps bitrate and the picture turns to mush.",
+          "More stores mean mixed egresses, and account environments start affecting each other.",
+          "You were sold a residential IP, but the ASN still belongs to a datacenter."
+        ],
+        "solutions": [
+          "Real residential ranges: IPs belong to carrier broadband, so ASN and blocklists can be checked independently.",
+          "Dedicated egress: the exit is yours alone, with no shared bandwidth or reputation.",
+          "Fixed egress: replacements are coordinated in advance so environments do not shift overnight.",
+          "Optional IEPL: fixed-path transit that flattens peak-hour latency and loss.",
+          "Manual delivery: region, ASN and test results are shared before activation."
+        ],
+        "scenarios": [
+          "Long TikTok live sessions",
+          "Independent store admin and order handling",
+          "Multi-store operations with one egress per store",
+          "Long-running overseas social sessions",
+          "Ad campaigns and landing page testing"
+        ],
+        "specs": {
+          "region": "United States (city subject to stock)",
+          "type": "Static residential / dedicated egress",
+          "protocol": "HTTP / SOCKS5 as delivered",
+          "devices": "Windows / macOS / iOS / Android / router",
+          "delivery": "Manual, within 24h during business hours",
+          "billing": "Monthly; quarterly and annual available",
+          "support": "Testing, replacement, Chinese-language support"
+        },
+        "pricingNote": "US stock is relatively stable; quotes combine city and bandwidth.",
+        "faq": [
+          {
+            "q": "How do I verify it is residential?",
+            "a": "Check the ASN owner and blocklists. We provide a test line so you can verify before ordering."
+          },
+          {
+            "q": "What is the difference from shared?",
+            "a": "A dedicated egress is used only by you, so bandwidth and reputation are not mixed with other users."
+          },
+          {
+            "q": "Can I choose a city?",
+            "a": "Subject to stock. Support confirms the currently available cities before you order."
+          },
+          {
+            "q": "Can I test first?",
+            "a": "Yes. We issue a test line so you can run a 30-minute real workload."
+          },
+          {
+            "q": "Which devices are supported?",
+            "a": "Windows, macOS, iOS, Android and common routers; protocols follow the delivery notes."
+          },
+          {
+            "q": "Will the egress change?",
+            "a": "It stays fixed under normal operation. If a change is required we coordinate it and allow a transition window."
+          },
+          {
+            "q": "Which payment methods work?",
+            "a": "Whatever the checkout page shows. Enterprise customers can use contracts and bank transfer."
+          },
+          {
+            "q": "What if the line drops?",
+            "a": "Check your local network and device first, then contact support. Line issues follow the support policy."
+          }
+        ],
+        "finalTitle": "Fix the egress first, then scale traffic.",
+        "finalSubtitle": "Start with one test line and decide on the long-term plan once it is stable."
+      },
+      "tiktok-live-ip": {
+        "eyebrow": "Live streaming · Uplink tuning",
+        "title": "Live stream keeps dropping? Stabilise the network layer first",
+        "subtitle": "We match a dedicated residential egress to your live region, add IEPL transit when needed, then advise bitrate and keyframe settings so network and encoder are configured together.",
+        "keywords": "live streaming network,live uplink IP,dedicated residential IP,IEPL transit",
+        "trust": [
+          "Region matched",
+          "Dedicated egress",
+          "Encoder guidance",
+          "Remote assistance"
+        ],
+        "pains": [
+          "It drops every ten minutes and viewers do not stay.",
+          "Peak-hour blur: the bitrate simply will not hold.",
+          "Switching networks triggers verification and kills the schedule.",
+          "Several live rooms share one egress and drag each other down.",
+          "You cannot tell whether it is the network, the device or the settings."
+        ],
+        "solutions": [
+          "Region match: stream to a market, use a residential egress in that market.",
+          "Dedicated egress: one line per live room, with no bandwidth contention.",
+          "IEPL transit: a fixed path around public congestion, with steadier latency and loss.",
+          "Uplink headroom: reserve roughly 30% above target bitrate so peaks do not saturate the line.",
+          "Encoder guidance: resolution, frame rate, bitrate and keyframe interval by device."
+        ],
+        "scenarios": [
+          "Long live sessions",
+          "Parallel live rooms in multiple regions",
+          "Pre-show stress testing",
+          "Cross-border teams streaming together",
+          "Live streaming plus store admin on one environment"
+        ],
+        "specs": {
+          "region": "US / UK / Germany / Japan / Taiwan / Philippines",
+          "type": "Dedicated static residential",
+          "protocol": "HTTP / SOCKS5 with optional transit",
+          "devices": "Desktop encoders, mobile streaming, common hardware encoders",
+          "delivery": "Manual configuration plus encoder guidance",
+          "billing": "Monthly; quarterly and annual available",
+          "support": "Pre-show test, remote assistance"
+        },
+        "pricingNote": "Live plans are quoted by region, bandwidth and whether transit is included.",
+        "faq": [
+          {
+            "q": "Can you guarantee zero drops?",
+            "a": "Not absolutely, but a dedicated egress on a fixed path controls the variables that actually matter."
+          },
+          {
+            "q": "How much uplink do I need?",
+            "a": "Reserve about 30% above target bitrate; the exact figure depends on resolution and frame rate."
+          },
+          {
+            "q": "Can I run a test stream?",
+            "a": "Yes. A 30-minute test is scheduled before activation."
+          },
+          {
+            "q": "Can I stream from a phone?",
+            "a": "Yes, on iOS and Android. Setup instructions come with the delivery notes."
+          },
+          {
+            "q": "How do multi-region streams work?",
+            "a": "One line per region, assigned per live room, so regions are never mixed."
+          },
+          {
+            "q": "Do I have to rebuy to change region?",
+            "a": "No. Lines are adjusted to the new region and the difference is settled as used."
+          },
+          {
+            "q": "Will you tune my encoder?",
+            "a": "Yes, we provide a working starting profile for your device and target quality."
+          },
+          {
+            "q": "What should I check when the picture breaks up?",
+            "a": "Look at loss and uplink saturation first, then encoder settings, then the local network."
+          }
+        ],
+        "finalTitle": "Fix the network, then optimise content.",
+        "finalSubtitle": "Content and ad spend only pay off once the uplink is stable."
+      },
+      "iepl": {
+        "eyebrow": "IEPL · Cross-border line",
+        "title": "Public internet unstable at peak? Move to a fixed path",
+        "subtitle": "Cross-border lines for live streaming, support and real-time operations, with a fixed path and far more predictable latency and jitter. Can be bundled with a dedicated residential egress.",
+        "keywords": "IEPL line,cross-border line,low latency line,live streaming line",
+        "trust": [
+          "Fixed path",
+          "Low latency and jitter",
+          "Dual-line redundancy",
+          "Scales with peak"
+        ],
+        "pains": [
+          "Latency spikes at peak and every click lags.",
+          "Packet loss breaks the picture and kills the uplink.",
+          "Public routing is unpredictable and faults are hard to isolate.",
+          "Critical work runs on a single line with no backup."
+        ],
+        "solutions": [
+          "Fixed path: bypass congested public nodes, flattening the latency curve.",
+          "Reserved bandwidth: sized to your peak, not contended with strangers.",
+          "Dual-line redundancy: active/standby for critical workloads.",
+          "Observability: latency, loss and troubleshooting guidance included.",
+          "Bundled delivery: line plus dedicated residential egress configured together."
+        ],
+        "scenarios": [
+          "Live uplink streaming",
+          "Cross-border support and real-time calls",
+          "Bulk multi-store admin work",
+          "Overseas warehouse and ERP access",
+          "Dual-line backup for critical work"
+        ],
+        "specs": {
+          "region": "US / UK / Germany / Japan / Taiwan / Philippines",
+          "type": "IEPL cross-border line",
+          "protocol": "Port forwarding / dedicated tunnel",
+          "devices": "Routers, servers, office networks",
+          "delivery": "Manual provisioning and joint testing",
+          "billing": "Monthly, priced by bandwidth",
+          "support": "Testing, incident response, expansion"
+        },
+        "pricingNote": "Lines are priced by bandwidth and region. Confirm your peak first.",
+        "faq": [
+          {
+            "q": "How is IEPL different from a normal line?",
+            "a": "It uses a fixed path instead of unpredictable public routing, so latency and loss stay far more stable."
+          },
+          {
+            "q": "Can you guarantee 100% uptime?",
+            "a": "No absolute guarantee, but a dedicated line controls the variables and comes with a response target."
+          },
+          {
+            "q": "How much bandwidth do I need?",
+            "a": "Size for peak: bitrate plus headroom for streaming, concurrency for office work."
+          },
+          {
+            "q": "Can I run dual lines?",
+            "a": "Yes. For critical work we recommend active/standby over two distinct paths."
+          },
+          {
+            "q": "Can it be combined with other lines?",
+            "a": "Yes. The line provides a stable path, the residential egress provides the network identity."
+          },
+          {
+            "q": "How long does activation take?",
+            "a": "It depends on resources; provisioning and joint testing are manual. Support confirms the timeline."
+          },
+          {
+            "q": "What happens during an incident?",
+            "a": "We troubleshoot remotely, respond within the agreed window and provide a workaround."
+          },
+          {
+            "q": "Can I stress test first?",
+            "a": "Yes. Testing and stress testing are scheduled before activation."
+          }
+        ],
+        "finalTitle": "Price one outage before you buy.",
+        "finalSubtitle": "Turn networking from guesswork into managed infrastructure."
+      },
+      "asia-ip": {
+        "eyebrow": "Japan · Taiwan · Philippines",
+        "title": "For Asian markets, use an egress in the right region",
+        "subtitle": "Dedicated static residential IPs in Japan, Taiwan and the Philippines, matched to your target market so content language, working environment and region stay consistent.",
+        "keywords": "Japan residential IP,Taiwan residential IP,Philippines residential IP,Asia live network",
+        "trust": [
+          "Three regions",
+          "Dedicated static residential",
+          "Market-based allocation",
+          "Manual delivery"
+        ],
+        "pains": [
+          "Running Japanese content through a US egress never looks consistent.",
+          "One line across several markets destabilises day-to-day operations.",
+          "Southeast Asia is expensive to test, so nobody dares to scale.",
+          "Content language and egress region disagree, so results are unreadable."
+        ],
+        "solutions": [
+          "Market allocation: Japan, Taiwan and the Philippines each get a matching egress.",
+          "No cross-region mixing: one store keeps one fixed region.",
+          "Optional IEPL: lower latency and jitter within Asia.",
+          "Small-scale testing first: validate, then activate in bulk.",
+          "Complete handover: region, ASN and configuration delivered together."
+        ],
+        "scenarios": [
+          "Asian live streaming",
+          "Local e-commerce and DTC stores",
+          "Content localisation validation",
+          "Southeast Asia market testing",
+          "Multi-region social operations"
+        ],
+        "specs": {
+          "region": "Japan / Taiwan / Philippines",
+          "type": "Dedicated static residential",
+          "protocol": "HTTP / SOCKS5",
+          "devices": "Desktop, mobile, routers",
+          "delivery": "Manual delivery",
+          "billing": "Monthly; quarterly available",
+          "support": "Testing, replacement, Chinese-language support"
+        },
+        "pricingNote": "Stock and cost differ per region, so each region is quoted separately.",
+        "faq": [
+          {
+            "q": "Can an Asian egress reach Western platforms?",
+            "a": "Yes, but keep the egress region aligned with your target market for a consistent environment."
+          },
+          {
+            "q": "Which region is cheapest?",
+            "a": "The Philippines is usually lower; Japan and Taiwan are tighter. It depends on current stock."
+          },
+          {
+            "q": "Can I buy several regions at once?",
+            "a": "Yes, allocated per store or per project."
+          },
+          {
+            "q": "Can I test first?",
+            "a": "Yes. A test line lets you validate login and page load speed."
+          },
+          {
+            "q": "Should I change content language too?",
+            "a": "We recommend it. Matching language and region makes results far easier to judge."
+          },
+          {
+            "q": "What latency should I expect?",
+            "a": "It depends on your location and the target region; you can measure it during the test."
+          },
+          {
+            "q": "Is quarterly billing available?",
+            "a": "Yes, and annual for long-term use. Support confirms the exact plan."
+          },
+          {
+            "q": "What if an egress gets blocked?",
+            "a": "We verify it, replace under the support policy and help review how it is being used."
+          }
+        ],
+        "finalTitle": "Pick the right region before scaling.",
+        "finalSubtitle": "Aligned region, language and environment make your data meaningful."
+      },
+      "enterprise": {
+        "eyebrow": "Enterprise · Multi-store",
+        "title": "Run your egresses as infrastructure",
+        "subtitle": "Plan dedicated egresses around your stores and team size, with unified delivery, renewal and support, plus contracts, invoices and a stated response target.",
+        "keywords": "enterprise IP plan,multi-store network,bulk residential IP,enterprise line",
+        "trust": [
+          "Contracts and invoices",
+          "Bulk delivery",
+          "Named contact",
+          "Response target"
+        ],
+        "pains": [
+          "Egresses are bought ad hoc, with no inventory.",
+          "Staff turnover breaks continuity because handover is verbal.",
+          "Mixed egresses are only discovered once stores get linked.",
+          "Finance needs invoices the vendor cannot issue."
+        ],
+        "solutions": [
+          "Egress planning: an allocation table by store, region and platform.",
+          "Bulk delivery: one configuration sheet, one renewal cycle, one incident entry point.",
+          "Contracts and invoices: enterprise agreements, bank transfer and compliant receipts.",
+          "Response target: incidents answered within the agreed window with a workaround.",
+          "Handover docs: configuration and owners written down, so staff changes are safe."
+        ],
+        "scenarios": [
+          "Cross-border agencies",
+          "Multi-store sellers",
+          "Live-stream organisations",
+          "Overseas warehouse and DTC teams",
+          "Enterprises needing contracts and invoices"
+        ],
+        "specs": {
+          "region": "Six-region mix (US / UK / DE / JP / TW / PH)",
+          "type": "Dedicated residential + optional line",
+          "protocol": "Configured per business environment",
+          "devices": "Office networks, servers, routers",
+          "delivery": "Bulk activation with configuration sheet",
+          "billing": "Monthly / quarterly / annual",
+          "support": "Named contact plus response target"
+        },
+        "pricingNote": "Enterprise plans are quoted by volume, region mix and service level, with annual contracts.",
+        "faq": [
+          {
+            "q": "What is the minimum order?",
+            "a": "Bulk plans usually start at 10 lines; the exact number depends on scale."
+          },
+          {
+            "q": "Can we sign a contract?",
+            "a": "Yes, including enterprise terms and confidentiality clauses."
+          },
+          {
+            "q": "Can you issue invoices?",
+            "a": "Yes, compliant receipts are issued against your company details."
+          },
+          {
+            "q": "What happens if an egress is blocked?",
+            "a": "We verify it, replace within the agreed window and help review how it is used."
+          },
+          {
+            "q": "Can renewals be unified?",
+            "a": "Yes. All lines renew on one billing cycle so nothing lapses."
+          },
+          {
+            "q": "How does handover work?",
+            "a": "You receive a configuration sheet and an owner list, so handover is documented."
+          },
+          {
+            "q": "Is a trial available?",
+            "a": "Yes, sample lines can be tested before bulk activation."
+          },
+          {
+            "q": "How fast do you respond?",
+            "a": "Within the agreed service level, with business-day priority."
+          }
+        ],
+        "finalTitle": "Turn procurement from a chore into infrastructure.",
+        "finalSubtitle": "Unified inventory, delivery and support scale better as you grow."
+      }
+    }
+  },
+  "zh-CN": {
+    "nav": {
+      "home": "返回首页",
+      "products": "查看全部产品",
+      "consult": "Telegram 咨询"
+    },
+    "cta": {
+      "consult": "Telegram 咨询",
+      "viewProducts": "查看产品与价格",
+      "quote": "获取报价",
+      "finalFallback": "先测试，再决定长期方案。"
+    },
+    "sections": {
+      "pains": "你可能正在经历",
+      "solutions": "我们怎么解决",
+      "process": "开通流程",
+      "specs": "规格与交付",
+      "compare": "方案对比",
+      "scenarios": "适用场景",
+      "pricing": "价格方案",
+      "cases": "典型用法",
+      "faq": "常见问题",
+      "final": "下一步",
+      "trust": "交付标准"
+    },
+    "labels": {
+      "example": "示例",
+      "caseDisclaimer": "以上为示例场景，用于说明交付方式，不代表真实客户评价。",
+      "specRegion": "覆盖地区",
+      "specType": "线路类型",
+      "specProtocol": "协议",
+      "specDevices": "支持设备",
+      "specDelivery": "交付方式",
+      "specBilling": "计费",
+      "specSupport": "售后支持",
+      "compareFit": "适合",
+      "included": "包含",
+      "note": "最终配置与报价以下单页及客服确认为准。",
+      "trustPayment": "支付方式按结算页展示",
+      "trustTelegram": "Telegram 直接对接",
+      "priceNote": "未确认价格一律咨询报价",
+      "stickyHint": "需要选地区或对比方案？直接问客服。"
+    },
+    "process": [
+      "说明地区、平台与用量，客服确认库存。",
+      "领取测试线路，跑一遍真实业务。",
+      "确认稳定后下单，人工交付配置。",
+      "到期前提醒续费，支持调整方案。"
+    ],
+    "compare": {
+      "intro": "三种常见做法，按业务阶段选，不必一上来就买最贵的。",
+      "items": [
+        {
+          "name": "共享住宅 IP",
+          "detail": "一条出口多人共用，成本低、即开即用；带宽与信誉不固定。",
+          "fit": "轻量测试、非实时业务"
+        },
+        {
+          "name": "独享静态住宅 IP",
+          "detail": "出口固定，ASN 可查，稳定性可解释；单价更高，热门地区需要等库存。",
+          "fit": "直播、店铺后台、长期登录"
+        },
+        {
+          "name": "IEPL 专线",
+          "detail": "固定路径，晚高峰延迟与丢包可控；按带宽计价，需要先规划峰值。",
+          "fit": "直播推流、实时客服、关键业务"
+        }
+      ]
+    },
+    "pricing": {
+      "intro": "价格随地区与库存浮动，以下为方案结构；具体报价由客服按用量确认。",
+      "contactQuote": "咨询报价",
+      "tiers": [
+        {
+          "name": "测试验证",
+          "cycle": "按次",
+          "features": [
+            "1 条测试线路",
+            "30 分钟真实业务验证",
+            "交付前给到 ASN 与地区信息"
+          ]
+        },
+        {
+          "name": "月付",
+          "cycle": "每月",
+          "features": [
+            "独享出口，按月续费",
+            "工作时间内人工交付",
+            "失效可申请更换"
+          ]
+        },
+        {
+          "name": "企业 / 年付",
+          "cycle": "年付",
+          "features": [
+            "批量店铺与地区规划",
+            "合同、发票与对账",
+            "专属对接人与响应时限"
+          ]
+        }
+      ]
+    },
+    "cases": {
+      "intro": "典型用法示例",
+      "disclaimer": "以上为示例场景，用于说明交付方式，不代表真实客户评价。",
+      "items": [
+        {
+          "title": "跨境直播团队",
+          "quote": "把出口和线路固定下来后，晚高峰掉线明显减少，推流参数也不用每天调。",
+          "meta": "6 个地区 · 独享住宅 + IEPL"
+        },
+        {
+          "title": "多店铺运营",
+          "quote": "一店一条线路，交接时按配置表走，新人上手不用重新摸网络。",
+          "meta": "12 条独享线路 · 月付"
+        },
+        {
+          "title": "企业采购",
+          "quote": "统一台账和续费提醒，比每个人各自买省事，财务也能对上账。",
+          "meta": "30 条线路 · 年付合同"
+        }
+      ]
+    },
+    "pages": {
+      "us-residential-ip": {
+        "eyebrow": "美国 · 静态住宅 · 独享出口",
+        "title": "美国静态住宅 IP，给直播和店铺一个固定的网络身份",
+        "subtitle": "真实运营商住宅段，出口独享、不与他人共享；城市按库存确认，工作时间内人工交付，先测试再购买。",
+        "keywords": "美国静态住宅IP,美国独享IP,美国住宅IP,直播网络",
+        "trust": [
+          "真实住宅 ASN",
+          "独享出口",
+          "六地区可选",
+          "中文售后"
+        ],
+        "pains": [
+          "直播推到一半掉线，观众走了，流量白买。",
+          "晚高峰卡顿，码率上不去，画面糊成一片。",
+          "店铺越开越多，出口混用，操作环境开始互相牵连。",
+          "说是住宅 IP，一查 ASN 还是机房段。"
+        ],
+        "solutions": [
+          "真实住宅段：IP 归属运营商宽带，ASN 与黑名单可自行核验。",
+          "独享出口：出口只归你，不与他人共享带宽与信誉。",
+          "出口固定：确需更换提前沟通，避免环境突变触发验证。",
+          "可加 IEPL：固定路径中转，降低晚高峰延迟与丢包。",
+          "人工交付：开通前给到地区、ASN 与测试结果。"
+        ],
+        "scenarios": [
+          "TikTok 长时间直播",
+          "独立站后台与订单处理",
+          "多店铺运营，一店一出口",
+          "海外社媒长期登录",
+          "广告投放与落地页测试"
+        ],
+        "specs": {
+          "region": "美国（城市按库存确认）",
+          "type": "静态住宅 / 独享出口",
+          "protocol": "HTTP / SOCKS5（按交付为准）",
+          "devices": "Windows / macOS / iOS / Android / 软路由",
+          "delivery": "人工交付，工作时间内 24h",
+          "billing": "月付，可季付 / 年付",
+          "support": "测试、失效更换、中文客服"
+        },
+        "pricingNote": "美国节点库存相对充足，可按城市与带宽组合报价。",
+        "faq": [
+          {
+            "q": "怎么确认是住宅 IP？",
+            "a": "查 ASN 归属与黑名单；我们提供测试线路，你可以自己核验后再决定。"
+          },
+          {
+            "q": "独享和共享差在哪？",
+            "a": "独享出口只归你使用，带宽与信誉不与他人共享，稳定性可解释。"
+          },
+          {
+            "q": "能指定城市吗？",
+            "a": "按库存可选，下单前客服会确认当前可用城市。"
+          },
+          {
+            "q": "可以先测试吗？",
+            "a": "可以，先发测试线路，跑 30 分钟真实业务再下单。"
+          },
+          {
+            "q": "支持哪些设备？",
+            "a": "Windows、macOS、iOS、Android 与常见软路由，协议以交付说明为准。"
+          },
+          {
+            "q": "出口会变吗？",
+            "a": "正常情况下保持固定；确需更换会提前沟通并给过渡时间。"
+          },
+          {
+            "q": "支持哪些付款方式？",
+            "a": "以结算页展示为准，企业客户可走合同与对公转账。"
+          },
+          {
+            "q": "掉线了怎么办？",
+            "a": "先排查本地网络与设备，再联系客服；属线路问题按售后规则处理。"
+          }
+        ],
+        "finalTitle": "先把出口固定，再谈放量。",
+        "finalSubtitle": "先测试一条线路，确认稳定后再决定长期方案。"
+      },
+      "tiktok-live-ip": {
+        "eyebrow": "直播网络 · 推流优化",
+        "title": "直播总掉线？先把网络这一段稳定下来",
+        "subtitle": "按直播地区匹配独享住宅出口，必要时加 IEPL 中转，再给到推流码率与关键帧建议，从网络到参数一次配好。",
+        "keywords": "直播网络方案,直播推流IP,独享住宅IP,IEPL中转",
+        "trust": [
+          "按地区匹配",
+          "独享出口",
+          "推流参数建议",
+          "中文远程协助"
+        ],
+        "pains": [
+          "开播十分钟掉一次，观众留不住。",
+          "晚高峰画面糊，码率上不去。",
+          "换了网络就要求验证，节奏全乱。",
+          "同一出口跑多个直播间，互相拖累。",
+          "分不清是网络、设备还是参数的问题。"
+        ],
+        "solutions": [
+          "地区匹配：直播面向哪个市场，就用哪个地区的住宅出口。",
+          "独享出口：一个直播间一条线路，不与他人抢带宽。",
+          "IEPL 中转：固定路径绕开公网拥塞，延迟与丢包更可控。",
+          "上行余量：按目标码率预留约 30% 余量，避免峰值顶满。",
+          "参数建议：分辨率、帧率、码率与关键帧间隔按设备给方案。"
+        ],
+        "scenarios": [
+          "长时间直播推流",
+          "多地区直播间并行",
+          "直播前压力测试",
+          "跨境团队协作推流",
+          "直播与店铺后台同环境"
+        ],
+        "specs": {
+          "region": "美国 / 英国 / 德国 / 日本 / 台湾 / 菲律宾",
+          "type": "独享静态住宅",
+          "protocol": "HTTP / SOCKS5 + 可选中转",
+          "devices": "电脑推流、手机开播、常见编码器",
+          "delivery": "人工配置 + 推流参数建议",
+          "billing": "月付，可季付 / 年付",
+          "support": "开播前测试、远程协助"
+        },
+        "pricingNote": "直播方案按地区、带宽与是否需要中转组合报价。",
+        "faq": [
+          {
+            "q": "能保证完全不掉线吗？",
+            "a": "不能承诺绝对，但独享出口加固定路径能把可控变量做到最好。"
+          },
+          {
+            "q": "需要多少上行带宽？",
+            "a": "按目标码率预留约 30% 余量，具体按分辨率与帧率核算。"
+          },
+          {
+            "q": "可以先跑测试流吗？",
+            "a": "可以，开通前安排一次 30 分钟测试。"
+          },
+          {
+            "q": "支持手机开播吗？",
+            "a": "支持，iOS 与 Android 都可用，配置方式随交付说明提供。"
+          },
+          {
+            "q": "多地区直播怎么配？",
+            "a": "一个地区一条线路，按直播间分配，避免跨区混用。"
+          },
+          {
+            "q": "换地区要重新买吗？",
+            "a": "不需要，按新地区调整线路即可，差价按实际结算。"
+          },
+          {
+            "q": "会帮我调推流参数吗？",
+            "a": "会，按设备与目标画质给到一组可用的起始参数。"
+          },
+          {
+            "q": "出现花屏先查什么？",
+            "a": "先看丢包与上行占用，再看编码器设置，最后排查本地网络。"
+          }
+        ],
+        "finalTitle": "先固定网络，再优化内容。",
+        "finalSubtitle": "网络稳了，内容与投放才有意义。"
+      },
+      "iepl": {
+        "eyebrow": "IEPL · 跨境专线",
+        "title": "公网晚高峰不稳？换成固定路径的专线",
+        "subtitle": "面向直播、客服与实时业务的跨境专线，路径固定、延迟与抖动更可控；可与独享住宅出口组合交付。",
+        "keywords": "IEPL专线,跨境专线,低延迟线路,直播专线",
+        "trust": [
+          "固定路径",
+          "低延迟低抖动",
+          "双线冗余",
+          "可按峰值扩容"
+        ],
+        "pains": [
+          "晚高峰延迟飙升，操作明显卡顿。",
+          "丢包导致画面花屏、推流中断。",
+          "公网路径不可控，出问题很难定位。",
+          "关键业务只有一条线路，没有备份。"
+        ],
+        "solutions": [
+          "固定路径：绕开公网拥塞节点，延迟曲线更平。",
+          "带宽预留：按业务峰值配置，不与他人抢出口。",
+          "双线冗余：关键业务可做主备切换。",
+          "可观测：提供延迟、丢包与故障排查建议。",
+          "组合交付：专线加独享住宅出口，一次配好。"
+        ],
+        "scenarios": [
+          "直播推流上行",
+          "跨境客服与实时沟通",
+          "多店铺后台批量操作",
+          "海外仓与 ERP 访问",
+          "关键业务双线备份"
+        ],
+        "specs": {
+          "region": "美国 / 英国 / 德国 / 日本 / 台湾 / 菲律宾",
+          "type": "IEPL 跨境专线",
+          "protocol": "端口转发 / 专属通道",
+          "devices": "软路由、服务器、办公网络",
+          "delivery": "人工开通与联调",
+          "billing": "按月带宽计费",
+          "support": "测试、故障响应、扩容"
+        },
+        "pricingNote": "专线按带宽与地区计价，先确认峰值再给方案。",
+        "faq": [
+          {
+            "q": "IEPL 和普通线路区别？",
+            "a": "走固定路径，不经过不可控的公网拥塞节点，延迟与丢包更稳定。"
+          },
+          {
+            "q": "能保证 100% 不掉线吗？",
+            "a": "不能承诺绝对，但专线把可控变量做到最好，并有明确的响应时限。"
+          },
+          {
+            "q": "需要多大带宽？",
+            "a": "按业务峰值配置，直播按码率加余量，办公按并发数估算。"
+          },
+          {
+            "q": "可以做双线吗？",
+            "a": "可以，关键业务建议主备两条不同路径。"
+          },
+          {
+            "q": "能和其他线路组合吗？",
+            "a": "可以，专线负责稳定路径，住宅出口负责网络身份。"
+          },
+          {
+            "q": "开通要多久？",
+            "a": "视资源情况，通常需要人工确认与联调，具体以客服回复为准。"
+          },
+          {
+            "q": "出故障怎么处理？",
+            "a": "先远程排查，属线路问题按响应时限处理并给出替代方案。"
+          },
+          {
+            "q": "可以先压测吗？",
+            "a": "可以，开通前安排测试与压力测试。"
+          }
+        ],
+        "finalTitle": "先算清一次中断的成本。",
+        "finalSubtitle": "把网络从碰运气，变成可管理的基础设施。"
+      },
+      "asia-ip": {
+        "eyebrow": "日本 · 台湾 · 菲律宾",
+        "title": "做亚洲市场，用对地区的住宅出口",
+        "subtitle": "日本、台湾、菲律宾独享静态住宅 IP，按目标市场匹配出口，内容语言、操作环境与地区保持一致。",
+        "keywords": "日本住宅IP,台湾住宅IP,菲律宾住宅IP,亚洲直播网络",
+        "trust": [
+          "三地区可选",
+          "独享静态住宅",
+          "按市场分配",
+          "中文交付"
+        ],
+        "pains": [
+          "用美国出口做日本区内容，环境对不上。",
+          "一条线路跨多个市场，操作稳定性受影响。",
+          "东南亚测试成本高，不敢放量。",
+          "内容语言与出口地区不一致，效果难判断。"
+        ],
+        "solutions": [
+          "按市场分配：日本、台湾、菲律宾分别匹配出口。",
+          "不跨区混用：一个店铺固定一个地区。",
+          "可选 IEPL：降低亚洲区延迟与抖动。",
+          "先小规模测试：验证后再批量开通。",
+          "交付清单：地区、ASN 与配置一次给全。"
+        ],
+        "scenarios": [
+          "亚洲区直播",
+          "本地电商与独立站",
+          "内容本地化验证",
+          "东南亚市场测试",
+          "多地区社媒运营"
+        ],
+        "specs": {
+          "region": "日本 / 台湾 / 菲律宾",
+          "type": "独享静态住宅",
+          "protocol": "HTTP / SOCKS5",
+          "devices": "电脑、手机、软路由",
+          "delivery": "人工交付",
+          "billing": "月付，可季付",
+          "support": "测试、更换、中文客服"
+        },
+        "pricingNote": "三地区库存与成本不同，按地区分别报价。",
+        "faq": [
+          {
+            "q": "亚洲出口能访问欧美平台吗？",
+            "a": "可以，但建议出口地区与目标市场一致，环境才自洽。"
+          },
+          {
+            "q": "哪个地区成本更低？",
+            "a": "菲律宾相对低，日本与台湾资源更紧，具体按当期库存。"
+          },
+          {
+            "q": "能同时买多个地区吗？",
+            "a": "可以，按店铺或项目分配。"
+          },
+          {
+            "q": "能先测试吗？",
+            "a": "可以，先发测试线路验证登录与加载速度。"
+          },
+          {
+            "q": "内容语言要一起改吗？",
+            "a": "建议一致，语言与地区匹配时数据更好判断。"
+          },
+          {
+            "q": "延迟大概多少？",
+            "a": "取决于你所在位置与目标地区，测试时可实测。"
+          },
+          {
+            "q": "支持季付吗？",
+            "a": "支持，长期使用可年付，具体按方案确认。"
+          },
+          {
+            "q": "出口被封怎么办？",
+            "a": "核实后按售后规则更换，并协助排查使用方式。"
+          }
+        ],
+        "finalTitle": "先选对地区，再谈放量。",
+        "finalSubtitle": "地区、语言与环境一致，运营数据才有参考价值。"
+      },
+      "enterprise": {
+        "eyebrow": "企业方案 · 多店铺",
+        "title": "把出口当成基础设施来管",
+        "subtitle": "按店铺与团队规模规划独享出口，统一交付、统一续费、统一售后，支持合同、发票与明确的响应时限。",
+        "keywords": "企业IP方案,多店铺网络,批量住宅IP,企业专线",
+        "trust": [
+          "合同与发票",
+          "批量交付",
+          "专属对接人",
+          "明确响应时限"
+        ],
+        "pains": [
+          "出口分散采购，没有台账。",
+          "人员变动就断档，交接靠口头。",
+          "店铺出现关联时才发现出口混用。",
+          "财务要发票，供应商给不了。"
+        ],
+        "solutions": [
+          "出口规划：按店铺、地区与平台做分配表。",
+          "批量交付：统一配置表、统一续费、统一故障入口。",
+          "合同与发票：企业合同、对公转账与合规票据。",
+          "响应时限：故障按约定时限响应，给出替代方案。",
+          "交接文档：配置与责任人写清楚，换人不掉链子。"
+        ],
+        "scenarios": [
+          "跨境代运营团队",
+          "多店铺卖家",
+          "直播机构",
+          "海外仓与独立站团队",
+          "需要合同与发票的企业"
+        ],
+        "specs": {
+          "region": "六地区组合（美 / 英 / 德 / 日 / 台 / 菲）",
+          "type": "独享住宅 + 可选专线",
+          "protocol": "按业务环境配置",
+          "devices": "办公网络、服务器、软路由",
+          "delivery": "批量开通与配置表",
+          "billing": "月付 / 季付 / 年付",
+          "support": "专属对接人 + 响应时限"
+        },
+        "pricingNote": "企业方案按数量、地区组合与服务级别报价，支持年度合同。",
+        "faq": [
+          {
+            "q": "最少多少条起？",
+            "a": "批量方案建议 10 条起，具体按业务规模确认。"
+          },
+          {
+            "q": "能签合同吗？",
+            "a": "可以，支持企业合同与保密条款。"
+          },
+          {
+            "q": "能开发票吗？",
+            "a": "可以，按企业资质开具合规票据。"
+          },
+          {
+            "q": "出口被封怎么处理？",
+            "a": "核实后按约定时限更换，并协助排查使用方式。"
+          },
+          {
+            "q": "能统一续费吗？",
+            "a": "可以，所有线路按同一账期续费，避免漏续。"
+          },
+          {
+            "q": "交接怎么做？",
+            "a": "提供配置表与责任人清单，交接有据可查。"
+          },
+          {
+            "q": "支持试用吗？",
+            "a": "支持抽样测试，确认后再批量开通。"
+          },
+          {
+            "q": "响应时间多久？",
+            "a": "按服务级别约定，工作日优先响应。"
+          }
+        ],
+        "finalTitle": "把采购从杂事，变成可管理的基础设施。",
+        "finalSubtitle": "台账、交付与售后统一，规模越大越省心。"
+      }
+    }
+  },
+  "zh-TW": {
+    "nav": {
+      "home": "返回首頁",
+      "products": "查看全部產品",
+      "consult": "Telegram 諮詢"
+    },
+    "cta": {
+      "consult": "Telegram 諮詢",
+      "viewProducts": "查看產品與價格",
+      "quote": "取得報價",
+      "finalFallback": "先測試，再決定長期方案。"
+    },
+    "sections": {
+      "pains": "你可能正在經歷",
+      "solutions": "我們怎麼解決",
+      "process": "開通流程",
+      "specs": "規格與交付",
+      "compare": "方案對比",
+      "scenarios": "適用場景",
+      "pricing": "價格方案",
+      "cases": "典型用法",
+      "faq": "常見問題",
+      "final": "下一步",
+      "trust": "交付標準"
+    },
+    "labels": {
+      "example": "示例",
+      "caseDisclaimer": "以上為示例場景，用於說明交付方式，不代表真實客戶評價。",
+      "specRegion": "覆蓋地區",
+      "specType": "線路類型",
+      "specProtocol": "協議",
+      "specDevices": "支援設備",
+      "specDelivery": "交付方式",
+      "specBilling": "計費",
+      "specSupport": "售後支援",
+      "compareFit": "適合",
+      "included": "包含",
+      "note": "最終設定與報價以下單頁及客服確認為準。",
+      "trustPayment": "付款方式以結算頁顯示",
+      "trustTelegram": "Telegram 直接對接",
+      "priceNote": "未確認價格一律諮詢報價",
+      "stickyHint": "需要選地區或比較方案？直接問客服。"
+    },
+    "process": [
+      "說明地區、平台與用量，客服確認庫存。",
+      "領取測試線路，跑一遍真實業務。",
+      "確認穩定後下單，人工交付設定。",
+      "到期前提醒續費，支援調整方案。"
+    ],
+    "compare": {
+      "intro": "三種常見做法，按業務階段選，不必一開始就買最貴的。",
+      "items": [
+        {
+          "name": "共享住宅 IP",
+          "detail": "一條出口多人共用，成本低、即開即用；頻寬與信譽不固定。",
+          "fit": "輕量測試、非即時業務"
+        },
+        {
+          "name": "獨享靜態住宅 IP",
+          "detail": "出口固定，ASN 可查，穩定性可解釋；單價更高，熱門地區需要等庫存。",
+          "fit": "直播、店鋪後台、長期登入"
+        },
+        {
+          "name": "IEPL 專線",
+          "detail": "固定路徑，晚高峰延遲與丟包可控；按頻寬計價，需要先規劃峰值。",
+          "fit": "直播推流、即時客服、關鍵業務"
+        }
+      ]
+    },
+    "pricing": {
+      "intro": "價格隨地區與庫存浮動，以下為方案結構；具體報價由客服按用量確認。",
+      "contactQuote": "諮詢報價",
+      "tiers": [
+        {
+          "name": "測試驗證",
+          "cycle": "按次",
+          "features": [
+            "1 條測試線路",
+            "30 分鐘真實業務驗證",
+            "交付前給到 ASN 與地區資訊"
+          ]
+        },
+        {
+          "name": "月付",
+          "cycle": "每月",
+          "features": [
+            "獨享出口，按月續費",
+            "工作時間內人工交付",
+            "失效可申請更換"
+          ]
+        },
+        {
+          "name": "企業 / 年付",
+          "cycle": "年付",
+          "features": [
+            "批次店鋪與地區規劃",
+            "合約、發票與對帳",
+            "專屬對接人與回應時限"
+          ]
+        }
+      ]
+    },
+    "cases": {
+      "intro": "典型用法示例",
+      "disclaimer": "以上為示例場景，用於說明交付方式，不代表真實客戶評價。",
+      "items": [
+        {
+          "title": "跨境直播團隊",
+          "quote": "把出口和線路固定下來後，晚高峰掉線明顯減少，推流參數也不用每天調。",
+          "meta": "6 個地區 · 獨享住宅 + IEPL"
+        },
+        {
+          "title": "多店鋪運營",
+          "quote": "一店一條線路，交接時按設定表走，新人上手不用重新摸網路。",
+          "meta": "12 條獨享線路 · 月付"
+        },
+        {
+          "title": "企業採購",
+          "quote": "統一模板和續費提醒，比每個人各自買省事，財務也能對上帳。",
+          "meta": "30 條線路 · 年付合約"
+        }
+      ]
+    },
+    "pages": {
+      "us-residential-ip": {
+        "eyebrow": "美國 · 靜態住宅 · 獨享出口",
+        "title": "美國靜態住宅 IP，給直播和店鋪一個固定的網路身份",
+        "subtitle": "真實電信商住宅段，出口獨享、不與他人共用；城市按庫存確認，工作時間內人工交付，先測試再購買。",
+        "keywords": "美國靜態住宅IP,美國獨享IP,美國住宅IP,直播網路",
+        "trust": [
+          "真實住宅 ASN",
+          "獨享出口",
+          "六地區可選",
+          "中文售後"
+        ],
+        "pains": [
+          "直播推到一半掉線，觀眾走了，流量白買。",
+          "晚高峰卡頓，碼率上不去，畫面糊成一片。",
+          "店鋪越開越多，出口混用，操作環境開始互相牽連。",
+          "說是住宅 IP，一查 ASN 還是機房段。"
+        ],
+        "solutions": [
+          "真實住宅段：IP 歸屬電信商寬頻，ASN 與黑名單可自行核驗。",
+          "獨享出口：出口只歸你，不與他人共用頻寬與信譽。",
+          "出口固定：確需更換提前溝通，避免環境突變觸發驗證。",
+          "可加 IEPL：固定路徑中轉，降低晚高峰延遲與丟包。",
+          "人工交付：開通前給到地區、ASN 與測試結果。"
+        ],
+        "scenarios": [
+          "TikTok 長時間直播",
+          "獨立站後台與訂單處理",
+          "多店鋪運營，一店一出口",
+          "海外社群長期登入",
+          "廣告投放與落地頁測試"
+        ],
+        "specs": {
+          "region": "美國（城市按庫存確認）",
+          "type": "靜態住宅 / 獨享出口",
+          "protocol": "HTTP / SOCKS5（按交付為準）",
+          "devices": "Windows / macOS / iOS / Android / 軟路由",
+          "delivery": "人工交付，工作時間內 24h",
+          "billing": "月付，可季付 / 年付",
+          "support": "測試、失效更換、中文客服"
+        },
+        "pricingNote": "美國節點庫存相對充足，可按城市與頻寬組合報價。",
+        "faq": [
+          {
+            "q": "怎麼確認是住宅 IP？",
+            "a": "查 ASN 歸屬與黑名單；我們提供測試線路，你可以自己核驗後再決定。"
+          },
+          {
+            "q": "獨享和共享差在哪？",
+            "a": "獨享出口只歸你使用，頻寬與信譽不與他人共用，穩定性可解釋。"
+          },
+          {
+            "q": "能指定城市嗎？",
+            "a": "按庫存可選，下單前客服會確認目前可用城市。"
+          },
+          {
+            "q": "可以先測試嗎？",
+            "a": "可以，先發測試線路，跑 30 分鐘真實業務再下單。"
+          },
+          {
+            "q": "支援哪些設備？",
+            "a": "Windows、macOS、iOS、Android 與常見軟路由，協議以交付說明為準。"
+          },
+          {
+            "q": "出口會變嗎？",
+            "a": "正常情況下保持固定；確需更換會提前溝通並給過渡時間。"
+          },
+          {
+            "q": "支援哪些付款方式？",
+            "a": "以結算頁顯示為準，企業客戶可走合約與對公轉帳。"
+          },
+          {
+            "q": "掉線了怎麼辦？",
+            "a": "先排查本地網路與設備，再聯絡客服；屬線路問題按售後規則處理。"
+          }
+        ],
+        "finalTitle": "先把出口固定，再談放量。",
+        "finalSubtitle": "先測試一條線路，確認穩定後再決定長期方案。"
+      },
+      "tiktok-live-ip": {
+        "eyebrow": "直播網路 · 推流優化",
+        "title": "直播總掉線？先把網路這一段穩定下來",
+        "subtitle": "按直播地區匹配獨享住宅出口，必要時加 IEPL 中轉，再給到推流碼率與關鍵幀建議，從網路到參數一次配好。",
+        "keywords": "直播網路方案,直播推流IP,獨享住宅IP,IEPL中轉",
+        "trust": [
+          "按地區匹配",
+          "獨享出口",
+          "推流參數建議",
+          "中文遠端協助"
+        ],
+        "pains": [
+          "開播十分鐘掉一次，觀眾留不住。",
+          "晚高峰畫面糊，碼率上不去。",
+          "換了網路就要求驗證，節奏全亂。",
+          "同一出口跑多個直播間，互相拖累。",
+          "分不清是網路、設備還是參數的問題。"
+        ],
+        "solutions": [
+          "地區匹配：直播面向哪個市場，就用哪個地區的住宅出口。",
+          "獨享出口：一個直播間一條線路，不與他人搶頻寬。",
+          "IEPL 中轉：固定路徑繞開公網壅塞，延遲與丟包更可控。",
+          "上行餘量：按目標碼率預留約 30% 餘量，避免峰值頂滿。",
+          "參數建議：解析度、幀率、碼率與關鍵幀間隔按設備給方案。"
+        ],
+        "scenarios": [
+          "長時間直播推流",
+          "多地區直播間並行",
+          "直播前壓力測試",
+          "跨境團隊協作推流",
+          "直播與店鋪後台同環境"
+        ],
+        "specs": {
+          "region": "美國 / 英國 / 德國 / 日本 / 台灣 / 菲律賓",
+          "type": "獨享靜態住宅",
+          "protocol": "HTTP / SOCKS5 + 可選中轉",
+          "devices": "電腦推流、手機開播、常見編碼器",
+          "delivery": "人工設定 + 推流參數建議",
+          "billing": "月付，可季付 / 年付",
+          "support": "開播前測試、遠端協助"
+        },
+        "pricingNote": "直播方案按地區、頻寬與是否需要中轉組合報價。",
+        "faq": [
+          {
+            "q": "能保證完全不掉線嗎？",
+            "a": "不能承諾絕對，但獨享出口加固定路徑能把可控變數做到最好。"
+          },
+          {
+            "q": "需要多少上行頻寬？",
+            "a": "按目標碼率預留約 30% 餘量，具體按解析度與幀率核算。"
+          },
+          {
+            "q": "可以先跑測試流嗎？",
+            "a": "可以，開通前安排一次 30 分鐘測試。"
+          },
+          {
+            "q": "支援手機開播嗎？",
+            "a": "支援，iOS 與 Android 都可用，設定方式隨交付說明提供。"
+          },
+          {
+            "q": "多地區直播怎麼配？",
+            "a": "一個地區一條線路，按直播間分配，避免跨區混用。"
+          },
+          {
+            "q": "換地區要重新買嗎？",
+            "a": "不需要，按新地區調整線路即可，差價按實際結算。"
+          },
+          {
+            "q": "會幫我調推流參數嗎？",
+            "a": "會，按設備與目標畫質給到一組可用的起始參數。"
+          },
+          {
+            "q": "出現花屏先查什麼？",
+            "a": "先看丟包與上行佔用，再看編碼器設定，最後排查本地網路。"
+          }
+        ],
+        "finalTitle": "先固定網路，再優化內容。",
+        "finalSubtitle": "網路穩了，內容與投放才有意義。"
+      },
+      "iepl": {
+        "eyebrow": "IEPL · 跨境專線",
+        "title": "公網晚高峰不穩？換成固定路徑的專線",
+        "subtitle": "面向直播、客服與即時業務的跨境專線，路徑固定、延遲與抖動更可控；可與獨享住宅出口組合交付。",
+        "keywords": "IEPL專線,跨境專線,低延遲線路,直播專線",
+        "trust": [
+          "固定路徑",
+          "低延遲低抖動",
+          "雙線冗餘",
+          "可按峰值擴容"
+        ],
+        "pains": [
+          "晚高峰延遲飆升，操作明顯卡頓。",
+          "丟包導致畫面花屏、推流中斷。",
+          "公網路徑不可控，出問題很難定位。",
+          "關鍵業務只有一條線路，沒有備份。"
+        ],
+        "solutions": [
+          "固定路徑：繞開公網壅塞節點，延遲曲線更平。",
+          "頻寬預留：按業務峰值配置，不與他人搶出口。",
+          "雙線冗餘：關鍵業務可做主備切換。",
+          "可觀測：提供延遲、丟包與故障排查建議。",
+          "組合交付：專線加獨享住宅出口，一次配好。"
+        ],
+        "scenarios": [
+          "直播推流上行",
+          "跨境客服與即時溝通",
+          "多店鋪後台批次操作",
+          "海外倉與 ERP 存取",
+          "關鍵業務雙線備份"
+        ],
+        "specs": {
+          "region": "美國 / 英國 / 德國 / 日本 / 台灣 / 菲律賓",
+          "type": "IEPL 跨境專線",
+          "protocol": "連接埠轉發 / 專屬通道",
+          "devices": "軟路由、伺服器、辦公網路",
+          "delivery": "人工開通與聯合調試",
+          "billing": "按月頻寬計費",
+          "support": "測試、故障回應、擴容"
+        },
+        "pricingNote": "專線按頻寬與地區計價，先確認峰值再給方案。",
+        "faq": [
+          {
+            "q": "IEPL 和普通線路區別？",
+            "a": "走固定路徑，不經過不可控的公網壅塞節點，延遲與丟包更穩定。"
+          },
+          {
+            "q": "能保證 100% 不掉線嗎？",
+            "a": "不能承諾絕對，但專線把可控變數做到最好，並有明確的回應時限。"
+          },
+          {
+            "q": "需要多大頻寬？",
+            "a": "按業務峰值配置，直播按碼率加餘量，辦公按併發數估算。"
+          },
+          {
+            "q": "可以做雙線嗎？",
+            "a": "可以，關鍵業務建議主備兩條不同路徑。"
+          },
+          {
+            "q": "能和其他線路組合嗎？",
+            "a": "可以，專線負責穩定路徑，住宅出口負責網路身份。"
+          },
+          {
+            "q": "開通要多久？",
+            "a": "視資源情況，通常需要人工確認與聯合調試，具體以客服回覆為準。"
+          },
+          {
+            "q": "出故障怎麼處理？",
+            "a": "先遠端排查，屬線路問題按回應時限處理並給出替代方案。"
+          },
+          {
+            "q": "可以先壓測嗎？",
+            "a": "可以，開通前安排測試與壓力測試。"
+          }
+        ],
+        "finalTitle": "先算清一次中斷的成本。",
+        "finalSubtitle": "把網路從碰運氣，變成可管理的基礎設施。"
+      },
+      "asia-ip": {
+        "eyebrow": "日本 · 台灣 · 菲律賓",
+        "title": "做亞洲市場，用對地區的住宅出口",
+        "subtitle": "日本、台灣、菲律賓獨享靜態住宅 IP，按目標市場匹配出口，內容語言、操作環境與地區保持一致。",
+        "keywords": "日本住宅IP,台灣住宅IP,菲律賓住宅IP,亞洲直播網路",
+        "trust": [
+          "三地區可選",
+          "獨享靜態住宅",
+          "按市場分配",
+          "中文交付"
+        ],
+        "pains": [
+          "用美國出口做日本區內容，環境對不上。",
+          "一條線路跨多個市場，操作穩定性受影響。",
+          "東南亞測試成本高，不敢放量。",
+          "內容語言與出口地區不一致，效果難判斷。"
+        ],
+        "solutions": [
+          "按市場分配：日本、台灣、菲律賓分別匹配出口。",
+          "不跨區混用：一個店鋪固定一個地區。",
+          "可選 IEPL：降低亞洲區延遲與抖動。",
+          "先小規模測試：驗證後再批次開通。",
+          "交付清單：地區、ASN 與設定一次給全。"
+        ],
+        "scenarios": [
+          "亞洲區直播",
+          "本地電商與獨立站",
+          "內容本地化驗證",
+          "東南亞市場測試",
+          "多地區社群運營"
+        ],
+        "specs": {
+          "region": "日本 / 台灣 / 菲律賓",
+          "type": "獨享靜態住宅",
+          "protocol": "HTTP / SOCKS5",
+          "devices": "電腦、手機、軟路由",
+          "delivery": "人工交付",
+          "billing": "月付，可季付",
+          "support": "測試、更換、中文客服"
+        },
+        "pricingNote": "三地區庫存與成本不同，按地區分別報價。",
+        "faq": [
+          {
+            "q": "亞洲出口能存取歐美平台嗎？",
+            "a": "可以，但建議出口地區與目標市場一致，環境才自洽。"
+          },
+          {
+            "q": "哪個地區成本更低？",
+            "a": "菲律賓相對低，日本與台灣資源更緊，具體按當期庫存。"
+          },
+          {
+            "q": "能同時買多個地區嗎？",
+            "a": "可以，按店鋪或專案分配。"
+          },
+          {
+            "q": "能先測試嗎？",
+            "a": "可以，先發測試線路驗證登入與載入速度。"
+          },
+          {
+            "q": "內容語言要一起改嗎？",
+            "a": "建議一致，語言與地區匹配時資料更好判斷。"
+          },
+          {
+            "q": "延遲大概多少？",
+            "a": "取決於你所在位置與目標地區，測試時可實測。"
+          },
+          {
+            "q": "支援季付嗎？",
+            "a": "支援，長期使用可年付，具體按方案確認。"
+          },
+          {
+            "q": "出口被封怎麼辦？",
+            "a": "核實後按售後規則更換，並協助排查使用方式。"
+          }
+        ],
+        "finalTitle": "先選對地區，再談放量。",
+        "finalSubtitle": "地區、語言與環境一致，運營資料才有參考價值。"
+      },
+      "enterprise": {
+        "eyebrow": "企業方案 · 多店鋪",
+        "title": "把出口當成基礎設施來管",
+        "subtitle": "按店鋪與團隊規模規劃獨享出口，統一交付、統一續費、統一售後，支援合約、發票與明確的回應時限。",
+        "keywords": "企業IP方案,多店鋪網路,批次住宅IP,企業專線",
+        "trust": [
+          "合約與發票",
+          "批次交付",
+          "專屬對接人",
+          "明確回應時限"
+        ],
+        "pains": [
+          "出口分散採購，沒有模板。",
+          "人員變動就斷檔，交接靠口頭。",
+          "店鋪出現關聯時才發現出口混用。",
+          "財務要發票，供應商給不了。"
+        ],
+        "solutions": [
+          "出口規劃：按店鋪、地區與平台做分配表。",
+          "批次交付：統一設定表、統一續費、統一故障入口。",
+          "合約與發票：企業合約、對公轉帳與合規票據。",
+          "回應時限：故障按約定時限回應，給出替代方案。",
+          "交接文件：設定與責任人寫清楚，換人不掉鏈子。"
+        ],
+        "scenarios": [
+          "跨境代運營團隊",
+          "多店鋪賣家",
+          "直播機構",
+          "海外倉與獨立站團隊",
+          "需要合約與發票的企業"
+        ],
+        "specs": {
+          "region": "六地區組合（美 / 英 / 德 / 日 / 台 / 菲）",
+          "type": "獨享住宅 + 可選專線",
+          "protocol": "按業務環境設定",
+          "devices": "辦公網路、伺服器、軟路由",
+          "delivery": "批次開通與設定表",
+          "billing": "月付 / 季付 / 年付",
+          "support": "專屬對接人 + 回應時限"
+        },
+        "pricingNote": "企業方案按數量、地區組合與服務級別報價，支援年度合約。",
+        "faq": [
+          {
+            "q": "最少多少條起？",
+            "a": "批次方案建議 10 條起，具體按業務規模確認。"
+          },
+          {
+            "q": "能簽合約嗎？",
+            "a": "可以，支援企業合約與保密條款。"
+          },
+          {
+            "q": "能開發票嗎？",
+            "a": "可以，按企業資質開立合規票據。"
+          },
+          {
+            "q": "出口被封怎麼處理？",
+            "a": "核實後按約定時限更換，並協助排查使用方式。"
+          },
+          {
+            "q": "能統一續費嗎？",
+            "a": "可以，所有線路按同一帳期續費，避免漏續。"
+          },
+          {
+            "q": "交接怎麼做？",
+            "a": "提供設定表與責任人清單，交接有據可查。"
+          },
+          {
+            "q": "支援試用嗎？",
+            "a": "支援抽樣測試，確認後再批次開通。"
+          },
+          {
+            "q": "回應時間多久？",
+            "a": "按服務級別約定，工作日優先回應。"
+          }
+        ],
+        "finalTitle": "把採購從雜事，變成可管理的基礎設施。",
+        "finalSubtitle": "模板、交付與售後統一，規模越大越省心。"
+      }
+    }
+  }
+}

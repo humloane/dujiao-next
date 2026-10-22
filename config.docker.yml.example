@@ -1,0 +1,198 @@
+# 本地 Docker 测试环境配置模板
+#
+# 不要直接提交真实密钥：scripts/docker-local.sh init 会基于本模板生成
+# config.docker.yml，并把下面四个占位符替换为随机值。config.docker.yml 已被
+# .gitignore 忽略，仅存在于本机。
+#
+# 与 config.yml.example 的差异只为本地单机测试服务：
+#   - Redis / 队列指向 compose 内的 redis 服务
+#   - SMTP、Telegram、Google 登录默认关闭
+#   - trusted_proxies 为空：容器直接暴露 8080，没有反向代理
+#   - server.mode 使用 debug，便于看请求日志
+
+app:
+  secret_key: __APP_SECRET_KEY__
+  totp_issuer: Dujiao-Next Local
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  mode: debug
+  trusted_proxies: []
+
+log:
+  dir: /app/logs
+  filename: app.log
+  max_size_mb: 100
+  max_backups: 7
+  max_age_days: 30
+  compress: true
+
+database:
+  driver: sqlite
+  dsn: ./db/dujiao.db
+  pool:
+    max_open_conns: 1
+    max_idle_conns: 1
+    conn_max_lifetime_seconds: 0
+    conn_max_idle_time_seconds: 0
+
+jwt:
+  secret: __JWT_SECRET__
+  expire_hours: 24
+
+user_jwt:
+  secret: __USER_JWT_SECRET__
+  expire_hours: 24
+  remember_me_expire_hours: 168
+
+bootstrap:
+  # 首次启动时创建的管理员；登录后台后请立即修改密码。
+  default_admin_username: "admin"
+  default_admin_password: "__ADMIN_PASSWORD__"
+
+telegram_auth:
+  enabled: false
+  bot_username: ""
+  bot_token: ""
+  client_secret: ""
+  oidc_redirect_uri: ""
+  mini_app_url: ""
+  login_expire_seconds: 300
+  replay_ttl_seconds: 300
+
+google_auth:
+  enabled: false
+  client_id: ""
+
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+  password: ""
+  db: 0
+  prefix: "dj"
+
+queue:
+  enabled: true
+  host: redis
+  port: 6379
+  password: ""
+  db: 1
+  concurrency: 10
+  queues:
+    default: 10
+    critical: 5
+  upstream_sync_interval: "5m"
+
+upload:
+  max_size: 10485760
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+  allowed_extensions:
+    - .jpg
+    - .jpeg
+    - .png
+    - .gif
+    - .webp
+  max_width: 4096
+  max_height: 4096
+
+cors:
+  allowed_origins:
+    - "http://localhost:8080"
+    - "http://127.0.0.1:8080"
+    - "http://localhost:5173"
+    - "http://127.0.0.1:5173"
+    - "http://localhost:5174"
+    - "http://127.0.0.1:5174"
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed_headers:
+    - Content-Type
+    - Content-Length
+    - Accept-Encoding
+    - Authorization
+    - Cache-Control
+    - X-Requested-With
+    - X-CSRF-Token
+  allow_credentials: true
+  max_age: 600
+
+security:
+  login_rate_limit:
+    window_seconds: 300
+    max_attempts: 5
+    block_seconds: 900
+  password_policy:
+    min_length: 8
+    require_upper: true
+    require_lower: true
+    require_number: true
+    require_special: false
+
+# 本地不启用邮件；需要测试注册验证码时可在后台设置里配置 SMTP。
+email:
+  enabled: false
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  from: ""
+  from_name: ""
+  use_tls: true
+  use_ssl: false
+  verify_code:
+    expire_minutes: 10
+    send_interval_seconds: 60
+    max_attempts: 5
+    length: 6
+
+order:
+  payment_expire_minutes: 15
+  max_refund_days: 30
+
+captcha:
+  provider: none
+  scenes:
+    login: false
+    register_send_code: false
+    reset_send_code: false
+    guest_create_order: false
+    gift_card_redeem: false
+  image:
+    length: 5
+    width: 240
+    height: 80
+    noise_count: 2
+    show_line: 2
+    expire_seconds: 300
+    max_store: 10240
+  turnstile:
+    site_key: ""
+    secret_key: ""
+    verify_url: https://challenges.cloudflare.com/turnstile/v0/siteverify
+    timeout_ms: 2000
+
+# 本地默认关闭分销；要测试分销/白标站点时改成 true 并重启。
+reseller:
+  enabled: false
+  main_hosts:
+    - localhost
+    - 127.0.0.1
+    - "::1"
+  trusted_forwarded_host: false
+  subdomain_base: ""
+  self_apply_enabled: true
+  settlement_confirm_days: 0
+
+web:
+  admin_path: "/admin"

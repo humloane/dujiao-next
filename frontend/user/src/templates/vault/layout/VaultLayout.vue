@@ -27,8 +27,8 @@
         </nav>
 
         <div class="ml-auto flex items-center gap-2">
-          <RouterLink class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" to="/products" :aria-label="t('nav.products')"><Search class="h-[18px] w-[18px]" /></RouterLink>
-          <RouterLink v-if="!userAuthStore.isAuthenticated" class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" to="/guest/orders" :aria-label="t('navbar.guestOrders')" :title="t('navbar.guestOrders')"><ClipboardList class="h-[18px] w-[18px]" /></RouterLink>
+          <RouterLink class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary max-[380px]:hidden" to="/products" :aria-label="t('nav.products')"><Search class="h-[18px] w-[18px]" /></RouterLink>
+          <RouterLink v-if="!userAuthStore.isAuthenticated" class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary max-[380px]:hidden" to="/guest/orders" :aria-label="t('navbar.guestOrders')" :title="t('navbar.guestOrders')"><ClipboardList class="h-[18px] w-[18px]" /></RouterLink>
           <button class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" type="button" :aria-label="t('resellerConsole.common.toggleTheme')" @click="toggleTheme">
             <Sun v-if="theme === 'dark'" class="h-[18px] w-[18px]" />
             <Moon v-else class="h-[18px] w-[18px]" />
@@ -59,31 +59,122 @@
           </template>
           <RouterLink v-else class="inline-flex items-center gap-2 rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-bold text-primary-foreground transition-colors hover:bg-primary/90 max-[900px]:hidden" to="/auth/login">{{ t('navbar.login') }}</RouterLink>
 
-          <!-- 移动端：更多菜单 -->
-          <div class="relative hidden max-[900px]:block" ref="moreEl">
-            <button class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" type="button" :aria-label="t('navbar.more')" @click="toggleMore">
-              <Menu v-if="!moreOpen" class="pointer-events-none h-[18px] w-[18px]" />
-              <X v-else class="pointer-events-none h-[18px] w-[18px]" />
+          <!-- 移动端：全屏抽屉（含全部主菜单、语言与 Telegram） -->
+          <button
+            class="hidden h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary max-[900px]:grid"
+            type="button"
+            :aria-label="t('navbar.menu')"
+            aria-haspopup="dialog"
+            :aria-expanded="mobileMenuOpen"
+            @click="openMobileMenu"
+          >
+            <Menu class="h-[18px] w-[18px]" />
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 移动端抽屉：所有主菜单 + 语言 + Telegram，锁定滚动、Esc 关闭、焦点陷阱 -->
+    <Teleport to="body">
+      <div v-if="mobileMenuOpen" class="fixed inset-0 z-[80] hidden max-[900px]:block">
+        <div class="absolute inset-0 bg-black/60" @click="closeMobileMenu"></div>
+        <div
+          ref="drawerRef"
+          class="absolute inset-y-0 right-0 flex w-[88vw] max-w-[22rem] flex-col overflow-y-auto border-l bg-card shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="t('navbar.menu')"
+          tabindex="-1"
+          style="overscroll-behavior: contain;"
+        >
+          <div class="flex items-center justify-between gap-3 border-b px-4 py-3">
+            <span class="min-w-0 truncate text-base font-bold">{{ brandName }}</span>
+            <button
+              type="button"
+              class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary"
+              :aria-label="t('navbar.closeMenu')"
+              @click="closeMobileMenu"
+            >
+              <X class="h-5 w-5" />
             </button>
-            <div v-if="moreOpen" class="absolute right-0 top-[calc(100%+8px)] z-[60] flex min-w-[168px] flex-col gap-0.5 rounded-md border bg-card p-2 shadow-[var(--shadow-lg)]">
-              <template v-for="item in menuItems" :key="`m-${item.key}`">
-                <RouterLink v-if="item.type === 'route'" :to="item.path" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="moreOpen = false">{{ item.label }}</RouterLink>
-                <a v-else :href="item.path" :target="item.target" rel="noopener noreferrer" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="moreOpen = false">{{ item.label }}</a>
-              </template>
-              <RouterLink v-if="!userAuthStore.isAuthenticated" to="/guest/orders" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="moreOpen = false">{{ t('navbar.guestOrders') }}</RouterLink>
-              <RouterLink v-if="userAuthStore.isAuthenticated" to="/me" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="moreOpen = false">{{ t('navbar.personalCenter') }}</RouterLink>
-              <RouterLink v-else to="/auth/login" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="moreOpen = false">{{ t('navbar.login') }}</RouterLink>
-              <button v-if="userAuthStore.isAuthenticated" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" @click="userAuthStore.logout(); moreOpen = false">{{ t('navbar.logout') }}</button>
-              <span class="px-3 pb-0.5 pt-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{{ t('navbar.selectLanguage') }}</span>
-              <button v-for="lang in languages" :key="`ml-${lang.code}`" class="flex w-full items-center justify-between gap-2.5 rounded-sm px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-secondary hover:text-foreground" :class="appStore.locale === lang.code ? 'text-primary' : 'text-muted-foreground'" @click="changeLanguage(lang.code); moreOpen = false">
+          </div>
+
+          <nav class="flex-1">
+            <template v-for="item in mobileMenuItems" :key="`d-${item.key}`">
+              <RouterLink
+                v-if="item.type === 'route'"
+                :to="item.path"
+                class="flex min-h-14 items-center gap-3 border-b px-4 text-base text-foreground"
+                active-class="!text-primary !font-semibold"
+                @click="closeMobileMenu"
+              >
+                <component :is="item.icon" class="h-5 w-5 shrink-0 opacity-70" />
+                <span class="min-w-0 truncate">{{ item.label }}</span>
+              </RouterLink>
+              <a
+                v-else
+                :href="item.path"
+                :target="item.target"
+                rel="noopener noreferrer"
+                class="flex min-h-14 items-center gap-3 border-b px-4 text-base text-foreground"
+                @click="closeMobileMenu"
+              >
+                <component :is="item.icon" class="h-5 w-5 shrink-0 opacity-70" />
+                <span class="min-w-0 truncate">{{ item.label }}</span>
+              </a>
+            </template>
+
+            <RouterLink
+              v-if="!userAuthStore.isAuthenticated"
+              to="/guest/orders"
+              class="flex min-h-14 items-center gap-3 border-b px-4 text-base text-foreground"
+              active-class="!text-primary !font-semibold"
+              @click="closeMobileMenu"
+            >
+              <ClipboardList class="h-5 w-5 shrink-0 opacity-70" />
+              {{ t('navbar.guestOrders') }}
+            </RouterLink>
+            <a
+              v-if="contact?.telegram"
+              :href="String(contact.telegram)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex min-h-14 items-center gap-3 border-b px-4 text-base text-foreground"
+              @click="closeMobileMenu"
+            >
+              <Send class="h-5 w-5 shrink-0 opacity-70" />
+              {{ t('navbar.telegram') }}
+            </a>
+            <button
+              v-if="userAuthStore.isAuthenticated"
+              type="button"
+              class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-destructive"
+              @click="userAuthStore.logout(); closeMobileMenu()"
+            >
+              <LogOut class="h-5 w-5 shrink-0 opacity-70" />
+              {{ t('navbar.logout') }}
+            </button>
+          </nav>
+
+          <div class="border-t px-4 py-4">
+            <span class="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">{{ t('navbar.selectLanguage') }}</span>
+            <div class="mt-2 grid gap-1">
+              <button
+                v-for="lang in languages"
+                :key="`d-${lang.code}`"
+                type="button"
+                class="flex min-h-12 items-center justify-between rounded-xl px-3 text-base"
+                :class="appStore.locale === lang.code ? 'font-semibold text-primary' : 'text-muted-foreground'"
+                @click="changeLanguage(lang.code); closeMobileMenu()"
+              >
                 {{ lang.name }}
-                <span v-if="appStore.locale === lang.code" class="h-[7px] w-[7px] rounded-full bg-primary"></span>
+                <span v-if="appStore.locale === lang.code" class="h-1.5 w-1.5 rounded-full bg-primary"></span>
               </button>
             </div>
           </div>
         </div>
       </div>
-    </header>
+    </Teleport>
 
     <!-- 页面内容 -->
     <main class="flex-1">
@@ -138,7 +229,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Search, Moon, Sun, ShoppingCart, Languages, Menu, X, User, Info, ClipboardList, LogOut, Github,
@@ -170,9 +261,10 @@ const userAuthStore = useUserAuthStore()
 const { theme, toggleTheme } = useTheme()
 
 const langOpen = ref(false)
-const moreOpen = ref(false)
 const langEl = ref<HTMLElement | null>(null)
-const moreEl = ref<HTMLElement | null>(null)
+const mobileMenuOpen = ref(false)
+const drawerRef = ref<HTMLElement | null>(null)
+let previousBodyOverflow = ''
 
 const year = new Date().getFullYear()
 
@@ -190,7 +282,10 @@ const brandDescription = computed(() => {
   return ''
 })
 
-const { isListMode, blogEnabled, noticeEnabled, aboutEnabled, secondaryNavItems } = useNavConfig()
+const { isListMode, blogEnabled, noticeEnabled, aboutEnabled, secondaryNavItems, primaryNavItems } = useNavConfig()
+
+// 移动端抽屉展示全部主菜单（首页 / 商品 / 博客 / 公告 / 关于 / 自定义项）
+const mobileMenuItems = primaryNavItems
 
 const menuItems = computed<NavItem[]>(() => {
   const items: NavItem[] = []
@@ -230,13 +325,56 @@ const changeLanguage = (code: string) => {
   langOpen.value = false
 }
 
-const toggleLang = () => { langOpen.value = !langOpen.value; moreOpen.value = false }
-const toggleMore = () => { moreOpen.value = !moreOpen.value; langOpen.value = false }
+const toggleLang = () => { langOpen.value = !langOpen.value }
+
+const drawerFocusSelector = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+const openMobileMenu = () => {
+  mobileMenuOpen.value = true
+}
+
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false
+}
+
+const onDrawerKeydown = (event: KeyboardEvent) => {
+  if (!mobileMenuOpen.value) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closeMobileMenu()
+    return
+  }
+  if (event.key !== 'Tab' || !drawerRef.value) return
+  const items = Array.from(drawerRef.value.querySelectorAll<HTMLElement>(drawerFocusSelector))
+  if (items.length === 0) return
+  const first = items[0] as HTMLElement
+  const last = items[items.length - 1] as HTMLElement
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(mobileMenuOpen, async (open) => {
+  if (typeof document === 'undefined') return
+  if (open) {
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onDrawerKeydown)
+    await nextTick()
+    drawerRef.value?.querySelector<HTMLElement>(drawerFocusSelector)?.focus()
+    return
+  }
+  document.body.style.overflow = previousBodyOverflow
+  document.removeEventListener('keydown', onDrawerKeydown)
+})
 
 const onDocClick = (e: MouseEvent) => {
   const target = e.target as Node
   if (langOpen.value && langEl.value && !langEl.value.contains(target)) langOpen.value = false
-  if (moreOpen.value && moreEl.value && !moreEl.value.contains(target)) moreOpen.value = false
 }
 
 onMounted(() => {
@@ -247,6 +385,8 @@ onMounted(() => {
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onDrawerKeydown)
+  document.body.style.overflow = previousBodyOverflow
   document.body.classList.remove('vault-tokens')
 })
 </script>

@@ -1,6 +1,28 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./styles/tokens.css";
 @plugin "@tailwindcss/typography";
+
+/*
+ * Container utility (Tailwind v4).
+ * v4 no longer reads `theme.container` from tailwind.config.js, so the same
+ * values (center + 16/24/32px padding + 1200px max-width) are declared here as
+ * the real source of truth. Keep both in sync if the design changes.
+ */
+@utility container {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 1200px;
+  padding-inline: 1rem;
+
+  @variant md {
+    padding-inline: 1.5rem;
+  }
+
+  @variant xl {
+    padding-inline: 2rem;
+  }
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 

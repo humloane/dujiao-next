@@ -84,13 +84,19 @@ func NewWriteService(options Options) *WriteService {
 
 // CreateProductInput 创建或完整更新商品的输入。
 type CreateProductInput struct {
-	CategoryID           uint
-	Slug                 string
-	SeoMetaJSON          map[string]interface{}
-	TitleJSON            map[string]interface{}
-	DescriptionJSON      map[string]interface{}
-	ContentJSON          map[string]interface{}
-	InstructionsJSON     map[string]interface{}
+	CategoryID       uint
+	Slug             string
+	SeoMetaJSON      map[string]interface{}
+	TitleJSON        map[string]interface{}
+	DescriptionJSON  map[string]interface{}
+	ContentJSON      map[string]interface{}
+	InstructionsJSON map[string]interface{}
+	// 结构化元数据使用指针区分「未提交」与「显式清空」，保证旧版管理端
+	// 不携带这些字段时不会把已有筛选信息静默抹掉。
+	Country              *string
+	Scenario             *[]string
+	IPType               *string
+	LineType             *string
 	ManualFormSchemaJSON map[string]interface{}
 	PriceAmount          decimal.Decimal
 	CostPriceAmount      decimal.Decimal

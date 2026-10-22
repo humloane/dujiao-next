@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -67,6 +68,31 @@ func TestGenerateReturnsCachedDocumentWithoutReadingSources(t *testing.T) {
 	}
 	if catalog.calls != 0 || posts.calls != 0 {
 		t.Fatalf("cache hit must skip sources: catalog=%d posts=%d", catalog.calls, posts.calls)
+	}
+}
+
+func TestGenerateIncludesLandingPagesAndHreflang(t *testing.T) {
+	service, err := NewService(&catalogStub{}, &postStub{}, &cacheStub{})
+	if err != nil {
+		t.Fatalf("new service failed: %v", err)
+	}
+	document, err := service.Generate(context.Background(), "https://example.com")
+	if err != nil {
+		t.Fatalf("generate failed: %v", err)
+	}
+	for _, needle := range []string{
+		"https://example.com/lp/us-residential-ip",
+		"https://example.com/lp/tiktok-live-ip",
+		"https://example.com/lp/iepl",
+		"https://example.com/lp/asia-ip",
+		"https://example.com/lp/enterprise",
+		`xmlns:xhtml="http://www.w3.org/1999/xhtml"`,
+		`hreflang="zh-CN"`,
+		`hreflang="x-default"`,
+	} {
+		if !strings.Contains(document, needle) {
+			t.Fatalf("sitemap missing %q", needle)
+		}
 	}
 }
 

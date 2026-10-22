@@ -106,6 +106,33 @@ func TestListPublicForTenantBuildsVisibilityFilterBeforePagination(t *testing.T)
 	}
 }
 
+func TestListPublicFilteredNormalizesStructuredFilters(t *testing.T) {
+	products := &productRepositoryStub{}
+	service := NewService(Options{Products: products})
+
+	_, _, err := service.ListPublicFiltered("", "", productcontract.PublicFilter{
+		Country:  " us ",
+		Scenario: "store_group",
+		IPType:   "data",
+		LineType: "IEPL",
+		Sort:     "price-asc",
+	}, 1, 12)
+	if err != nil {
+		t.Fatalf("ListPublicFiltered returned error: %v", err)
+	}
+
+	if products.filter.Country != "US" ||
+		products.filter.Scenario != productdomain.ScenarioStoreGroup ||
+		products.filter.IPType != productdomain.IPTypeDatacenter ||
+		products.filter.LineType != productdomain.LineTypeIEPL ||
+		products.filter.Sort != "price_asc" {
+		t.Fatalf("unexpected normalized filter: %#v", products.filter)
+	}
+	if !products.filter.OnlyActive || !products.filter.WithCategory {
+		t.Fatalf("public visibility flags missing: %#v", products.filter)
+	}
+}
+
 func TestQueryServiceUsesProductContractErrors(t *testing.T) {
 	service := NewService(Options{
 		Products: &productRepositoryStub{},

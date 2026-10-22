@@ -93,17 +93,26 @@ func (s *Service) GenerateRobots(baseURL string) string {
 
 // xmlEntry 是 sitemap.xml 的传输结构。
 type xmlEntry struct {
-	XMLName    xml.Name `xml:"url"`
-	Loc        string   `xml:"loc"`
-	LastMod    string   `xml:"lastmod,omitempty"`
-	ChangeFreq string   `xml:"changefreq,omitempty"`
-	Priority   string   `xml:"priority,omitempty"`
+	XMLName    xml.Name  `xml:"url"`
+	Loc        string    `xml:"loc"`
+	LastMod    string    `xml:"lastmod,omitempty"`
+	ChangeFreq string    `xml:"changefreq,omitempty"`
+	Priority   string    `xml:"priority,omitempty"`
+	Alternates []xmlLink `xml:"xhtml:link,omitempty"`
+}
+
+// xmlLink 是 sitemap 中的 hreflang 备用链接。
+type xmlLink struct {
+	Rel      string `xml:"rel,attr"`
+	HrefLang string `xml:"hreflang,attr"`
+	Href     string `xml:"href,attr"`
 }
 
 type urlSet struct {
-	XMLName xml.Name   `xml:"urlset"`
-	Xmlns   string     `xml:"xmlns,attr"`
-	URLs    []xmlEntry `xml:"url"`
+	XMLName    xml.Name   `xml:"urlset"`
+	Xmlns      string     `xml:"xmlns,attr"`
+	XmlnsXhtml string     `xml:"xmlns:xhtml,attr"`
+	URLs       []xmlEntry `xml:"url"`
 }
 
 func (s *Service) collectURLs(ctx context.Context, baseURL string) ([]domain.URL, error) {
@@ -123,6 +132,11 @@ func (s *Service) collectURLs(ctx context.Context, baseURL string) ([]domain.URL
 		{"/about", "monthly", "0.3"},
 		{"/terms", "yearly", "0.2"},
 		{"/privacy", "yearly", "0.2"},
+		{"/lp/us-residential-ip", "monthly", "0.8"},
+		{"/lp/tiktok-live-ip", "monthly", "0.8"},
+		{"/lp/iepl", "monthly", "0.8"},
+		{"/lp/asia-ip", "monthly", "0.8"},
+		{"/lp/enterprise", "monthly", "0.7"},
 	}
 	for _, p := range staticPages {
 		entries = append(entries, domain.URL{
@@ -180,22 +194,45 @@ func (s *Service) collectURLs(ctx context.Context, baseURL string) ([]domain.URL
 		})
 	}
 
+	// 为每个可索引 URL 生成三语 hreflang；前台 detectLocale 会读取 ?lang=。
+	for i := range entries {
+		path := strings.TrimPrefix(entries[i].Location, baseURL)
+		if path == "" {
+			path = "/"
+		}
+		entries[i].Alternates = map[string]string{
+			"zh-CN":     baseURL + path + "?lang=zh-CN",
+			"zh-TW":     baseURL + path + "?lang=zh-TW",
+			"en-US":     baseURL + path + "?lang=en-US",
+			"x-default": baseURL + path,
+		}
+	}
+
 	return entries, nil
 }
 
 func renderSitemapXML(entries []domain.URL) (string, error) {
 	xmlEntries := make([]xmlEntry, 0, len(entries))
 	for _, entry := range entries {
+		links := make([]xmlLink, 0, len(entry.Alternates))
+		for lang, href := range entry.Alternates {
+			if strings.TrimSpace(lang) == "" || strings.TrimSpace(href) == "" {
+				continue
+			}
+			links = append(links, xmlLink{Rel: "alternate", HrefLang: lang, Href: href})
+		}
 		xmlEntries = append(xmlEntries, xmlEntry{
 			Loc:        entry.Location,
 			LastMod:    entry.LastModified,
 			ChangeFreq: entry.ChangeFrequency,
 			Priority:   entry.Priority,
+			Alternates: links,
 		})
 	}
 	set := urlSet{
-		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
-		URLs:  xmlEntries,
+		Xmlns:      "http://www.sitemaps.org/schemas/sitemap/0.9",
+		XmlnsXhtml: "http://www.w3.org/1999/xhtml",
+		URLs:       xmlEntries,
 	}
 	body, err := xml.MarshalIndent(set, "", "  ")
 	if err != nil {

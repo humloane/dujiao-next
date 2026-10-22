@@ -558,7 +558,14 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     title: () => product.value ? getLocalizedText(product.value.title) : '',
     link: () => {
       if (!canonicalUrl.value) return []
-      return [{ rel: 'canonical', href: canonicalUrl.value }]
+      const base = canonicalUrl.value.split('?')[0]
+      return [
+        { key: 'canonical', rel: 'canonical', href: canonicalUrl.value },
+        { key: 'alternate-zh-CN', rel: 'alternate', hreflang: 'zh-CN', href: `${base}?lang=zh-CN` },
+        { key: 'alternate-zh-TW', rel: 'alternate', hreflang: 'zh-TW', href: `${base}?lang=zh-TW` },
+        { key: 'alternate-en-US', rel: 'alternate', hreflang: 'en-US', href: `${base}?lang=en-US` },
+        { key: 'alternate-x-default', rel: 'alternate', hreflang: 'x-default', href: base },
+      ]
     },
     meta: () => {
       if (!product.value) return []

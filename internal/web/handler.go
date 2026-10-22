@@ -13,6 +13,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// resolveRequestMeta 把 Gin 请求上下文交给已注册的 SEO 解析器。
+func resolveRequestMeta(c *gin.Context) *PageMeta {
+	provider := getMetaProvider()
+	if provider == nil || c == nil {
+		return nil
+	}
+	scheme := "https"
+	if c.Request.TLS == nil && c.GetHeader("X-Forwarded-Proto") == "" {
+		scheme = "http"
+	}
+	if proto := strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")); proto != "" {
+		scheme = proto
+	}
+	host := c.Request.Host
+	if forwardedHost := strings.TrimSpace(c.GetHeader("X-Forwarded-Host")); forwardedHost != "" {
+		host = forwardedHost
+	}
+	return provider(MetaRequest{
+		Context:        c.Request.Context(),
+		Path:           c.Request.URL.Path,
+		RawQuery:       c.Request.URL.RawQuery,
+		Host:           host,
+		Scheme:         scheme,
+		AcceptLanguage: c.GetHeader("Accept-Language"),
+	})
+}
+
 // 保留路径，不能与 admin path 冲突或互为前缀。
 var reservedPaths = []string{"/api", "/uploads", "/health"}
 
@@ -186,14 +213,14 @@ func RegisterUser(r *gin.Engine, fsys fs.FS) error {
 
 		fp := strings.TrimPrefix(c.Request.URL.Path, "/")
 		if fp == "" || fp == "index.html" {
-			serveIndex(c, indexCached)
+			serveUserIndex(c.Writer, indexCached, resolveRequestMeta(c))
 			return
 		}
 		if hasFile(fsys, fp) {
 			serveAsset(c, fileServer, fp)
 			return
 		}
-		serveIndex(c, indexCached)
+		serveUserIndex(c.Writer, indexCached, resolveRequestMeta(c))
 	})
 	return nil
 }

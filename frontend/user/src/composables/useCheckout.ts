@@ -14,6 +14,8 @@ import { refreshCartStockSnapshots, cartItemPurchaseLimit as itemPurchaseLimit, 
 import { getImageUrl } from '../utils/image'
 import { getAffiliateCode, getAffiliateVisitorKey } from '../utils/affiliate'
 import { saveGuestOrderAuth } from '../utils/guestOrderAuth'
+import { getUTMPayload } from '../utils/utm'
+import { track } from '../utils/analytics'
 import ImageCaptcha from '../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../components/captcha/TurnstileCaptcha.vue'
 import { useLocalized, useProductLabels } from './useProduct'
@@ -71,6 +73,7 @@ export function useCheckout() {
   const previewLoading = ref(false)
   const previewError = ref('')
   const previewRequestId = ref(0)
+  const checkoutTracked = ref(false)
   const couponRefreshing = ref(false)
   const syncingStock = ref(false)
   const orderPaymentChannels = ref<any[]>([])
@@ -656,13 +659,17 @@ export function useCheckout() {
     fulfillment_type: item.fulfillmentType || undefined,
   }))
 
-  const buildOrderPayload = () => ({
-    coupon_code: normalizedCouponCode.value || undefined,
-    affiliate_code: getAffiliateCode() || undefined,
-    affiliate_visitor_key: getAffiliateVisitorKey() || undefined,
-    items: buildItemsPayload(),
-    manual_form_data: buildManualFormDataPayload(),
-  })
+  const buildOrderPayload = () => {
+    const utm = getUTMPayload()
+    return {
+      coupon_code: normalizedCouponCode.value || undefined,
+      affiliate_code: getAffiliateCode() || undefined,
+      affiliate_visitor_key: getAffiliateVisitorKey() || undefined,
+      utm: Object.keys(utm).length > 0 ? utm : undefined,
+      items: buildItemsPayload(),
+      manual_form_data: buildManualFormDataPayload(),
+    }
+  }
 
   const loadOrderPaymentChannels = async () => {
     if (!userAuthStore.isAuthenticated) {
@@ -764,6 +771,14 @@ export function useCheckout() {
 
       if (requestId !== previewRequestId.value) return
       preview.value = response.data.data
+      if (!checkoutTracked.value && preview.value) {
+        checkoutTracked.value = true
+        track('begin_checkout', {
+          value: preview.value.total_amount,
+          currency: preview.value.currency,
+          items: cartItems.value.length,
+        })
+      }
       if (userAuthStore.isAuthenticated) {
         debouncedLoadOrderPaymentChannels()
       } else {

@@ -1,7 +1,16 @@
 <template>
   <div id="app" class="min-h-screen bg-background text-foreground flex flex-col">
+    <!-- 落地页是独立投放页：不套站点外壳，避免深色页面与站点浅色主题混搭 -->
+    <ErrorBoundary v-if="isLandingPage">
+      <RouterView v-slot="{ Component }">
+        <Transition name="page-fade" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
+    </ErrorBoundary>
+
     <!-- vault 模板：自带顶栏/页脚的外壳包裹页面（控制台仍走下方分支） -->
-    <VaultLayout v-if="isVault && !isResellerConsole">
+    <VaultLayout v-else-if="isVault && !isResellerConsole">
       <ErrorBoundary>
         <RouterView v-slot="{ Component }">
           <Transition name="page-fade" mode="out-in">
@@ -14,7 +23,7 @@
     <!-- classic 模板 / 分销控制台（保持原有结构不变） -->
     <template v-else>
       <Navbar v-if="!isResellerConsole" />
-      <main class="flex-1" :class="isResellerConsole ? '' : 'pb-14 lg:pb-0'">
+      <main class="flex-1" :class="isResellerConsole ? '' : 'pb-14 md:pb-0'">
         <ErrorBoundary>
           <RouterView v-slot="{ Component }">
             <Transition name="page-fade" mode="out-in">
@@ -55,6 +64,8 @@ const VaultLayout = defineAsyncComponent(() => import('./templates/vault/layout/
 const appStore = useAppStore()
 const route = useRoute()
 const isResellerConsole = computed(() => route.meta.resellerConsole === true)
+// Landing pages carry their own sticky CTA instead of the global bottom nav.
+const isLandingPage = computed(() => route.name === 'landing-page')
 // getActiveTemplate 读取 appStore.config（响应式），config 加载后会重新计算
 const isVault = computed(() => getActiveTemplate() === 'vault')
 </script>

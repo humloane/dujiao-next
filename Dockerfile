@@ -13,6 +13,13 @@ WORKDIR /src
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
+# 可选统计 ID：Vite 只能把 import.meta.env 编译进产物，因此必须在构建期传入。
+# 留空时前端不会加载 GA4 / Clarity 脚本。
+ARG VITE_GA4_ID=""
+ARG VITE_CLARITY_ID=""
+ENV VITE_GA4_ID=${VITE_GA4_ID}
+ENV VITE_CLARITY_ID=${VITE_CLARITY_ID}
+
 # 先只拷 manifest，让依赖安装层能在源码变动时命中缓存
 COPY frontend/admin/package.json frontend/admin/pnpm-lock.yaml ./admin/
 COPY frontend/user/package.json  frontend/user/pnpm-lock.yaml  ./user/

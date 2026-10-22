@@ -1,11 +1,11 @@
 <template>
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-xl border-t theme-safe-bottom">
-    <div class="flex items-stretch h-14">
+  <nav class="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/90 backdrop-blur-xl theme-safe-bottom md:hidden">
+    <div class="flex h-14 items-stretch">
       <router-link
         v-for="item in navItems"
         :key="item.path"
         :to="item.path"
-        class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs transition-colors min-h-[44px]"
+        class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 text-[13px] transition-colors"
         :class="isActive(item.path) ? 'text-primary font-semibold' : 'text-muted-foreground'"
       >
         <!-- Home -->

@@ -43,6 +43,39 @@ export function useBlogDetail() {
     image: () => post.value?.thumbnail || '',
     canonicalPath: () => `/blog/${(route.params.slug as string) || ''}`,
     type: () => 'article',
+    jsonLd: () => {
+      if (!post.value) return undefined
+      const base = String(appStore.config?.brand?.site_url || '').replace(/\/+$/, '')
+        || (typeof window !== 'undefined' ? window.location.origin : '')
+      const canonical = `${base}/blog/${post.value.slug || route.params.slug || ''}`
+      const title = getLocalizedText(post.value.title)
+      const siteName = String(appStore.config?.brand?.site_name || 'Dujiao-Next')
+      const published = post.value.published_at || post.value.created_at
+      const article: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description: getLocalizedText(post.value.summary) || '',
+        url: canonical,
+        mainEntityOfPage: canonical,
+        datePublished: published || undefined,
+        dateModified: post.value.updated_at || published || undefined,
+        author: { '@type': 'Organization', name: siteName },
+        publisher: { '@type': 'Organization', name: siteName },
+      }
+      if (post.value.thumbnail) article.image = [post.value.thumbnail]
+      return [
+        article,
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: siteName, item: base + '/' },
+            { '@type': 'ListItem', position: 2, name: title, item: canonical },
+          ],
+        },
+      ]
+    },
   })
 
   const backLink = computed(() => {

@@ -278,7 +278,12 @@
     "guestOrders": "Guest Lookup",
     "logout": "Logout",
     "selectLanguage": "Select Language",
-    "more": "More"
+    "more": "More",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "telegram": "Telegram support",
+    "home": "Home",
+    "products": "All products"
   },
   "toast": {
     "addedToCart": "Added to cart"
@@ -1738,5 +1743,588 @@
     "authInvalid": "Credentials mismatch, please try again",
     "authSubmit": "Save and search",
     "authClear": "Clear saved info"
+  },
+  "productFilters": {
+    "title": "Filters",
+    "country": "Country / Region",
+    "scenario": "Use case",
+    "ipType": "IP type",
+    "lineType": "Line type",
+    "sort": "Sort",
+    "allCountries": "All countries",
+    "allScenarios": "All use cases",
+    "allIpTypes": "All IP types",
+    "allLineTypes": "All lines",
+    "shared": "Shared nodes",
+    "scenarios": {
+      "live": "Live streaming",
+      "ecommerce": "Cross-border e-commerce",
+      "store-group": "Multi-store",
+      "ads": "Advertising",
+      "enterprise": "Enterprise",
+      "test": "Testing"
+    },
+    "ipTypes": {
+      "residential": "Static residential",
+      "datacenter": "Datacenter",
+      "isp": "ISP",
+      "shared": "Shared"
+    },
+    "lineTypes": {
+      "direct": "Direct",
+      "iepl": "IEPL",
+      "shared": "Shared line"
+    },
+    "sorts": {
+      "recommended": "Recommended",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "newest": "Newest"
+    },
+    "sheetTitle": "Filter and sort",
+    "openFilters": "Filters",
+    "search": "Search options",
+    "noResults": "No matching options",
+    "apply": "Show results",
+    "reset": "Reset",
+    "activeCount": "{count} selected",
+    "close": "Close"
+  },
+  "landing": {
+    "nav": {
+      "home": "Back to home",
+      "products": "View all products",
+      "consult": "Telegram support"
+    },
+    "cta": {
+      "consult": "Telegram support",
+      "viewProducts": "View products & pricing",
+      "quote": "Get a quote",
+      "finalFallback": "Test first, then choose a long-term plan."
+    },
+    "sections": {
+      "pains": "What you may be facing",
+      "solutions": "How we solve it",
+      "process": "Getting started",
+      "specs": "Specs & delivery",
+      "compare": "Compare options",
+      "scenarios": "Use cases",
+      "pricing": "Pricing",
+      "cases": "Typical setups",
+      "faq": "FAQ",
+      "final": "Next step",
+      "trust": "Delivery standards"
+    },
+    "labels": {
+      "example": "Example",
+      "caseDisclaimer": "Illustrative setups only. They describe delivery, not real customer testimonials.",
+      "specRegion": "Regions",
+      "specType": "Line type",
+      "specProtocol": "Protocol",
+      "specDevices": "Devices",
+      "specDelivery": "Delivery",
+      "specBilling": "Billing",
+      "specSupport": "Support",
+      "compareFit": "Best for",
+      "included": "Includes",
+      "note": "Final configuration and pricing are confirmed on the order page or with support.",
+      "trustPayment": "Payment methods follow checkout",
+      "trustTelegram": "Direct Telegram support",
+      "priceNote": "Unconfirmed prices are quoted on request",
+      "stickyHint": "Need a region or a comparison? Ask support."
+    },
+    "process": [
+      "Tell us the region, platform and volume; we confirm stock.",
+      "Get a test line and run a real workload.",
+      "Place the order and receive the manual configuration.",
+      "Renewal reminders arrive before expiry; plans can be adjusted."
+    ],
+    "compare": {
+      "intro": "Three common setups. Pick by stage, not by the most expensive option.",
+      "items": [
+        {
+          "name": "Shared residential IP",
+          "detail": "Several users share one egress. Cheap and instant, but bandwidth and reputation vary.",
+          "fit": "Light testing, non-real-time work"
+        },
+        {
+          "name": "Dedicated static residential IP",
+          "detail": "Fixed egress with a verifiable ASN. Higher unit price; popular regions may wait for stock.",
+          "fit": "Live streaming, store admin, long sessions"
+        },
+        {
+          "name": "IEPL line",
+          "detail": "Fixed path with predictable peak-hour latency and loss. Priced by bandwidth, so plan your peak first.",
+          "fit": "Live uplink, real-time support, critical work"
+        }
+      ]
+    },
+    "pricing": {
+      "intro": "Pricing follows region and stock. Below is the plan structure; support confirms the actual quote.",
+      "contactQuote": "Quote on request",
+      "tiers": [
+        {
+          "name": "Trial",
+          "cycle": "per test",
+          "features": [
+            "One test line",
+            "30-minute real workload",
+            "ASN and region shared before delivery"
+          ]
+        },
+        {
+          "name": "Monthly",
+          "cycle": "per month",
+          "features": [
+            "Dedicated egress, renewed monthly",
+            "Manual delivery during business hours",
+            "Replacement if the line fails"
+          ]
+        },
+        {
+          "name": "Enterprise / annual",
+          "cycle": "per year",
+          "features": [
+            "Store and region planning",
+            "Contracts, invoices and reconciliation",
+            "Named contact and response target"
+          ]
+        }
+      ]
+    },
+    "cases": {
+      "intro": "Typical setups",
+      "disclaimer": "Illustrative setups only. They describe delivery, not real customer testimonials.",
+      "items": [
+        {
+          "title": "Cross-border live team",
+          "quote": "Once the egress and line were fixed, peak-hour drops dropped sharply and we stopped retuning bitrate daily.",
+          "meta": "6 regions · dedicated residential + IEPL"
+        },
+        {
+          "title": "Multi-store operations",
+          "quote": "One line per store. Handovers follow the configuration sheet, so new staff do not re-learn the network.",
+          "meta": "12 dedicated lines · monthly"
+        },
+        {
+          "title": "Enterprise procurement",
+          "quote": "One inventory and one renewal calendar beats everyone buying separately, and finance can reconcile it.",
+          "meta": "30 lines · annual contract"
+        }
+      ]
+    },
+    "pages": {
+      "us-residential-ip": {
+        "eyebrow": "US · Static residential · Dedicated egress",
+        "title": "US static residential IPs with a fixed network identity",
+        "subtitle": "Real carrier residential ranges with a dedicated egress, not shared with other users. City availability depends on stock, delivery is manual during business hours, and you test before you buy.",
+        "keywords": "US static residential IP,dedicated US IP,residential egress,live streaming network",
+        "trust": [
+          "Real residential ASN",
+          "Dedicated egress",
+          "Six regions",
+          "Chinese-language support"
+        ],
+        "pains": [
+          "The stream drops halfway through, viewers leave and the ad spend is wasted.",
+          "Peak-hour stutter caps bitrate and the picture turns to mush.",
+          "More stores mean mixed egresses, and account environments start affecting each other.",
+          "You were sold a residential IP, but the ASN still belongs to a datacenter."
+        ],
+        "solutions": [
+          "Real residential ranges: IPs belong to carrier broadband, so ASN and blocklists can be checked independently.",
+          "Dedicated egress: the exit is yours alone, with no shared bandwidth or reputation.",
+          "Fixed egress: replacements are coordinated in advance so environments do not shift overnight.",
+          "Optional IEPL: fixed-path transit that flattens peak-hour latency and loss.",
+          "Manual delivery: region, ASN and test results are shared before activation."
+        ],
+        "scenarios": [
+          "Long TikTok live sessions",
+          "Independent store admin and order handling",
+          "Multi-store operations with one egress per store",
+          "Long-running overseas social sessions",
+          "Ad campaigns and landing page testing"
+        ],
+        "specs": {
+          "region": "United States (city subject to stock)",
+          "type": "Static residential / dedicated egress",
+          "protocol": "HTTP / SOCKS5 as delivered",
+          "devices": "Windows / macOS / iOS / Android / router",
+          "delivery": "Manual, within 24h during business hours",
+          "billing": "Monthly; quarterly and annual available",
+          "support": "Testing, replacement, Chinese-language support"
+        },
+        "pricingNote": "US stock is relatively stable; quotes combine city and bandwidth.",
+        "faq": [
+          {
+            "q": "How do I verify it is residential?",
+            "a": "Check the ASN owner and blocklists. We provide a test line so you can verify before ordering."
+          },
+          {
+            "q": "What is the difference from shared?",
+            "a": "A dedicated egress is used only by you, so bandwidth and reputation are not mixed with other users."
+          },
+          {
+            "q": "Can I choose a city?",
+            "a": "Subject to stock. Support confirms the currently available cities before you order."
+          },
+          {
+            "q": "Can I test first?",
+            "a": "Yes. We issue a test line so you can run a 30-minute real workload."
+          },
+          {
+            "q": "Which devices are supported?",
+            "a": "Windows, macOS, iOS, Android and common routers; protocols follow the delivery notes."
+          },
+          {
+            "q": "Will the egress change?",
+            "a": "It stays fixed under normal operation. If a change is required we coordinate it and allow a transition window."
+          },
+          {
+            "q": "Which payment methods work?",
+            "a": "Whatever the checkout page shows. Enterprise customers can use contracts and bank transfer."
+          },
+          {
+            "q": "What if the line drops?",
+            "a": "Check your local network and device first, then contact support. Line issues follow the support policy."
+          }
+        ],
+        "finalTitle": "Fix the egress first, then scale traffic.",
+        "finalSubtitle": "Start with one test line and decide on the long-term plan once it is stable."
+      },
+      "tiktok-live-ip": {
+        "eyebrow": "Live streaming · Uplink tuning",
+        "title": "Live stream keeps dropping? Stabilise the network layer first",
+        "subtitle": "We match a dedicated residential egress to your live region, add IEPL transit when needed, then advise bitrate and keyframe settings so network and encoder are configured together.",
+        "keywords": "live streaming network,live uplink IP,dedicated residential IP,IEPL transit",
+        "trust": [
+          "Region matched",
+          "Dedicated egress",
+          "Encoder guidance",
+          "Remote assistance"
+        ],
+        "pains": [
+          "It drops every ten minutes and viewers do not stay.",
+          "Peak-hour blur: the bitrate simply will not hold.",
+          "Switching networks triggers verification and kills the schedule.",
+          "Several live rooms share one egress and drag each other down.",
+          "You cannot tell whether it is the network, the device or the settings."
+        ],
+        "solutions": [
+          "Region match: stream to a market, use a residential egress in that market.",
+          "Dedicated egress: one line per live room, with no bandwidth contention.",
+          "IEPL transit: a fixed path around public congestion, with steadier latency and loss.",
+          "Uplink headroom: reserve roughly 30% above target bitrate so peaks do not saturate the line.",
+          "Encoder guidance: resolution, frame rate, bitrate and keyframe interval by device."
+        ],
+        "scenarios": [
+          "Long live sessions",
+          "Parallel live rooms in multiple regions",
+          "Pre-show stress testing",
+          "Cross-border teams streaming together",
+          "Live streaming plus store admin on one environment"
+        ],
+        "specs": {
+          "region": "US / UK / Germany / Japan / Taiwan / Philippines",
+          "type": "Dedicated static residential",
+          "protocol": "HTTP / SOCKS5 with optional transit",
+          "devices": "Desktop encoders, mobile streaming, common hardware encoders",
+          "delivery": "Manual configuration plus encoder guidance",
+          "billing": "Monthly; quarterly and annual available",
+          "support": "Pre-show test, remote assistance"
+        },
+        "pricingNote": "Live plans are quoted by region, bandwidth and whether transit is included.",
+        "faq": [
+          {
+            "q": "Can you guarantee zero drops?",
+            "a": "Not absolutely, but a dedicated egress on a fixed path controls the variables that actually matter."
+          },
+          {
+            "q": "How much uplink do I need?",
+            "a": "Reserve about 30% above target bitrate; the exact figure depends on resolution and frame rate."
+          },
+          {
+            "q": "Can I run a test stream?",
+            "a": "Yes. A 30-minute test is scheduled before activation."
+          },
+          {
+            "q": "Can I stream from a phone?",
+            "a": "Yes, on iOS and Android. Setup instructions come with the delivery notes."
+          },
+          {
+            "q": "How do multi-region streams work?",
+            "a": "One line per region, assigned per live room, so regions are never mixed."
+          },
+          {
+            "q": "Do I have to rebuy to change region?",
+            "a": "No. Lines are adjusted to the new region and the difference is settled as used."
+          },
+          {
+            "q": "Will you tune my encoder?",
+            "a": "Yes, we provide a working starting profile for your device and target quality."
+          },
+          {
+            "q": "What should I check when the picture breaks up?",
+            "a": "Look at loss and uplink saturation first, then encoder settings, then the local network."
+          }
+        ],
+        "finalTitle": "Fix the network, then optimise content.",
+        "finalSubtitle": "Content and ad spend only pay off once the uplink is stable."
+      },
+      "iepl": {
+        "eyebrow": "IEPL · Cross-border line",
+        "title": "Public internet unstable at peak? Move to a fixed path",
+        "subtitle": "Cross-border lines for live streaming, support and real-time operations, with a fixed path and far more predictable latency and jitter. Can be bundled with a dedicated residential egress.",
+        "keywords": "IEPL line,cross-border line,low latency line,live streaming line",
+        "trust": [
+          "Fixed path",
+          "Low latency and jitter",
+          "Dual-line redundancy",
+          "Scales with peak"
+        ],
+        "pains": [
+          "Latency spikes at peak and every click lags.",
+          "Packet loss breaks the picture and kills the uplink.",
+          "Public routing is unpredictable and faults are hard to isolate.",
+          "Critical work runs on a single line with no backup."
+        ],
+        "solutions": [
+          "Fixed path: bypass congested public nodes, flattening the latency curve.",
+          "Reserved bandwidth: sized to your peak, not contended with strangers.",
+          "Dual-line redundancy: active/standby for critical workloads.",
+          "Observability: latency, loss and troubleshooting guidance included.",
+          "Bundled delivery: line plus dedicated residential egress configured together."
+        ],
+        "scenarios": [
+          "Live uplink streaming",
+          "Cross-border support and real-time calls",
+          "Bulk multi-store admin work",
+          "Overseas warehouse and ERP access",
+          "Dual-line backup for critical work"
+        ],
+        "specs": {
+          "region": "US / UK / Germany / Japan / Taiwan / Philippines",
+          "type": "IEPL cross-border line",
+          "protocol": "Port forwarding / dedicated tunnel",
+          "devices": "Routers, servers, office networks",
+          "delivery": "Manual provisioning and joint testing",
+          "billing": "Monthly, priced by bandwidth",
+          "support": "Testing, incident response, expansion"
+        },
+        "pricingNote": "Lines are priced by bandwidth and region. Confirm your peak first.",
+        "faq": [
+          {
+            "q": "How is IEPL different from a normal line?",
+            "a": "It uses a fixed path instead of unpredictable public routing, so latency and loss stay far more stable."
+          },
+          {
+            "q": "Can you guarantee 100% uptime?",
+            "a": "No absolute guarantee, but a dedicated line controls the variables and comes with a response target."
+          },
+          {
+            "q": "How much bandwidth do I need?",
+            "a": "Size for peak: bitrate plus headroom for streaming, concurrency for office work."
+          },
+          {
+            "q": "Can I run dual lines?",
+            "a": "Yes. For critical work we recommend active/standby over two distinct paths."
+          },
+          {
+            "q": "Can it be combined with other lines?",
+            "a": "Yes. The line provides a stable path, the residential egress provides the network identity."
+          },
+          {
+            "q": "How long does activation take?",
+            "a": "It depends on resources; provisioning and joint testing are manual. Support confirms the timeline."
+          },
+          {
+            "q": "What happens during an incident?",
+            "a": "We troubleshoot remotely, respond within the agreed window and provide a workaround."
+          },
+          {
+            "q": "Can I stress test first?",
+            "a": "Yes. Testing and stress testing are scheduled before activation."
+          }
+        ],
+        "finalTitle": "Price one outage before you buy.",
+        "finalSubtitle": "Turn networking from guesswork into managed infrastructure."
+      },
+      "asia-ip": {
+        "eyebrow": "Japan · Taiwan · Philippines",
+        "title": "For Asian markets, use an egress in the right region",
+        "subtitle": "Dedicated static residential IPs in Japan, Taiwan and the Philippines, matched to your target market so content language, working environment and region stay consistent.",
+        "keywords": "Japan residential IP,Taiwan residential IP,Philippines residential IP,Asia live network",
+        "trust": [
+          "Three regions",
+          "Dedicated static residential",
+          "Market-based allocation",
+          "Manual delivery"
+        ],
+        "pains": [
+          "Running Japanese content through a US egress never looks consistent.",
+          "One line across several markets destabilises day-to-day operations.",
+          "Southeast Asia is expensive to test, so nobody dares to scale.",
+          "Content language and egress region disagree, so results are unreadable."
+        ],
+        "solutions": [
+          "Market allocation: Japan, Taiwan and the Philippines each get a matching egress.",
+          "No cross-region mixing: one store keeps one fixed region.",
+          "Optional IEPL: lower latency and jitter within Asia.",
+          "Small-scale testing first: validate, then activate in bulk.",
+          "Complete handover: region, ASN and configuration delivered together."
+        ],
+        "scenarios": [
+          "Asian live streaming",
+          "Local e-commerce and DTC stores",
+          "Content localisation validation",
+          "Southeast Asia market testing",
+          "Multi-region social operations"
+        ],
+        "specs": {
+          "region": "Japan / Taiwan / Philippines",
+          "type": "Dedicated static residential",
+          "protocol": "HTTP / SOCKS5",
+          "devices": "Desktop, mobile, routers",
+          "delivery": "Manual delivery",
+          "billing": "Monthly; quarterly available",
+          "support": "Testing, replacement, Chinese-language support"
+        },
+        "pricingNote": "Stock and cost differ per region, so each region is quoted separately.",
+        "faq": [
+          {
+            "q": "Can an Asian egress reach Western platforms?",
+            "a": "Yes, but keep the egress region aligned with your target market for a consistent environment."
+          },
+          {
+            "q": "Which region is cheapest?",
+            "a": "The Philippines is usually lower; Japan and Taiwan are tighter. It depends on current stock."
+          },
+          {
+            "q": "Can I buy several regions at once?",
+            "a": "Yes, allocated per store or per project."
+          },
+          {
+            "q": "Can I test first?",
+            "a": "Yes. A test line lets you validate login and page load speed."
+          },
+          {
+            "q": "Should I change content language too?",
+            "a": "We recommend it. Matching language and region makes results far easier to judge."
+          },
+          {
+            "q": "What latency should I expect?",
+            "a": "It depends on your location and the target region; you can measure it during the test."
+          },
+          {
+            "q": "Is quarterly billing available?",
+            "a": "Yes, and annual for long-term use. Support confirms the exact plan."
+          },
+          {
+            "q": "What if an egress gets blocked?",
+            "a": "We verify it, replace under the support policy and help review how it is being used."
+          }
+        ],
+        "finalTitle": "Pick the right region before scaling.",
+        "finalSubtitle": "Aligned region, language and environment make your data meaningful."
+      },
+      "enterprise": {
+        "eyebrow": "Enterprise · Multi-store",
+        "title": "Run your egresses as infrastructure",
+        "subtitle": "Plan dedicated egresses around your stores and team size, with unified delivery, renewal and support, plus contracts, invoices and a stated response target.",
+        "keywords": "enterprise IP plan,multi-store network,bulk residential IP,enterprise line",
+        "trust": [
+          "Contracts and invoices",
+          "Bulk delivery",
+          "Named contact",
+          "Response target"
+        ],
+        "pains": [
+          "Egresses are bought ad hoc, with no inventory.",
+          "Staff turnover breaks continuity because handover is verbal.",
+          "Mixed egresses are only discovered once stores get linked.",
+          "Finance needs invoices the vendor cannot issue."
+        ],
+        "solutions": [
+          "Egress planning: an allocation table by store, region and platform.",
+          "Bulk delivery: one configuration sheet, one renewal cycle, one incident entry point.",
+          "Contracts and invoices: enterprise agreements, bank transfer and compliant receipts.",
+          "Response target: incidents answered within the agreed window with a workaround.",
+          "Handover docs: configuration and owners written down, so staff changes are safe."
+        ],
+        "scenarios": [
+          "Cross-border agencies",
+          "Multi-store sellers",
+          "Live-stream organisations",
+          "Overseas warehouse and DTC teams",
+          "Enterprises needing contracts and invoices"
+        ],
+        "specs": {
+          "region": "Six-region mix (US / UK / DE / JP / TW / PH)",
+          "type": "Dedicated residential + optional line",
+          "protocol": "Configured per business environment",
+          "devices": "Office networks, servers, routers",
+          "delivery": "Bulk activation with configuration sheet",
+          "billing": "Monthly / quarterly / annual",
+          "support": "Named contact plus response target"
+        },
+        "pricingNote": "Enterprise plans are quoted by volume, region mix and service level, with annual contracts.",
+        "faq": [
+          {
+            "q": "What is the minimum order?",
+            "a": "Bulk plans usually start at 10 lines; the exact number depends on scale."
+          },
+          {
+            "q": "Can we sign a contract?",
+            "a": "Yes, including enterprise terms and confidentiality clauses."
+          },
+          {
+            "q": "Can you issue invoices?",
+            "a": "Yes, compliant receipts are issued against your company details."
+          },
+          {
+            "q": "What happens if an egress is blocked?",
+            "a": "We verify it, replace within the agreed window and help review how it is used."
+          },
+          {
+            "q": "Can renewals be unified?",
+            "a": "Yes. All lines renew on one billing cycle so nothing lapses."
+          },
+          {
+            "q": "How does handover work?",
+            "a": "You receive a configuration sheet and an owner list, so handover is documented."
+          },
+          {
+            "q": "Is a trial available?",
+            "a": "Yes, sample lines can be tested before bulk activation."
+          },
+          {
+            "q": "How fast do you respond?",
+            "a": "Within the agreed service level, with business-day priority."
+          }
+        ],
+        "finalTitle": "Turn procurement from a chore into infrastructure.",
+        "finalSubtitle": "Unified inventory, delivery and support scale better as you grow."
+      }
+    }
+  },
+  "productMeta": {
+    "title": "Network details",
+    "country": "Country / Region",
+    "ipType": "IP type",
+    "lineType": "Line type",
+    "scenarios": "Use cases",
+    "compareTitle": "Compare the three options",
+    "compare": {
+      "datacenter": "Datacenter IP: cheap and fast, but concentrated ranges are easy for platforms to flag.",
+      "shared": "Shared residential IP: moderate cost, but the egress is shared and reputation is unpredictable.",
+      "dedicated": "Dedicated static residential IP: highest cost, but fixed, clean and explainable."
+    },
+    "faqTitle": "FAQ",
+    "faqQ1": "How do I verify it is residential?",
+    "faqA1": "Check the ASN owner and blocklists, or request a test IP and verify it yourself.",
+    "faqQ2": "What is the difference between dedicated and shared?",
+    "faqA2": "Dedicated egress is exclusive to you. Shared is cheaper but stability cannot be controlled.",
+    "faqQ3": "Which devices and protocols are supported?",
+    "faqA3": "Windows, macOS, iOS, Android and routers. Protocols follow the product page and delivery notes."
   }
 }

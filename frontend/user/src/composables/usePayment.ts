@@ -5,6 +5,7 @@ import { guestOrderAPI, paymentAPI, userOrderAPI, walletAPI } from '../api'
 import { useAppStore } from '../stores/app'
 import { useTelegramMiniAppStore } from '../stores/telegramMiniApp'
 import { orderStatusLabel } from '../utils/status'
+import { track } from '../utils/analytics'
 import { fulfillmentTypeLabel } from '../utils/fulfillment'
 import { debounceAsync } from '../utils/debounce'
 import { copyText } from '../utils/clipboard'
@@ -39,6 +40,7 @@ export function usePayment() {
   const loading = ref(true)
   const submitting = ref(false)
   const order = ref<any>(null)
+  const purchaseTracked = ref(false)
   const paymentResult = ref<any>(null)
   const error = ref('')
   const selectedChannelId = ref<number | null>(null)
@@ -1238,6 +1240,14 @@ export function usePayment() {
       }
       stopPolling()
       stopCountdown()
+      if (!purchaseTracked.value) {
+        purchaseTracked.value = true
+        track('purchase', {
+          transaction_id: order.value?.order_no,
+          value: order.value?.total_amount,
+          currency: order.value?.currency,
+        })
+      }
       if (shouldRedirect(status)) {
         redirectToOrderDetail()
       }

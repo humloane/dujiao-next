@@ -20,6 +20,8 @@ export interface AdminCategory {
   slug: string
   name: LocalizedText
   icon: string
+  description?: LocalizedText
+  seo_meta?: Record<string, LocalizedText | string>
   sort_order: number
   is_active: boolean
   created_at: string
@@ -64,6 +66,10 @@ export interface AdminProduct {
   wholesale_prices?: AdminWholesalePrice[]
   images: string[]
   tags: string[]
+  country?: string
+  scenario?: string[]
+  ip_type?: string
+  line_type?: string
   purchase_type: string
   min_purchase_quantity: number
   max_purchase_quantity: number

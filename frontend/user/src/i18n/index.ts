@@ -13,6 +13,13 @@ const localeLoaders: Record<string, () => Promise<{ default: Record<string, unkn
 const loadedLocales = new Set(['zh-CN'])
 
 export function detectLocale(): string {
+    // 服务端注入的 hreflang 指向 ?lang=xx，前端必须按同一语言渲染，
+    // 否则爬虫/用户看到的 <html lang> 与 SPA 内容会不一致。
+    if (typeof window !== 'undefined') {
+        const queryLang = new URLSearchParams(window.location.search).get('lang')
+        if (queryLang && supportedLocales.includes(queryLang)) return queryLang
+    }
+
     const saved = localStorage.getItem('locale')
     if (saved && supportedLocales.includes(saved)) return saved
 
@@ -70,6 +77,9 @@ export async function setI18nLocale(locale: string): Promise<void> {
 // 再切语言时请求已失效的旧 chunk（预取时已进入浏览器缓存）
 export function warmupLocaleMessages(): void {
     if (typeof window === 'undefined') return
+    // 落地页是按语言分流的投放页：首屏带宽留给正文与 CTA，
+    // 切语言仍会走 setI18nLocale 按需下载，不做预取。
+    if (window.location.pathname.startsWith('/lp/')) return
 
     const prefetch = () => {
         for (const locale of Object.keys(localeLoaders)) {

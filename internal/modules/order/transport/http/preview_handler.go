@@ -90,6 +90,7 @@ type CreateOrderRequest struct {
 	CouponCode          string                  `json:"coupon_code"`
 	AffiliateCode       string                  `json:"affiliate_code"`
 	AffiliateVisitorKey string                  `json:"affiliate_visitor_key"`
+	UTM                 map[string]string       `json:"utm"`
 	ManualFormData      map[string]jsonmap.JSON `json:"manual_form_data"`
 }
 
@@ -101,6 +102,7 @@ type CreateGuestOrderRequest struct {
 	CouponCode          string                            `json:"coupon_code"`
 	AffiliateCode       string                            `json:"affiliate_code"`
 	AffiliateVisitorKey string                            `json:"affiliate_visitor_key"`
+	UTM                 map[string]string                 `json:"utm"`
 	ManualFormData      map[string]jsonmap.JSON           `json:"manual_form_data"`
 	CaptchaPayload      captchahttp.CaptchaPayloadRequest `json:"captcha_payload"`
 }
@@ -121,6 +123,7 @@ type CreateOrderInput struct {
 	CouponCode          string
 	AffiliateCode       string
 	AffiliateVisitorKey string
+	UTM                 map[string]string
 	ClientIP            string
 	ManualFormData      map[string]jsonmap.JSON
 }
@@ -135,6 +138,7 @@ type CreateGuestOrderInput struct {
 	CouponCode          string
 	AffiliateCode       string
 	AffiliateVisitorKey string
+	UTM                 map[string]string
 	ClientIP            string
 	ManualFormData      map[string]jsonmap.JSON
 }
@@ -208,6 +212,7 @@ func (h *PreviewHandler) PreviewOrder(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})
@@ -235,6 +240,7 @@ func (h *PreviewHandler) PreviewGuestOrder(c *gin.Context) {
 		CouponCode:          req.CouponCode,
 		AffiliateCode:       req.AffiliateCode,
 		AffiliateVisitorKey: req.AffiliateVisitorKey,
+		UTM:                 req.UTM,
 		ClientIP:            c.ClientIP(),
 		ManualFormData:      req.ManualFormData,
 	})

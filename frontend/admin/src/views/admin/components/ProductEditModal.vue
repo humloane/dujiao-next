@@ -14,7 +14,14 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogScrollContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { notifyError } from '@/utils/notify'
+import {
+  ADMIN_COUNTRY_CODES,
+  ADMIN_IP_TYPES,
+  ADMIN_LINE_TYPES,
+  ADMIN_SCENARIOS,
+} from '@/constants/productMeta'
 import { getLocalizedText } from '@/utils/format'
 import { buildAdminCategoryPath, createAdminCategoryChildCountMap, createAdminCategoryMap, flattenAdminCategories, isAdminProductCategorySelectable } from '@/utils/category'
 
@@ -46,6 +53,35 @@ const languages = computed(() => [
   { code: 'zh-TW', name: t('admin.common.lang.zhTW') },
   { code: 'en-US', name: t('admin.common.lang.enUS') },
 ])
+
+const countryOptions = computed(() => {
+  let displayNames: { of: (code: string) => string | undefined } | null = null
+  try {
+    const DisplayNames = (Intl as unknown as { DisplayNames?: new (locales: string[], options: { type: string }) => { of: (code: string) => string | undefined } }).DisplayNames
+    displayNames = DisplayNames ? new DisplayNames([locale.value], { type: 'region' }) : null
+  } catch {
+    displayNames = null
+  }
+  return ADMIN_COUNTRY_CODES.map((code) => ({
+    value: code,
+    label: code === 'SHARED' ? t('admin.products.form.countryShared') : (displayNames?.of(code) || code),
+  }))
+})
+
+const scenarioOptions = computed(() => ADMIN_SCENARIOS.map((value) => ({
+  value,
+  label: t(`admin.products.form.scenarios.${value}`),
+})))
+
+const ipTypeOptions = computed(() => ADMIN_IP_TYPES.map((value) => ({
+  value,
+  label: t(`admin.products.form.ipTypes.${value}`),
+})))
+
+const lineTypeOptions = computed(() => ADMIN_LINE_TYPES.map((value) => ({
+  value,
+  label: t(`admin.products.form.lineTypes.${value}`),
+})))
 
 const categoryMap = computed(() => createAdminCategoryMap(props.categories))
 const categoryChildCountMap = computed(() => createAdminCategoryChildCountMap(props.categories))
@@ -167,6 +203,10 @@ const form = reactive({
   cost_price_amount: 0,
   images: [] as string[],
   tags: [] as string[],
+  country: '',
+  scenario: [] as string[],
+  ip_type: '',
+  line_type: '',
   purchase_type: 'member',
   min_purchase_quantity: '' as number | '',
   max_purchase_quantity: '' as number | '',
@@ -511,6 +551,10 @@ const resetForm = () => {
     cost_price_amount: 0,
     images: [],
     tags: [],
+    country: '',
+    scenario: [],
+    ip_type: '',
+    line_type: '',
     purchase_type: 'member',
     min_purchase_quantity: '',
     max_purchase_quantity: '',
@@ -560,6 +604,10 @@ const populateForm = (product: AdminProduct) => {
     cost_price_amount: Number(product.cost_price_amount || 0),
     images: imagesList,
     tags: tagsList,
+    country: String(product.country || ''),
+    scenario: Array.isArray(product.scenario) ? [...product.scenario] : [],
+    ip_type: String(product.ip_type || ''),
+    line_type: String(product.line_type || ''),
     purchase_type: product.purchase_type || 'member',
     min_purchase_quantity: Number(product.min_purchase_quantity || 0) > 0 ? Math.floor(Number(product.min_purchase_quantity || 0)) : '',
     max_purchase_quantity: Number(product.max_purchase_quantity || 0) > 0 ? Math.floor(Number(product.max_purchase_quantity || 0)) : '',
@@ -636,6 +684,10 @@ const handleSubmit = async () => {
       cost_price_amount: effectiveCostPrice,
       images: form.images,
       tags: form.tags,
+      country: form.country,
+      scenario: form.scenario,
+      ip_type: form.ip_type,
+      line_type: form.line_type,
       purchase_type: form.purchase_type,
       min_purchase_quantity: minPurchaseQuantityValue,
       max_purchase_quantity: maxPurchaseQuantityValue,
@@ -802,6 +854,64 @@ watch(
               </SelectContent>
             </Select>
             <p class="mt-1 text-xs text-muted-foreground">{{ getCategoryLeafTip() }}</p>
+          </div>
+
+          <div class="col-span-1">
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.products.form.country') }}</label>
+            <Select
+              :model-value="form.country || '__none__'"
+              @update:modelValue="(value) => { form.country = value === '__none__' ? '' : String(value) }"
+            >
+              <SelectTrigger class="h-9 w-full">
+                <SelectValue :placeholder="t('admin.products.form.countryPlaceholder')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{{ t('admin.products.form.countryPlaceholder') }}</SelectItem>
+                <SelectItem v-for="item in countryOptions" :key="item.value" :value="item.value">{{ item.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="col-span-1">
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.products.form.scenario') }}</label>
+            <MultiSelect
+              :model-value="form.scenario"
+              :options="scenarioOptions"
+              :placeholder="t('admin.products.form.scenarioPlaceholder')"
+              @update:model-value="(value) => { form.scenario = value.map(String) }"
+            />
+          </div>
+
+          <div class="col-span-1">
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.products.form.ipType') }}</label>
+            <Select
+              :model-value="form.ip_type || '__none__'"
+              @update:modelValue="(value) => { form.ip_type = value === '__none__' ? '' : String(value) }"
+            >
+              <SelectTrigger class="h-9 w-full">
+                <SelectValue :placeholder="t('admin.products.form.ipTypePlaceholder')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{{ t('admin.products.form.ipTypePlaceholder') }}</SelectItem>
+                <SelectItem v-for="item in ipTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="col-span-1">
+            <label class="block text-xs font-medium text-muted-foreground mb-1.5">{{ t('admin.products.form.lineType') }}</label>
+            <Select
+              :model-value="form.line_type || '__none__'"
+              @update:modelValue="(value) => { form.line_type = value === '__none__' ? '' : String(value) }"
+            >
+              <SelectTrigger class="h-9 w-full">
+                <SelectValue :placeholder="t('admin.products.form.lineTypePlaceholder')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{{ t('admin.products.form.lineTypePlaceholder') }}</SelectItem>
+                <SelectItem v-for="item in lineTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div class="col-span-1">

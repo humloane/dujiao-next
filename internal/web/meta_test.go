@@ -1,0 +1,72 @@
+package web
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestInjectMetaHTML(t *testing.T) {
+	index := []byte(`<!doctype html><html lang="en"><head><title></title></head><body><div id="app"></div></body></html>`)
+	meta := &PageMeta{
+		Title:       `<Dujiao> "Local"`,
+		Description: `A "quoted" description`,
+		Keywords:    `ip, proxy`,
+		Canonical:   `https://example.com/products/demo`,
+		Image:       `https://example.com/a.png`,
+		Type:        "product",
+		Locale:      "zh-CN",
+		JSONLD:      `{"@type":"Product","name":"</script><script>alert(1)</script>"}`,
+		Alternates: map[string]string{
+			"zh-CN":     "https://example.com/products/demo?lang=zh-CN",
+			"x-default": "https://example.com/products/demo",
+		},
+	}
+
+	body := string(injectMetaHTML(index, meta))
+
+	if !strings.Contains(body, `<html lang="zh-CN">`) {
+		t.Fatalf("html lang was not replaced: %s", body)
+	}
+	if !strings.Contains(body, `<title>&lt;Dujiao&gt; &#34;Local&#34;</title>`) {
+		t.Fatalf("title not escaped: %s", body)
+	}
+	if !strings.Contains(body, `content="A &#34;quoted&#34; description"`) {
+		t.Fatalf("description not escaped: %s", body)
+	}
+	if !strings.Contains(body, `rel="canonical" href="https://example.com/products/demo"`) {
+		t.Fatalf("canonical missing: %s", body)
+	}
+	if !strings.Contains(body, `hreflang="zh-CN"`) || !strings.Contains(body, `hreflang="x-default"`) {
+		t.Fatalf("alternates missing: %s", body)
+	}
+	if strings.Contains(body, `</script><script>alert(1)</script>`) {
+		t.Fatalf("JSON-LD closing script was not escaped: %s", body)
+	}
+	if !strings.Contains(body, `<script type="application/ld+json" data-seo-jsonld="server"`) {
+		t.Fatalf("JSON-LD missing: %s", body)
+	}
+}
+
+func TestInjectMetaHTMLWithoutTitleIsNoop(t *testing.T) {
+	index := []byte(`<html><head><title></title></head></html>`)
+	if body := string(injectMetaHTML(index, &PageMeta{})); body != string(index) {
+		t.Fatalf("empty meta should not change index: %s", body)
+	}
+}
+
+func TestInjectMetaHTMLWritesBodySnapshot(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div id="app"></div></body></html>`)
+	meta := &PageMeta{
+		Title:    "IEPL",
+		Path:     "/lp/iepl",
+		JSONLD:   `{"@type":"WebPage"}`,
+		BodyHTML: `<article><h1>IEPL 专线</h1></article>`,
+	}
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `<div id="app"><article><h1>IEPL 专线</h1></article></div>`) {
+		t.Fatalf("body snapshot not injected: %s", body)
+	}
+	if !strings.Contains(body, `data-path="/lp/iepl"`) {
+		t.Fatalf("server JSON-LD path marker missing: %s", body)
+	}
+}

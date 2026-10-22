@@ -144,6 +144,7 @@ type CreateOrderInput struct {
 	CouponCode          string
 	AffiliateCode       string
 	AffiliateVisitorKey string
+	UTM                 map[string]string
 	ClientIP            string
 	ManualFormData      map[string]jsonmap.JSON
 	SkipRiskControl     bool // 完全跳过风控（下游订单）
@@ -160,6 +161,7 @@ type CreateGuestOrderInput struct {
 	CouponCode          string
 	AffiliateCode       string
 	AffiliateVisitorKey string
+	UTM                 map[string]string
 	ClientIP            string
 	ManualFormData      map[string]jsonmap.JSON
 }
@@ -235,6 +237,7 @@ func (s *OrderService) CreateOrder(input CreateOrderInput) (*orderdomain.Order, 
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
 		AffiliateVisitorKey: input.AffiliateVisitorKey,
+		UTM:                 input.UTM,
 		ClientIP:            input.ClientIP,
 		ManualFormData:      input.ManualFormData,
 		SkipRiskControl:     input.SkipRiskControl,
@@ -259,6 +262,7 @@ func (s *OrderService) CreateGuestOrder(input CreateGuestOrderInput) (*orderdoma
 		GuestPassword:       password,
 		GuestLocale:         locale,
 		Tenant:              input.Tenant,
+		UTM:                 input.UTM,
 		Items:               input.Items,
 		CouponCode:          input.CouponCode,
 		AffiliateCode:       input.AffiliateCode,
@@ -279,6 +283,7 @@ type orderCreateParams struct {
 	CouponCode               string
 	AffiliateCode            string
 	AffiliateVisitorKey      string
+	UTM                      map[string]string
 	ClientIP                 string
 	RiskIP                   string
 	RiskPaymentExpireMinutes int
@@ -524,6 +529,7 @@ func (s *OrderService) createOrder(input orderCreateParams) (*orderdomain.Order,
 		PromotionID:             result.OrderPromotionID,
 		AffiliateProfileID:      affiliateProfileID,
 		AffiliateCode:           affiliateCode,
+		UTMJSON:                 normalizeUTM(input.UTM),
 		ExpiresAt:               &expiresAt,
 		ClientIP:                strings.TrimSpace(input.ClientIP),
 		RiskIP:                  input.RiskIP,
@@ -805,4 +811,28 @@ func validateGuestPassword(password string) error {
 		return ErrGuestPasswordTooShort
 	}
 	return nil
+}
+
+const utmValueMaxLength = 200
+
+var utmAllowedKeys = []string{"source", "medium", "campaign", "content", "term"}
+
+// normalizeUTM 只保留白名单归因字段，限制长度并丢弃空值。
+// 归因字段不参与金额与库存计算，属于不可信展示数据，必须在这里收敛。
+func normalizeUTM(raw map[string]string) jsonmap.JSON {
+	if len(raw) == 0 {
+		return jsonmap.JSON{}
+	}
+	result := make(jsonmap.JSON, len(raw))
+	for _, key := range utmAllowedKeys {
+		value := strings.TrimSpace(raw[key])
+		if value == "" {
+			continue
+		}
+		if len([]rune(value)) > utmValueMaxLength {
+			value = string([]rune(value)[:utmValueMaxLength])
+		}
+		result[key] = value
+	}
+	return result
 }
