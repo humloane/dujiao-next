@@ -11,13 +11,36 @@ export function getImageUrl(path: string | undefined | null): string {
         return path
     }
 
-    // 获取 API 基础 URL
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+    // 获取 API 基础 URL（Node 单测里 import.meta.env 可能不存在）
+    const env = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env
+    const apiBaseUrl = env?.VITE_API_BASE_URL || ''
 
     // 确保路径以 / 开头
     const normalizedPath = path.startsWith('/') ? path : `/${path}`
 
     return `${apiBaseUrl}${normalizedPath}`
+}
+
+/**
+ * 生成商品图/横幅的 srcset：只对本地 uploads 下的 jpg/png 生效。
+ * 变体由 scripts/optimize-images.sh 生成（-480/-800/-1200/-1800.webp），
+ * 组件在变体加载失败时会自动回退到原图。
+ */
+export function getImageVariantSrcSet(
+  path: string | undefined | null,
+  widths: number[] = [480, 800, 1200],
+): string {
+  if (!path) return ''
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:')) return ''
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  if (!/^\/uploads\/.+\.(png|jpe?g)$/i.test(normalized)) return ''
+  const base = normalized.replace(/\.(png|jpe?g)$/i, '')
+  return widths.map((width) => `${getImageUrl(`${base}-${width}.webp`)} ${width}w`).join(', ')
+}
+
+/** 首屏 banner 使用更大的 1800 档，避免 1440/2x 屏幕发虚。 */
+export function getBannerSrcSet(path: string | undefined | null): string {
+  return getImageVariantSrcSet(path, [800, 1200, 1800])
 }
 
 /**

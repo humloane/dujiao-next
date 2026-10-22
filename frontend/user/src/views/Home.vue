@@ -12,7 +12,7 @@
             @touchstart="onBannerTouchStart"
             @touchend="onBannerTouchEnd">
             <Transition name="banner-fade" mode="out-in">
-              <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" class="absolute inset-0 h-full w-full object-cover" />
+              <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
             </Transition>
             <div class="absolute inset-0 bg-black/50"></div>
             <div v-if="bannerLoading" class="relative flex min-h-[200px] flex-col justify-between p-5 sm:min-h-[240px] sm:p-6 md:min-h-[320px] md:p-10">
@@ -172,7 +172,7 @@
           @touchend="onBannerTouchEnd">
           <!-- Banner image with fade transition -->
           <Transition name="banner-fade" mode="out-in">
-            <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" class="absolute inset-0 h-full w-full object-cover" />
+            <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
           </Transition>
           <div class="absolute inset-0 bg-black/50"></div>
 

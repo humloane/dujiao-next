@@ -278,6 +278,15 @@ go run ./cmd/dedupe-product-content -apply           # apply
 go run ./cmd/dedupe-product-content -report=dedupe.csv
 ```
 
+### Images and security headers
+
+- Generate WebP variants for existing uploads (requires ImageMagick):
+  `scripts/optimize-images.sh uploads --apply` (dry-run by default).
+  Product cards use `srcset` and fall back to the original image if a variant is missing.
+- Include `deploy/nginx/security-headers.conf` in the site's Nginx `server {}` block
+  (CSP is Report-Only until Chatwoot/payment domains are confirmed).
+- Enable admin 2FA and email captcha in the admin settings before going live.
+
 ## Quick Start (Develop)
 
 Run the backend and the two frontends separately for hot reload:

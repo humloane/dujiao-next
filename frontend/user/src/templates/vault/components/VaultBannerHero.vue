@@ -9,9 +9,16 @@
         <img
           v-if="!bannerLoading && heroImage"
           :src="heroImage"
+          :srcset="bannerSrcSet || undefined"
+          sizes="100vw"
+          width="1800"
+          height="480"
           :key="heroImage"
           :alt="heroTitle"
+          fetchpriority="high"
+          decoding="async"
           class="absolute inset-0 h-full w-full object-cover"
+          @error="bannerVariantFailed = true"
         />
       </Transition>
       <div class="absolute inset-0 bg-gradient-to-r from-black/65 via-black/40 to-black/15"></div>
@@ -83,10 +90,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight, ChevronLeft, ChevronRight, Zap } from 'lucide-vue-next'
 import { useBannerCarousel } from '../../../composables/useBannerCarousel'
+import { getBannerSrcSet } from '../../../utils/image'
 
 const { t } = useI18n()
 
@@ -112,6 +120,10 @@ const {
   onBannerTouchEnd,
   stopHeroAutoPlay,
 } = useBannerCarousel()
+
+const bannerVariantFailed = ref(false)
+const bannerSrcSet = computed(() => bannerVariantFailed.value ? '' : getBannerSrcSet(heroImage.value))
+watch(heroImage, () => { bannerVariantFailed.value = false })
 
 onMounted(() => { void loadBanners() })
 onUnmounted(() => stopHeroAutoPlay())

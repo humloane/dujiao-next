@@ -3,8 +3,8 @@
     <div class="mb-4 md:mb-6 relative group"
       @touchstart="onImageTouchStart"
       @touchend="onImageTouchEnd">
-      <img v-if="currentImage" :src="currentImage" :alt="productTitle"
-        class="w-full aspect-[4/3] object-cover rounded-xl border relative z-10 shadow-lg" />
+      <img v-if="currentImage" :src="currentImage" :srcset="mainSrcSet || undefined" sizes="(max-width: 1024px) 100vw, 720px" width="1200" height="900" :alt="productTitle" fetchpriority="high" decoding="async"
+        class="w-full aspect-[4/3] object-cover rounded-xl border relative z-10 shadow-lg" @error="handleMainError" />
       <div v-else
         class="w-full aspect-[4/3] bg-muted rounded-xl border flex items-center justify-center relative z-10">
         <ImageIcon class="w-24 h-24 text-muted-foreground" :stroke-width="1.5" />
@@ -23,7 +23,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { Image as ImageIcon } from 'lucide-vue-next'
+import { getImageVariantSrcSet } from '../../utils/image'
 
 const props = defineProps<{
   images: string[]
@@ -34,6 +36,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:currentImage': [value: string]
 }>()
+
+const variantFailed = ref(false)
+const mainSrcSet = computed(() => variantFailed.value ? '' : getImageVariantSrcSet(props.currentImage))
+const handleMainError = () => {
+  if (mainSrcSet.value) variantFailed.value = true
+}
+watch(() => props.currentImage, () => { variantFailed.value = false })
 
 // Image touch swipe
 let touchStartX = 0

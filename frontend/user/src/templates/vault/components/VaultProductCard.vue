@@ -5,7 +5,7 @@
         class="relative grid h-[152px] w-full flex-none place-items-center overflow-hidden rounded-[13px] will-change-transform after:absolute after:inset-0 after:bg-[radial-gradient(130%_80%_at_78%_14%,rgba(255,255,255,0.26),transparent_56%)]"
         :class="coverClass"
       >
-        <img v-if="coverImage" :src="coverImage" :alt="title" loading="lazy" class="absolute inset-0 h-full w-full object-cover" @error="imageErrored = true" />
+        <img v-if="coverImage" :src="coverImage" :srcset="coverSrcSet || undefined" sizes="(max-width: 640px) 50vw, 240px" width="800" height="600" :alt="title" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover" @error="handleCoverError" />
         <Package v-else class="relative z-[1] h-[58px] w-[58px] text-white" />
         <!-- 商家标签浮层 -->
         <div v-if="!soldOut && product.tags && product.tags.length" class="absolute right-1.5 top-1.5 z-[3] flex max-w-[80%] flex-wrap justify-end gap-1">
@@ -64,7 +64,7 @@
 import { computed, ref, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AlarmClock, Lock, Package, Pencil, UserPlus, XCircle, Zap } from 'lucide-vue-next'
-import { getFirstImageUrl, getImageUrl } from '../../../utils/image'
+import { getFirstImageUrl, getImageUrl, getImageVariantSrcSet } from '../../../utils/image'
 import { useLocalized, useProductLabels } from '../../../composables/useProduct'
 
 const props = withDefaults(defineProps<{ product: any; index?: number }>(), { index: 0 })
@@ -94,6 +94,7 @@ const soldOut = computed(() => isSoldOut(props.product))
 const promo = computed(() => hasPromotionPrice(props.product))
 
 const imageErrored = ref(false)
+const variantFailed = ref(false)
 const coverImage = computed(() => {
   if (imageErrored.value) return ''
   const primary = getFirstImageUrl(props.product?.images)
@@ -101,6 +102,16 @@ const coverImage = computed(() => {
   const icon = props.product?.category?.icon
   return icon ? getImageUrl(icon) : ''
 })
+const coverSrcSet = computed(() => variantFailed.value ? '' : getImageVariantSrcSet(getFirstImageUrl(props.product?.images)))
+
+const handleCoverError = () => {
+  // 变体未生成时先回退原图，原图也失败才显示占位图标。
+  if (coverSrcSet.value) {
+    variantFailed.value = true
+    return
+  }
+  imageErrored.value = true
+}
 
 const stockPill = computed<{ tone: string; icon: Component; label: string }>(() => {
   if (soldOut.value) {

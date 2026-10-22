@@ -13,6 +13,9 @@
         :class="isSoldOut(product) ? 'bg-black/15' : 'bg-black/15 group-hover:bg-black/5'"
       ></div>
       <img v-if="displayImageSrc && !imageErrored" :src="displayImageSrc"
+        :srcset="imageSrcSet || undefined"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        width="800" height="600"
         :alt="getLocalizedText(product.title)" loading="lazy" decoding="async"
         class="w-full h-full object-cover transform transition-transform duration-700 ease-out"
         :class="[
@@ -165,7 +168,7 @@
 import { useI18n } from 'vue-i18n'
 import { computed, ref, watch } from 'vue'
 import { ArrowRight, ChevronRight, Image as ImageIcon, Lock, Pencil, ShoppingCart, UserPlus, Zap } from 'lucide-vue-next'
-import { getFirstImageUrl, getImageUrl } from '../utils/image'
+import { getFirstImageUrl, getImageUrl, getImageVariantSrcSet } from '../utils/image'
 import { useLocalized, useProductLabels } from '../composables/useProduct'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -192,6 +195,7 @@ const { getLocalizedText, siteCurrency, formatPrice } = useLocalized()
 const { getPurchaseTypeLabel, getFulfillmentTypeLabel, getStockBadgeVariant, getStockStatusLabel, isSoldOut, hasPromotionPrice, getPromotionPriceAmount, hasPromotionRules, hasWholesalePrices } = useProductLabels()
 
 const imageErrored = ref(false)
+const variantFailed = ref(false)
 const attemptIdx = ref(0)
 
 const imageCandidates = computed<string[]>(() => {
@@ -207,13 +211,20 @@ const imageCandidates = computed<string[]>(() => {
 })
 
 const displayImageSrc = computed(() => imageCandidates.value[attemptIdx.value] ?? '')
+const imageSrcSet = computed(() => variantFailed.value ? '' : getImageVariantSrcSet(displayImageSrc.value))
 
 watch(imageCandidates, () => {
   attemptIdx.value = 0
   imageErrored.value = false
+  variantFailed.value = false
 }, { deep: true })
 
 const handleImageError = () => {
+  // 先回退到原图（变体还没生成时也能正常显示），再回退到分类图标。
+  if (imageSrcSet.value) {
+    variantFailed.value = true
+    return
+  }
   if (attemptIdx.value < imageCandidates.value.length - 1) {
     attemptIdx.value++
   } else {
