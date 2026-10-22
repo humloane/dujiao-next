@@ -109,6 +109,7 @@ const authStore = useAdminAuthStore()
 const isDark = ref(false)
 const appVersion = ref('')
 const siteUrl = ref('')
+const siteName = ref('')
 
 // 版本检测与一键升级的完整交互都在 SystemUpdateDialog 内，这里只负责开关
 const updateCheckOpen = ref(false)
@@ -739,6 +740,10 @@ onMounted(() => {
     if (typeof url === 'string' && url) {
       siteUrl.value = url
     }
+    const name = payload?.brand?.site_name
+    if (typeof name === 'string' && name.trim()) {
+      siteName.value = name.trim()
+    }
   }).catch(() => {})
 })
 
@@ -757,7 +762,7 @@ onBeforeUnmount(() => {
       >
         <div class="py-6" :class="sidebarCollapsed ? 'px-2' : 'px-6'">
           <div v-if="!sidebarCollapsed" class="text-xl font-semibold tracking-tight">
-            {{ t('admin.brand') }}
+            {{ siteName || t('admin.brand') }}
           </div>
           <div v-if="!sidebarCollapsed" class="text-xs text-muted-foreground mt-1">{{ t('admin.layout.controlRoom') }}</div>
           <div v-if="sidebarCollapsed" class="text-lg font-semibold tracking-tight text-center">D&J</div>
@@ -845,7 +850,7 @@ onBeforeUnmount(() => {
         <!-- Collapse toggle button -->
         <div class="border-t border-border">
           <div v-if="!sidebarCollapsed" class="px-6 py-3 text-[11px] text-muted-foreground space-y-1">
-            <p>© {{ new Date().getFullYear() }} Dujiao-Next <span v-if="appVersion" class="text-muted-foreground/70">{{ appVersion }}</span></p>
+            <p>© {{ new Date().getFullYear() }} {{ siteName || t('admin.brand') }} <span v-if="appVersion" class="text-muted-foreground/70">{{ appVersion }}</span></p>
             <a
               href="https://github.com/dujiao-next"
               target="_blank"
@@ -876,7 +881,7 @@ onBeforeUnmount(() => {
           <SheetTitle class="sr-only">{{ t('admin.layout.navigation') }}</SheetTitle>
           <div class="px-6 py-6">
             <div class="text-xl font-semibold tracking-tight">
-              {{ t('admin.brand') }}
+              {{ siteName || t('admin.brand') }}
             </div>
             <div class="text-xs text-muted-foreground mt-1">{{ t('admin.layout.controlRoom') }}</div>
           </div>
@@ -934,7 +939,7 @@ onBeforeUnmount(() => {
             </div>
           </nav>
           <div class="px-6 py-4 border-t border-border text-[11px] text-muted-foreground space-y-1">
-            <p>© {{ new Date().getFullYear() }} Dujiao-Next <span v-if="appVersion" class="text-muted-foreground/70">{{ appVersion }}</span></p>
+            <p>© {{ new Date().getFullYear() }} {{ siteName || t('admin.brand') }} <span v-if="appVersion" class="text-muted-foreground/70">{{ appVersion }}</span></p>
           </div>
         </SheetContent>
       </Sheet>

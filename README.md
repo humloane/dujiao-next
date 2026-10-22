@@ -286,6 +286,8 @@ go run ./cmd/dedupe-product-content -report=dedupe.csv
 - Include `deploy/nginx/security-headers.conf` in the site's Nginx `server {}` block
   (CSP is Report-Only until Chatwoot/payment domains are confirmed).
 - Enable admin 2FA and email captcha in the admin settings before going live.
+- Set Chatwoot `position: 'left'` in the injected snippet so the bubble never covers the
+  right-side CTAs; `/checkout` and `/pay` hide the launcher automatically.
 
 ## Quick Start (Develop)
 

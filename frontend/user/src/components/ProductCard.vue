@@ -56,30 +56,9 @@
         {{ getLocalizedText(product.title) }}
       </h3>
 
-      <!-- Badges -->
+      <!-- Badges: 卡片只保留交付方式 + 库存，购买类型等细节放详情页 -->
       <div class="mb-2 md:mb-3 flex flex-wrap items-center gap-1 md:gap-2">
-        <!-- Mobile: show only fulfillment type badge -->
         <Badge
-          class="md:hidden"
-          size="xs"
-          :variant="product.fulfillment_type === 'auto' ? 'info' : 'neutral'"
-        >
-          {{ getFulfillmentTypeLabel(product.fulfillment_type) }}
-        </Badge>
-
-        <!-- Desktop: show all badges -->
-        <Badge
-          class="hidden md:inline-flex"
-          size="xs"
-          :variant="product.purchase_type === 'guest' ? 'warning' : 'success'"
-        >
-          <UserPlus v-if="product.purchase_type === 'guest'" class="h-3 w-3" />
-          <Lock v-else class="h-3 w-3" />
-          {{ getPurchaseTypeLabel(product.purchase_type) }}
-        </Badge>
-
-        <Badge
-          class="hidden md:inline-flex"
           size="xs"
           :variant="product.fulfillment_type === 'auto' ? 'info' : 'neutral'"
         >
@@ -88,7 +67,7 @@
           {{ getFulfillmentTypeLabel(product.fulfillment_type) }}
         </Badge>
 
-        <Badge class="hidden md:inline-flex" size="xs" :variant="getStockBadgeVariant(product.stock_status)">
+        <Badge size="xs" :variant="getStockBadgeVariant(product.stock_status)">
           {{ getStockStatusLabel(product) }}
         </Badge>
       </div>
@@ -167,7 +146,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { computed, ref, watch } from 'vue'
-import { ArrowRight, ChevronRight, Image as ImageIcon, Lock, Pencil, ShoppingCart, UserPlus, Zap } from 'lucide-vue-next'
+import { ArrowRight, ChevronRight, Image as ImageIcon, Pencil, ShoppingCart, Zap } from 'lucide-vue-next'
 import { getFirstImageUrl, getImageUrl, getImageVariantSrcSet } from '../utils/image'
 import { useLocalized, useProductLabels } from '../composables/useProduct'
 import { Badge } from '@/components/ui/badge'
@@ -192,7 +171,7 @@ defineEmits<{
 
 const { t } = useI18n()
 const { getLocalizedText, siteCurrency, formatPrice } = useLocalized()
-const { getPurchaseTypeLabel, getFulfillmentTypeLabel, getStockBadgeVariant, getStockStatusLabel, isSoldOut, hasPromotionPrice, getPromotionPriceAmount, hasPromotionRules, hasWholesalePrices } = useProductLabels()
+const { getFulfillmentTypeLabel, getStockBadgeVariant, getStockStatusLabel, isSoldOut, hasPromotionPrice, getPromotionPriceAmount, hasPromotionRules, hasWholesalePrices } = useProductLabels()
 
 const imageErrored = ref(false)
 const variantFailed = ref(false)

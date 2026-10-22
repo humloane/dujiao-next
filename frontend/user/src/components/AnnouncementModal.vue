@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
     >
       <div
         v-if="visible"
-        class="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6"
+        class="fixed inset-0 z-[120] flex items-end justify-center p-0 sm:items-center sm:p-6"
         @click.self="handleClose"
       >
         <div class="fixed inset-0 bg-black/55 backdrop-blur-md" aria-hidden="true" />
@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="announcement-modal-title"
-            class="bg-card text-card-foreground relative z-10 flex max-h-[86vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border"
+            class="bg-card text-card-foreground relative z-10 flex max-h-[70dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border sm:max-h-[86vh] sm:rounded-3xl"
             style="box-shadow: var(--ui-shadow-card)"
           >
             <!-- Header -->

@@ -27,6 +27,7 @@ const useRecovery = ref(false)
 const error = ref('')
 const loadingCaptcha = ref(false)
 const captchaConfig = ref<any>(null)
+const siteName = ref('')
 const captchaPayload = ref<CaptchaPayload>({})
 const turnstileToken = ref('')
 const imageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
@@ -165,6 +166,11 @@ const loadCaptchaConfig = async () => {
     const payload = res.data?.data as any
     applySiteIcon(payload?.brand?.site_icon)
     captchaConfig.value = payload?.captcha || null
+    const site = payload?.brand?.site_name
+    if (typeof site === 'string' && site.trim()) {
+      siteName.value = site.trim()
+      document.title = `${siteName.value} Admin`
+    }
   } catch {
     captchaConfig.value = null
   } finally {
@@ -279,7 +285,7 @@ onUnmounted(() => {
         </CardContent>
       </Card>
       <p class="mt-4 flex items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-        <span>© {{ new Date().getFullYear() }} Dujiao-Next ·</span>
+        <span>© {{ new Date().getFullYear() }} {{ siteName || 'Dujiao-Next' }} ·</span>
         <a
           href="https://github.com/dujiao-next"
           target="_blank"

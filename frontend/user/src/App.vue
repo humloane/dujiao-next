@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from './stores/app'
 import { getActiveTemplate } from './templates/registry'
@@ -68,6 +68,15 @@ const isResellerConsole = computed(() => route.meta.resellerConsole === true)
 const isLandingPage = computed(() => route.name === 'landing-page')
 // getActiveTemplate 读取 appStore.config（响应式），config 加载后会重新计算
 const isVault = computed(() => getActiveTemplate() === 'vault')
+
+// 结算/支付页隐藏 Chatwoot 气泡，避免遮挡支付按钮。
+const chatwootHidden = computed(() => route.path.startsWith('/checkout') || route.path.startsWith('/pay'))
+watch(chatwootHidden, (hidden) => {
+  document.body.classList.toggle('chatwoot-hidden', hidden)
+}, { immediate: true })
+onUnmounted(() => {
+  document.body.classList.remove('chatwoot-hidden')
+})
 </script>
 
 <style>
@@ -79,5 +88,21 @@ const isVault = computed(() => getActiveTemplate() === 'vault')
 .page-fade-enter-from,
 .page-fade-leave-to {
   opacity: 0;
+}
+
+/* Chatwoot 通过 site_config.scripts 注入，气泡容器不在 Vue 模板里。
+   推荐同时在 Chatwoot 初始化参数里设置 position: 'left'；这里只做移动端兜底。 */
+@media (max-width: 640px) {
+  #chatwoot-container {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
+  }
+  .woot-widget-bubble {
+    transform: scale(0.88);
+    transform-origin: bottom right;
+  }
+}
+body.chatwoot-hidden #chatwoot-container,
+body.chatwoot-hidden .woot-widget-bubble {
+  display: none !important;
 }
 </style>

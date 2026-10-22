@@ -382,6 +382,12 @@ const routes = [
       },
     ],
   },
+  {
+    // 未知后台路径回到首页，避免白屏（如手输 /settings/seo）。
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    redirect: '/',
+  },
 ]
 
 // base 由 utils/adminBase 统一解析：fullstack 模式下读后端注入的 <base href>，
