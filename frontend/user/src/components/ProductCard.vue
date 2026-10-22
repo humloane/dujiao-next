@@ -94,8 +94,8 @@
         {{ getLocalizedText(product.description) }}
       </p>
 
-      <div class="flex items-center justify-between border-t pt-2 md:pt-4 mt-auto">
-        <div class="flex flex-col">
+      <div class="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-2 md:pt-4">
+        <div class="flex min-w-0 flex-col">
           <span class="hidden md:block text-xs text-muted-foreground uppercase tracking-wider">{{ t('products.price') }}</span>
           <span
             v-if="hasPromotionPrice(product)"
@@ -132,7 +132,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex shrink-0 items-center gap-2">
           <!-- Quick buy cart button -->
           <Button
             type="button"

@@ -11,7 +11,7 @@
           <router-link to="/" class="hidden text-sm font-semibold text-[color:var(--lp-ink-muted)] sm:inline-flex">
             {{ tx('nav.home') }}
           </router-link>
-          <router-link to="/products" class="text-sm font-semibold text-[color:var(--lp-ink-muted)]">
+          <router-link to="/products" class="hidden text-sm font-semibold text-[color:var(--lp-ink-muted)] sm:inline-flex">
             {{ tx('nav.products') }}
           </router-link>
           <a

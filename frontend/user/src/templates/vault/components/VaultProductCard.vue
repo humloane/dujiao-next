@@ -34,8 +34,8 @@
       </span>
     </div>
 
-    <div class="mt-auto flex items-end justify-between gap-2 px-1">
-      <div class="flex min-w-0 flex-col gap-1">
+    <div class="mt-auto flex flex-wrap items-end justify-between gap-2 px-1">
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="flex flex-wrap items-baseline gap-x-1.5">
           <template v-if="promo">
             <span class="text-xl font-extrabold tabular-nums text-primary">{{ formatPrice(getPromotionPriceAmount(product), siteCurrency) }}</span>
