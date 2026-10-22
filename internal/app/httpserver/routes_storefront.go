@@ -29,6 +29,7 @@ import (
 	"github.com/dujiao-next/internal/constants"
 	"github.com/dujiao-next/internal/htmltext"
 	categorydomain "github.com/dujiao-next/internal/modules/catalog/category/domain"
+	productcontract "github.com/dujiao-next/internal/modules/catalog/product/contract"
 	productdomain "github.com/dujiao-next/internal/modules/catalog/product/domain"
 	contentapp "github.com/dujiao-next/internal/modules/content/application"
 	contentdomain "github.com/dujiao-next/internal/modules/content/domain"
@@ -40,6 +41,8 @@ import (
 	"html"
 	"net/url"
 	"path"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -363,12 +366,12 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		meta.Title = firstNonEmpty(localized(site.SeoTitle, locale), site.Name)
 		meta.Description = firstNonEmpty(localized(site.SeoDesc, locale), localized(site.Description, locale), meta.Description)
 		meta.JSONLD = marshalJSONLD(homeJSONLD(base, site, locale))
-		meta.BodyHTML = simpleBodyHTML(site.Name, meta.Description)
+		meta.BodyHTML = r.homeBodyHTML(ctx, locale, site.Name, meta.Description, site)
 	case cleanPath == "/products":
 		meta.Title = joinTitle(staticText("products", locale), site.Name)
 		meta.Description = firstNonEmpty(localized(site.SeoDesc, locale), staticText("productsDesc", locale), meta.Description)
 		meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
-		meta.BodyHTML = simpleBodyHTML(staticText("products", locale), meta.Description)
+		meta.BodyHTML = r.productsBodyHTML(locale, staticText("products", locale), meta.Description, site)
 	case strings.HasPrefix(cleanPath, "/categories/"):
 		slug := strings.TrimPrefix(cleanPath, "/categories/")
 		if category := r.findCategory(slug); category != nil {
@@ -383,12 +386,12 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 			), seoDescriptionMaxRunes)
 			meta.Keywords = asStringFromMap(seo["keywords"], locale)
 			meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
-			meta.BodyHTML = simpleBodyHTML(name, meta.Description)
+			meta.BodyHTML = r.categoryBodyHTML(locale, site, category, meta.Description)
 		}
 	case strings.HasPrefix(cleanPath, "/products/"):
 		slug := strings.TrimPrefix(cleanPath, "/products/")
 		if product := r.findProduct(slug); product != nil {
-			r.applyProductMeta(meta, base, cleanPath, locale, site, product)
+			r.applyProductMeta(ctx, meta, base, cleanPath, locale, site, product)
 		}
 	case strings.HasPrefix(cleanPath, "/blog/"):
 		slug := strings.TrimPrefix(cleanPath, "/blog/")
@@ -399,15 +402,15 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		key := strings.TrimPrefix(cleanPath, "/")
 		meta.Title = joinTitle(staticText(key, locale), site.Name)
 		meta.Description = firstNonEmpty(staticText(key+"Desc", locale), meta.Description)
-		var titles []string
+		var posts []contentdomain.Post
 		if cleanPath == "/blog" {
-			titles = r.listPostTitles(ctx, locale, 12)
+			posts = r.seoPosts(ctx, blogBodyPostLimit)
 		}
 		// 没有已发布文章时不要输出空的 CollectionPage。
-		if cleanPath != "/blog" || len(titles) > 0 {
+		if cleanPath != "/blog" || len(posts) > 0 {
 			meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
 		}
-		meta.BodyHTML = listBodyHTML(meta.Title, meta.Description, titles)
+		meta.BodyHTML = r.blogListBodyHTML(locale, site, meta.Title, meta.Description, posts)
 	case cleanPath == "/about" || cleanPath == "/terms" || cleanPath == "/privacy":
 		key := strings.TrimPrefix(cleanPath, "/")
 		meta.Title = joinTitle(staticText(key, locale), site.Name)
@@ -492,7 +495,7 @@ func (r *seoResolver) findPost(ctx context.Context, slug string) *contentdomain.
 	return post
 }
 
-func (r *seoResolver) applyProductMeta(meta *web.PageMeta, base, cleanPath, locale string, site seoSite, product *productdomain.Product) {
+func (r *seoResolver) applyProductMeta(ctx context.Context, meta *web.PageMeta, base, cleanPath, locale string, site seoSite, product *productdomain.Product) {
 	seo := asMap(product.SeoMetaJSON)
 	title := localized(asMap(product.TitleJSON), locale)
 	if title == "" {
@@ -538,7 +541,7 @@ func (r *seoResolver) applyProductMeta(meta *web.PageMeta, base, cleanPath, loca
 		jsonLD["image"] = images
 	}
 	meta.JSONLD = marshalJSONLD(jsonLD)
-	meta.BodyHTML = simpleBodyHTML(title, meta.Description)
+	meta.BodyHTML = r.productBodyHTML(ctx, locale, site, product)
 }
 
 func (r *seoResolver) applyPostMeta(meta *web.PageMeta, base, cleanPath, locale string, site seoSite, post *contentdomain.Post) {
@@ -592,7 +595,7 @@ func (r *seoResolver) applyPostMeta(meta *web.PageMeta, base, cleanPath, locale 
 		},
 	}
 	meta.JSONLD = marshalJSONLD(graph)
-	meta.BodyHTML = simpleBodyHTML(title, meta.Description)
+	meta.BodyHTML = r.postBodyHTML(locale, site, post)
 }
 
 func homeJSONLD(base string, site seoSite, locale string) map[string]interface{} {
@@ -873,6 +876,36 @@ func staticText(key, locale string) string {
 		"termsDesc":                {"服务范围、交付、退款与使用规则。", "服務範圍、交付、退款與使用規則。", "Service scope, delivery, refunds and usage rules."},
 		"privacy":                  {"隐私政策", "隱私政策", "Privacy Policy"},
 		"privacyDesc":              {"我们如何收集、使用与保护你的个人信息。", "我們如何收集、使用與保護你的個人資訊。", "How we collect, use and protect your personal information."},
+		"bodyRegions":              {"覆盖地区", "覆蓋地區", "Regions"},
+		"bodyFeatured":             {"主推商品", "主推商品", "Featured products"},
+		"bodyLatestPosts":          {"最新文章", "最新文章", "Latest posts"},
+		"bodyAllPosts":             {"全部文章", "全部文章", "All posts"},
+		"bodyBlogEmpty":            {"暂无文章", "暫無文章", "No posts yet"},
+		"bodyCategoryProducts":     {"分类商品", "分類商品", "Products in this category"},
+		"bodyFilterNote":           {"支持按国家/地区、使用场景、IP 类型与线路类型筛选。", "支援按國家/地區、使用場景、IP 類型與線路類型篩選。", "Filter by region, use case, IP type and line type."},
+		"bodyProductCount":         {"共 {count} 个商品", "共 {count} 個商品", "{count} products"},
+		"bodySpecPrice":            {"价格", "價格", "Price"},
+		"bodySpecDelivery":         {"交付方式", "交付方式", "Delivery"},
+		"bodySpecStock":            {"库存", "庫存", "Stock"},
+		"bodyStockUnlimited":       {"不限", "不限", "Unlimited"},
+		"bodyFulfillmentManual":    {"人工交付", "人工交付", "Manual delivery"},
+		"bodyFulfillmentAuto":      {"自动交付", "自動交付", "Automatic delivery"},
+		"bodyPublishedAt":          {"发布于", "發佈於", "Published"},
+		"bodySpecs":                {"规格与交付", "規格與交付", "Specs & delivery"},
+		"bodySpecType":             {"IP 类型", "IP 類型", "IP type"},
+		"bodySpecLine":             {"线路类型", "線路類型", "Line type"},
+		"bodyScenarios":            {"适用场景", "適用場景", "Use cases"},
+		"bodyFaq":                  {"常见问题", "常見問題", "FAQ"},
+		"bodyDetail":               {"商品详情", "商品詳情", "Details"},
+		"bodyRelated":              {"相关商品", "相關商品", "Related products"},
+		"bodyCoverage":             {"本页覆盖地区", "本頁覆蓋地區", "Regions on this page"},
+		"bodyProcess":              {"购买与交付", "購買與交付", "Ordering & delivery"},
+		"bodyStep1":                {"选择商品与规格后提交订单", "選擇商品與規格後提交訂單", "Choose a product and place the order"},
+		"bodyStep2":                {"完成支付，订单进入处理", "完成付款，訂單進入處理", "Complete payment and the order is queued"},
+		"bodyStep3":                {"人工交付，按订单页说明使用", "人工交付，按訂單頁說明使用", "Manual delivery with instructions on the order page"},
+		"bodyStep4":                {"售后支持，按订单页联系方式处理", "售後支援，按訂單頁聯絡方式處理", "Support via the contact shown on the order page"},
+		"bodySkuList":              {"可选规格", "可選規格", "Available options"},
+		"bodySkuDefault":           {"默认规格", "預設規格", "Default option"},
 		"lp-us-residential-ip":     {"美国静态住宅 IP", "美國靜態住宅 IP", "US Static Residential IP"},
 		"lp-us-residential-ipDesc": {"美国独享静态住宅 IP，适配 TikTok 直播、跨境电商与店群运营。", "美國獨享靜態住宅 IP，適配 TikTok 直播、跨境電商與店群運營。", "Dedicated US static residential IPs for TikTok live, cross-border e-commerce and multi-store operations."},
 		"lp-tiktok-live-ip":        {"TikTok 直播 IP 方案", "TikTok 直播 IP 方案", "TikTok Live IP Solutions"},
@@ -896,26 +929,6 @@ func staticText(key, locale string) string {
 	default:
 		return item[0]
 	}
-}
-
-// listPostTitles 返回最近的已发布文章标题，用于 /blog 的正文摘要与非空判断。
-func (r *seoResolver) listPostTitles(ctx context.Context, locale string, limit int) []string {
-	if r == nil || r.container == nil || r.container.ContentPostService == nil {
-		return nil
-	}
-	posts, _, err := r.container.ContentPostService.ListPublic(ctx, contentapp.PublicPostQuery{Page: 1, PageSize: limit})
-	if err != nil {
-		return nil
-	}
-	titles := make([]string, 0, len(posts))
-	for _, post := range posts {
-		title := localized(asMap(post.TitleJSON), locale)
-		if strings.TrimSpace(title) == "" {
-			title = post.Slug
-		}
-		titles = append(titles, title)
-	}
-	return titles
 }
 
 // landingJSONLD 输出落地页结构化数据：WebPage + BreadcrumbList，有 FAQ 时追加 FAQPage。
@@ -1027,23 +1040,514 @@ func simpleBodyHTML(title, description string) string {
 	return b.String()
 }
 
-// listBodyHTML 用于列表页：标题 + 描述 + 若干条目链接文案。
-func listBodyHTML(title, description string, items []string) string {
-	var b strings.Builder
+// ---------- 服务端正文快照（SEO） ----------
+//
+// SPA 首屏只有一个空的 #app，爬虫不执行 JS 时拿不到正文。这里按路由拼出
+// 可索引的正文摘要写进 #app：浏览器里 Vue 挂载会整体替换，不影响交互。
+// 所有来自数据库或用户的内容统一 html.EscapeString，且不输出任何 script。
+
+const (
+	homeBodyProductLimit = 3
+	bodyProductLimit     = 20
+	blogBodyPostLimit    = 10
+	productBodyFAQLimit  = 6
+	postBodyExcerptRunes = 800
+)
+
+// seoRegionCodes 是站点在售的六地区 + 共享节点。
+var seoRegionCodes = []string{"US", "GB", "DE", "JP", "TW", "PH", "SHARED"}
+
+// seoEnumLabels 让正文里的枚举值按语言展示；未知值原样输出，不编造翻译。
+var seoEnumLabels = map[string][3]string{
+	"US":          {"美国", "美國", "United States"},
+	"GB":          {"英国", "英國", "United Kingdom"},
+	"DE":          {"德国", "德國", "Germany"},
+	"JP":          {"日本", "日本", "Japan"},
+	"TW":          {"台湾", "台灣", "Taiwan"},
+	"PH":          {"菲律宾", "菲律賓", "Philippines"},
+	"SHARED":      {"共享节点", "共享節點", "Shared nodes"},
+	"live":        {"直播", "直播", "Live streaming"},
+	"ecommerce":   {"跨境电商", "跨境電商", "Cross-border e-commerce"},
+	"store-group": {"店群", "店群", "Multi-store"},
+	"ads":         {"广告投放", "廣告投放", "Advertising"},
+	"enterprise":  {"企业方案", "企業方案", "Enterprise"},
+	"test":        {"测试验证", "測試驗證", "Testing"},
+	"residential": {"静态住宅", "靜態住宅", "Static residential"},
+	"datacenter":  {"机房 IP", "機房 IP", "Datacenter IP"},
+	"isp":         {"ISP 住宅", "ISP 住宅", "ISP"},
+	"shared":      {"共享", "共享", "Shared"},
+	"direct":      {"直连", "直連", "Direct"},
+	"iepl":        {"IEPL 专线", "IEPL 專線", "IEPL line"},
+}
+
+func localizedTriple(item [3]string, locale string) string {
+	switch locale {
+	case "zh-TW":
+		return item[1]
+	case "en-US":
+		return item[2]
+	default:
+		return item[0]
+	}
+}
+
+func enumLabel(value, locale string) string {
+	trimmed := strings.TrimSpace(value)
+	item, ok := seoEnumLabels[trimmed]
+	if !ok {
+		return trimmed
+	}
+	return localizedTriple(item, locale)
+}
+
+// seoProducts 读取公开商品（仅上架）。失败时返回 nil，正文退化为不含商品的版本。
+func (r *seoResolver) seoProducts(limit int, categoryID string) []productdomain.Product {
+	if r == nil || r.container == nil || r.container.ProductRepo == nil || limit <= 0 {
+		return nil
+	}
+	items, _, err := r.container.ProductRepo.List(productcontract.ListFilter{
+		Page:       1,
+		PageSize:   limit,
+		CategoryID: categoryID,
+		OnlyActive: true,
+	})
+	if err != nil {
+		return nil
+	}
+	return items
+}
+
+// seoPosts 读取已发布文章；/blog 列表与首页「最新文章」共用。
+func (r *seoResolver) seoPosts(ctx context.Context, limit int) []contentdomain.Post {
+	if r == nil || r.container == nil || r.container.ContentPostService == nil || limit <= 0 {
+		return nil
+	}
+	posts, _, err := r.container.ContentPostService.ListPublic(ctx, contentapp.PublicPostQuery{Page: 1, PageSize: limit})
+	if err != nil {
+		return nil
+	}
+	return posts
+}
+
+func productTitle(product *productdomain.Product, locale string) string {
+	title := localized(asMap(product.TitleJSON), locale)
+	if title == "" {
+		title = product.Slug
+	}
+	return title
+}
+
+func productPriceLabel(product *productdomain.Product, site seoSite) string {
+	return product.PriceAmount.String() + " " + site.Currency
+}
+
+func productRegionLabel(product *productdomain.Product, locale string) string {
+	return enumLabel(product.Country, locale)
+}
+
+func scenarioLabels(product *productdomain.Product, locale string) []string {
+	labels := make([]string, 0, len(product.Scenario))
+	for _, value := range product.Scenario {
+		if label := enumLabel(value, locale); label != "" {
+			labels = append(labels, label)
+		}
+	}
+	return labels
+}
+
+func writeEscaped(b *strings.Builder, tag, value string) {
+	if strings.TrimSpace(value) == "" {
+		return
+	}
+	fmt.Fprintf(b, "<%s>%s</%s>", tag, html.EscapeString(value), tag)
+}
+
+func writeHeading(b *strings.Builder, level int, value string) {
+	if strings.TrimSpace(value) == "" {
+		return
+	}
+	fmt.Fprintf(b, "<h%d>%s</h%d>", level, html.EscapeString(value), level)
+}
+
+func writeLinkList(b *strings.Builder, heading string, items []string) {
+	if len(items) == 0 {
+		return
+	}
+	writeHeading(b, 2, heading)
+	b.WriteString("<ul>")
+	for _, item := range items {
+		fmt.Fprintf(b, "<li>%s</li>", html.EscapeString(item))
+	}
+	b.WriteString("</ul>")
+}
+
+// writeProductList 输出商品条目：名称（链接）/ 价格 / 地区 / 场景。
+func writeProductList(b *strings.Builder, heading, locale string, site seoSite, products []productdomain.Product) {
+	if len(products) == 0 {
+		return
+	}
+	writeHeading(b, 2, heading)
+	b.WriteString("<ul>")
+	for i := range products {
+		product := &products[i]
+		parts := []string{productPriceLabel(product, site)}
+		if region := productRegionLabel(product, locale); region != "" {
+			parts = append(parts, region)
+		}
+		if scenarios := scenarioLabels(product, locale); len(scenarios) > 0 {
+			parts = append(parts, strings.Join(scenarios, " / "))
+		}
+		fmt.Fprintf(b, `<li><a href="/products/%s">%s</a> — %s</li>`,
+			html.EscapeString(product.Slug),
+			html.EscapeString(productTitle(product, locale)),
+			html.EscapeString(strings.Join(parts, " · ")),
+		)
+	}
+	b.WriteString("</ul>")
+}
+
+func writePostList(b *strings.Builder, heading, locale, emptyText string, posts []contentdomain.Post) {
+	writeHeading(b, 2, heading)
+	if len(posts) == 0 {
+		if strings.TrimSpace(emptyText) != "" {
+			writeEscaped(b, "p", emptyText)
+		}
+		return
+	}
+	b.WriteString("<ul>")
+	for i := range posts {
+		post := &posts[i]
+		title := localized(asMap(post.TitleJSON), locale)
+		if title == "" {
+			title = post.Slug
+		}
+		fmt.Fprintf(b, `<li><a href="/blog/%s">%s</a>`, html.EscapeString(post.Slug), html.EscapeString(title))
+		summary := truncateRunes(stripHTML(localized(asMap(post.SummaryJSON), locale)), 120)
+		if summary != "" {
+			fmt.Fprintf(b, " — %s", html.EscapeString(summary))
+		}
+		b.WriteString("</li>")
+	}
+	b.WriteString("</ul>")
+}
+
+func writeBreadcrumb(b *strings.Builder, siteName string, crumbs [][2]string) {
+	b.WriteString(`<nav aria-label="Breadcrumb"><ol>`)
+	fmt.Fprintf(b, `<li><a href="/">%s</a></li>`, html.EscapeString(siteName))
+	for _, crumb := range crumbs {
+		if strings.TrimSpace(crumb[1]) == "" {
+			fmt.Fprintf(b, "<li>%s</li>", html.EscapeString(crumb[0]))
+			continue
+		}
+		fmt.Fprintf(b, `<li><a href="%s">%s</a></li>`, html.EscapeString(crumb[1]), html.EscapeString(crumb[0]))
+	}
+	b.WriteString("</ol></nav>")
+}
+
+// ---------- 各路由正文 ----------
+
+func (r *seoResolver) homeBodyHTML(ctx context.Context, locale, title, description string, site seoSite) string {
+	b := &strings.Builder{}
 	b.WriteString("<article>")
-	if title != "" {
-		fmt.Fprintf(&b, "<h1>%s</h1>", html.EscapeString(title))
+	writeHeading(b, 1, title)
+	writeEscaped(b, "p", description)
+
+	regions := make([]string, 0, len(seoRegionCodes))
+	for _, code := range seoRegionCodes {
+		regions = append(regions, enumLabel(code, locale))
 	}
-	if description != "" {
-		fmt.Fprintf(&b, "<p>%s</p>", html.EscapeString(description))
+	writeLinkList(b, staticText("bodyRegions", locale), regions)
+
+	writeProductList(b, staticText("bodyFeatured", locale), locale, site, r.seoProducts(homeBodyProductLimit, ""))
+
+	writePostList(b, staticText("bodyLatestPosts", locale), locale, staticText("bodyBlogEmpty", locale), r.seoPosts(ctx, 2))
+
+	b.WriteString(`<p><a href="/products">` + html.EscapeString(staticText("products", locale)) + `</a></p>`)
+	b.WriteString("</article>")
+	return b.String()
+}
+
+func (r *seoResolver) productsBodyHTML(locale, title, description string, site seoSite) string {
+	b := &strings.Builder{}
+	b.WriteString("<article>")
+	writeHeading(b, 1, title)
+	writeEscaped(b, "p", description)
+	writeEscaped(b, "p", staticText("bodyFilterNote", locale))
+
+	products := r.seoProducts(bodyProductLimit, "")
+	if len(products) > 0 {
+		countText := strings.ReplaceAll(staticText("bodyProductCount", locale), "{count}", strconv.Itoa(len(products)))
+		writeEscaped(b, "p", countText)
 	}
-	if len(items) > 0 {
+	writeProductList(b, staticText("bodyFeatured", locale), locale, site, products)
+	writeLinkList(b, staticText("bodyCoverage", locale), productCoverage(products, locale))
+	b.WriteString(`<p><a href="/products">` + html.EscapeString(staticText("products", locale)) + `</a></p>`)
+	b.WriteString("</article>")
+	return b.String()
+}
+
+func (r *seoResolver) categoryBodyHTML(locale string, site seoSite, category *categorydomain.Category, description string) string {
+	if category == nil {
+		return ""
+	}
+	name := localized(asMap(category.NameJSON), locale)
+	// 正文用完整分类描述（meta description 会被截断到 160 字）。
+	description = firstNonEmpty(localized(asMap(category.DescriptionJSON), locale), description)
+	b := &strings.Builder{}
+	b.WriteString("<article>")
+	writeHeading(b, 1, name)
+	writeEscaped(b, "p", description)
+
+	products := r.seoProducts(bodyProductLimit, strconv.FormatUint(uint64(category.ID), 10))
+	if len(products) > 0 {
+		countText := strings.ReplaceAll(staticText("bodyProductCount", locale), "{count}", strconv.Itoa(len(products)))
+		writeEscaped(b, "p", countText)
+	}
+	writeProductList(b, staticText("bodyCategoryProducts", locale), locale, site, products)
+	writeLinkList(b, staticText("bodyCoverage", locale), productCoverage(products, locale))
+	b.WriteString("</article>")
+	return b.String()
+}
+
+// productFAQPairs 只用商品真实字段拼 FAQ，最多 6 条；没有的字段直接跳过。
+func productFAQPairs(product *productdomain.Product, locale string, site seoSite) [][2]string {
+	pairs := make([][2]string, 0, productBodyFAQLimit)
+	add := func(question, answer string) {
+		if len(pairs) >= productBodyFAQLimit || strings.TrimSpace(answer) == "" {
+			return
+		}
+		pairs = append(pairs, [2]string{question, answer})
+	}
+
+	add(staticText("bodySpecDelivery", locale), productDeliveryLabel(product, locale))
+	add(staticText("bodySpecStock", locale), productStockLabel(product, locale))
+	add(staticText("bodySpecPrice", locale), productPriceLabel(product, site))
+
+	if region := productRegionLabel(product, locale); region != "" {
+		add(staticText("bodyRegions", locale), region)
+	}
+	if scenarios := scenarioLabels(product, locale); len(scenarios) > 0 {
+		add(staticText("bodyScenarios", locale), strings.Join(scenarios, " / "))
+	}
+	if line := enumLabel(product.LineType, locale); line != "" {
+		add(staticText("bodySpecLine", locale), line)
+	}
+	return pairs
+}
+
+func productDeliveryLabel(product *productdomain.Product, locale string) string {
+	if product.FulfillmentType == constants.FulfillmentTypeAuto {
+		return staticText("bodyFulfillmentAuto", locale)
+	}
+	return staticText("bodyFulfillmentManual", locale)
+}
+
+func productStockLabel(product *productdomain.Product, locale string) string {
+	if product.ManualStockTotal < 0 {
+		return staticText("bodyStockUnlimited", locale)
+	}
+	return strconv.Itoa(product.ManualStockTotal)
+}
+
+func (r *seoResolver) productBodyHTML(ctx context.Context, locale string, site seoSite, product *productdomain.Product) string {
+	b := &strings.Builder{}
+	b.WriteString("<article>")
+
+	categorySlug := ""
+	if r != nil && r.container != nil && r.container.CategoryRepo != nil && product.CategoryID != 0 {
+		if category, err := r.container.CategoryRepo.GetByID(strconv.FormatUint(uint64(product.CategoryID), 10)); err == nil && category != nil {
+			categorySlug = category.Slug
+		}
+	}
+	crumbs := [][2]string{{staticText("products", locale), "/products"}}
+	if categorySlug != "" {
+		crumbs = append(crumbs, [2]string{staticText("bodyCategoryProducts", locale), "/categories/" + categorySlug})
+	}
+	writeBreadcrumb(b, site.Name, crumbs)
+
+	writeHeading(b, 1, productTitle(product, locale))
+	writeEscaped(b, "p", stripHTML(localized(asMap(product.DescriptionJSON), locale)))
+
+	writeHeading(b, 2, staticText("bodySpecs", locale))
+	b.WriteString("<dl>")
+	specs := [][2]string{
+		{staticText("bodySpecPrice", locale), productPriceLabel(product, site)},
+		{staticText("bodyRegions", locale), productRegionLabel(product, locale)},
+		{staticText("bodySpecType", locale), enumLabel(product.IPType, locale)},
+		{staticText("bodySpecLine", locale), enumLabel(product.LineType, locale)},
+		{staticText("bodySpecDelivery", locale), productDeliveryLabel(product, locale)},
+		{staticText("bodySpecStock", locale), productStockLabel(product, locale)},
+	}
+	for _, row := range specs {
+		if strings.TrimSpace(row[1]) == "" {
+			continue
+		}
+		fmt.Fprintf(b, "<dt>%s</dt><dd>%s</dd>", html.EscapeString(row[0]), html.EscapeString(row[1]))
+	}
+	b.WriteString("</dl>")
+
+	writeLinkList(b, staticText("bodyScenarios", locale), scenarioLabels(product, locale))
+
+	if skus := activeSKUs(product); len(skus) > 0 {
+		writeHeading(b, 2, staticText("bodySkuList", locale))
 		b.WriteString("<ul>")
-		for _, item := range items {
-			fmt.Fprintf(&b, "<li>%s</li>", html.EscapeString(item))
+		for _, sku := range skus {
+			label := skuLabel(sku, locale)
+			fmt.Fprintf(b, `<li>%s — %s %s</li>`, html.EscapeString(label), html.EscapeString(sku.PriceAmount.String()), html.EscapeString(site.Currency))
 		}
 		b.WriteString("</ul>")
 	}
+
+	if pairs := productFAQPairs(product, locale, site); len(pairs) > 0 {
+		writeHeading(b, 2, staticText("bodyFaq", locale))
+		for _, pair := range pairs {
+			writeHeading(b, 3, pair[0])
+			writeEscaped(b, "p", pair[1])
+		}
+	}
+
+	if content := stripHTML(localized(asMap(product.ContentJSON), locale)); content != "" {
+		writeHeading(b, 2, staticText("bodyDetail", locale))
+		writeEscaped(b, "p", truncateRunes(content, 1200))
+	}
+
+	// 下单到售后的真实流程，和站内结算页一致，不是编造内容。
+	writeLinkList(b, staticText("bodyProcess", locale), []string{
+		staticText("bodyStep1", locale),
+		staticText("bodyStep2", locale),
+		staticText("bodyStep3", locale),
+		staticText("bodyStep4", locale),
+	})
+
+	// 同分类的其他商品：既是内部链接，也让正文覆盖更多真实商品名。
+	if related := r.relatedProducts(product); len(related) > 0 {
+		writeProductList(b, staticText("bodyRelated", locale), locale, site, related)
+	}
+
+	links := []string{fmt.Sprintf(`<a href="/products">%s</a>`, html.EscapeString(staticText("products", locale)))}
+	if categorySlug != "" {
+		links = append(links, fmt.Sprintf(`<a href="/categories/%s">%s</a>`, html.EscapeString(categorySlug), html.EscapeString(staticText("products", locale))))
+	}
+	if len(r.seoPosts(ctx, 2)) > 0 {
+		links = append(links, fmt.Sprintf(`<a href="/blog">%s</a>`, html.EscapeString(staticText("blog", locale))))
+	}
+	b.WriteString("<p>" + strings.Join(links, " · ") + "</p>")
 	b.WriteString("</article>")
 	return b.String()
+}
+
+func (r *seoResolver) blogListBodyHTML(locale string, site seoSite, title, description string, posts []contentdomain.Post) string {
+	b := &strings.Builder{}
+	b.WriteString("<article>")
+	// meta.Title 形如「博客 - 站点名」，正文 H1 只保留页面名。
+	writeHeading(b, 1, strings.TrimSuffix(title, " - "+site.Name))
+	writeEscaped(b, "p", description)
+	writePostList(b, staticText("bodyAllPosts", locale), locale, staticText("bodyBlogEmpty", locale), posts)
+	b.WriteString("</article>")
+	return b.String()
+}
+
+func (r *seoResolver) postBodyHTML(locale string, site seoSite, post *contentdomain.Post) string {
+	title := localized(asMap(post.TitleJSON), locale)
+	if title == "" {
+		title = post.Slug
+	}
+	b := &strings.Builder{}
+	b.WriteString("<article>")
+	writeBreadcrumb(b, site.Name, [][2]string{
+		{staticText("blog", locale), "/blog"},
+		{title, ""},
+	})
+	writeHeading(b, 1, title)
+
+	published := post.CreatedAt
+	if post.PublishedAt != nil {
+		published = *post.PublishedAt
+	}
+	if !published.IsZero() {
+		writeEscaped(b, "p", staticText("bodyPublishedAt", locale)+" "+published.Format("2006-01-02"))
+	}
+
+	excerpt := stripHTML(localized(asMap(post.ContentJSON), locale))
+	if strings.TrimSpace(excerpt) == "" {
+		excerpt = stripHTML(localized(asMap(post.SummaryJSON), locale))
+	}
+	writeEscaped(b, "p", truncateRunes(excerpt, postBodyExcerptRunes))
+	b.WriteString("</article>")
+	return b.String()
+}
+
+// relatedProducts 返回同分类的其他在售商品，最多 6 个。
+func (r *seoResolver) relatedProducts(product *productdomain.Product) []productdomain.Product {
+	if product == nil || product.CategoryID == 0 {
+		return nil
+	}
+	items := r.seoProducts(bodyProductLimit, strconv.FormatUint(uint64(product.CategoryID), 10))
+	related := make([]productdomain.Product, 0, 6)
+	for i := range items {
+		if items[i].ID == product.ID {
+			continue
+		}
+		related = append(related, items[i])
+		if len(related) == 6 {
+			break
+		}
+	}
+	return related
+}
+
+// productCoverage 返回当前页商品实际覆盖的地区（去重、保持上架顺序），不虚构未在售地区。
+func productCoverage(products []productdomain.Product, locale string) []string {
+	seen := make(map[string]struct{}, len(products))
+	labels := make([]string, 0, len(products))
+	for i := range products {
+		code := strings.TrimSpace(products[i].Country)
+		if code == "" {
+			continue
+		}
+		if _, ok := seen[code]; ok {
+			continue
+		}
+		seen[code] = struct{}{}
+		labels = append(labels, enumLabel(code, locale))
+	}
+	return labels
+}
+
+// activeSKUs 只返回上架的 SKU；没有 SKU 的商品返回空。
+func activeSKUs(product *productdomain.Product) []productdomain.ProductSKU {
+	skus := make([]productdomain.ProductSKU, 0, len(product.SKUs))
+	for _, sku := range product.SKUs {
+		if sku.IsActive {
+			skus = append(skus, sku)
+		}
+	}
+	return skus
+}
+
+// skuLabel 用 SKU 规格值拼展示名，缺省时回落到本地化的「默认规格」。
+// 键按字典序输出，保证同一 SKU 每次渲染的文案稳定。
+func skuLabel(sku productdomain.ProductSKU, locale string) string {
+	values := asMap(sku.SpecValuesJSON)
+	if len(values) == 0 {
+		return staticText("bodySkuDefault", locale)
+	}
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		value := strings.TrimSpace(asString(values[key]))
+		if value == "" {
+			continue
+		}
+		parts = append(parts, value)
+	}
+	if len(parts) == 0 {
+		return staticText("bodySkuDefault", locale)
+	}
+	return strings.Join(parts, " / ")
 }
