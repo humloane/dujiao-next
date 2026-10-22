@@ -312,6 +312,9 @@
                     </Button>
                   </div>
                 </div>
+                <div v-if="deliveryReassurance" class="rounded-xl bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
+                  {{ deliveryReassurance }}
+                </div>
 
               </div>
             </div>
@@ -413,7 +416,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft, Lock, Minus, Pencil, Plus, RotateCw, Tag, UserPlus, Zap } from 'lucide-vue-next'
 import { getImageUrl } from '../utils/image'
@@ -475,6 +478,13 @@ const {
   mobileBarShowSkuPrice, mobileBarSkuPriceDisplay,
   mobileBarShowProductPromotionPrice, mobileBarProductPromotionPriceDisplay, mobileBarProductPriceDisplay,
 } = useProductDetail({ onLoaded: () => setupMobileBarObserver() })
+
+const deliveryReassurance = computed(() => {
+  const type = product.value?.fulfillment_type
+  if (type === 'manual') return t('productDetail.deliveryReassuranceManual')
+  if (type === 'auto') return t('productDetail.deliveryReassuranceAuto')
+  return ''
+})
 
 onUnmounted(() => {
   if (observer) {

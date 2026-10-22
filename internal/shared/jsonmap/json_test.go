@@ -26,6 +26,16 @@ func TestJSONDatabaseRoundTrip(t *testing.T) {
 	}
 }
 
+func TestJSONScanAcceptsTextEncoding(t *testing.T) {
+	var value JSON
+	if err := value.Scan(`{"name":"storefront","count":2}`); err != nil {
+		t.Fatalf("scan text JSON: %v", err)
+	}
+	if value["name"] != "storefront" {
+		t.Fatalf("unexpected scanned value: %#v", value)
+	}
+}
+
 func TestJSONScanNilCreatesEmptyObject(t *testing.T) {
 	value := JSON{"stale": true}
 	if err := value.Scan(nil); err != nil {

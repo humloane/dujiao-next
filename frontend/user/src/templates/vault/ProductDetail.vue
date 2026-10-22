@@ -179,9 +179,9 @@
             </template>
           </div>
 
-          <div class="mt-4 flex items-center gap-3 rounded-md bg-[color:var(--teal-soft)] px-[18px] py-3.5 text-[color:var(--teal-strong)]">
+          <div v-if="deliveryReassurance" class="mt-4 flex items-center gap-3 rounded-md bg-[color:var(--teal-soft)] px-[18px] py-3.5 text-[color:var(--teal-strong)]">
             <TicketCheck class="h-[22px] w-[22px] flex-none" />
-            <span class="text-sm font-semibold">{{ t('productDetail.deliveryReassurance') }}</span>
+            <span class="text-sm font-semibold">{{ deliveryReassurance }}</span>
           </div>
         </div>
       </section>
@@ -303,6 +303,13 @@ const {
   mobileBarShowSkuPrice, mobileBarSkuPriceDisplay,
   mobileBarShowProductPromotionPrice, mobileBarProductPromotionPriceDisplay, mobileBarProductPriceDisplay,
 } = useProductDetail({ onLoaded: () => setupMobileBarObserver() })
+
+const deliveryReassurance = computed(() => {
+  const type = product.value?.fulfillment_type
+  if (type === 'manual') return t('productDetail.deliveryReassuranceManual')
+  if (type === 'auto') return t('productDetail.deliveryReassuranceAuto')
+  return ''
+})
 
 const stockPillTone = computed(() => {
   const variant = getStockBadgeVariant(product.value?.stock_status)

@@ -26,9 +26,13 @@ func (value *JSON) Scan(source interface{}) error {
 		*value = make(JSON)
 		return nil
 	}
-	bytes, ok := source.([]byte)
-	if !ok {
+	switch typed := source.(type) {
+	case []byte:
+		return json.Unmarshal(typed, value)
+	case string:
+		// SQLite 手动写入或外部导入可能把 JSON 存成 TEXT；不处理会静默变成空对象。
+		return json.Unmarshal([]byte(typed), value)
+	default:
 		return nil
 	}
-	return json.Unmarshal(bytes, value)
 }

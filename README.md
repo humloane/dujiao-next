@@ -270,6 +270,14 @@ go run ./cmd/backfill-seo-content -report=seo.csv     # export the full change l
 > `Post` has no `seo_meta` column yet; post SEO keeps using the existing title/summary.
 > The command never adds database columns and is safe to re-run (idempotent).
 
+Clean duplicated product content blocks (`核心亮点` / `适用场景` / `交付说明`) with:
+
+```bash
+go run ./cmd/dedupe-product-content                  # dry-run
+go run ./cmd/dedupe-product-content -apply           # apply
+go run ./cmd/dedupe-product-content -report=dedupe.csv
+```
+
 ## Quick Start (Develop)
 
 Run the backend and the two frontends separately for hot reload:
