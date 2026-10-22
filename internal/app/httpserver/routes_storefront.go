@@ -359,6 +359,9 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		meta.Image = base + defaultOGImagePath
 	}
 
+	// 标题后缀优先用当前语言的站点 SEO 标题，避免英文页面出现中文品牌名。
+	siteName := seoSiteName(site, locale)
+
 	ctx := req.Context
 	if ctx == nil {
 		ctx = context.Background()
@@ -373,7 +376,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		meta.JSONLD = marshalJSONLD(homeJSONLD(base, site, locale))
 		meta.BodyHTML = r.homeBodyHTML(ctx, locale, site.Name, meta.Description, site)
 	case cleanPath == "/products":
-		meta.Title = joinTitle(staticText("products", locale), site.Name)
+		meta.Title = joinTitle(staticText("products", locale), siteName)
 		meta.Description = firstNonEmpty(localized(site.SeoDesc, locale), staticText("productsDesc", locale), meta.Description)
 		meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
 		meta.BodyHTML = r.productsBodyHTML(locale, staticText("products", locale), meta.Description, site)
@@ -382,7 +385,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		if category := r.findCategory(slug); category != nil {
 			name := localized(asMap(category.NameJSON), locale)
 			seo := asMap(category.SeoMetaJSON)
-			meta.Title = joinTitle(firstNonEmpty(asStringFromMap(seo["title"], locale), name), site.Name)
+			meta.Title = joinTitle(firstNonEmpty(asStringFromMap(seo["title"], locale), name), siteName)
 			meta.Description = truncateRunes(firstNonEmpty(
 				asStringFromMap(seo["description"], locale),
 				localized(asMap(category.DescriptionJSON), locale),
@@ -405,7 +408,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		}
 	case cleanPath == "/blog" || cleanPath == "/notice":
 		key := strings.TrimPrefix(cleanPath, "/")
-		meta.Title = joinTitle(staticText(key, locale), site.Name)
+		meta.Title = joinTitle(staticText(key, locale), siteName)
 		meta.Description = firstNonEmpty(staticText(key+"Desc", locale), meta.Description)
 		postType := constants.PostTypeBlog
 		if cleanPath == "/notice" {
@@ -423,7 +426,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		}
 	case cleanPath == "/about" || cleanPath == "/terms" || cleanPath == "/privacy":
 		key := strings.TrimPrefix(cleanPath, "/")
-		meta.Title = joinTitle(staticText(key, locale), site.Name)
+		meta.Title = joinTitle(staticText(key, locale), siteName)
 		meta.Description = firstNonEmpty(staticText(key+"Desc", locale), meta.Description)
 		meta.JSONLD = marshalJSONLD(staticPageJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
 		meta.BodyHTML = r.staticPageBodyHTML(locale, key, staticText(key, locale), meta.Description, site)
@@ -436,7 +439,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		}
 		// 落地页是独立销售页：用 WebPage 而不是 CollectionPage，
 		// 关键词也来自落地页自己的文案，不复用站点 keywords。
-		meta.Title = joinTitle(page.Title, site.Name)
+		meta.Title = joinTitle(page.Title, siteName)
 		meta.Description = truncateRunes(firstNonEmpty(page.Subtitle, meta.Description), seoDescriptionMaxRunes)
 		meta.Keywords = strings.TrimSpace(page.Keywords)
 		meta.JSONLD = marshalJSONLD(landingJSONLD(base, cleanPath, page, site, locale))
@@ -512,7 +515,7 @@ func (r *seoResolver) applyProductMeta(ctx context.Context, meta *web.PageMeta, 
 	if title == "" {
 		title = product.Slug
 	}
-	meta.Title = joinTitle(firstNonEmpty(asStringFromMap(seo["title"], locale), title), site.Name)
+	meta.Title = joinTitle(firstNonEmpty(asStringFromMap(seo["title"], locale), title), seoSiteName(site, locale))
 	meta.Description = truncateRunes(firstNonEmpty(
 		asStringFromMap(seo["description"], locale),
 		stripHTML(localized(asMap(product.DescriptionJSON), locale)),
@@ -532,8 +535,7 @@ func (r *seoResolver) applyProductMeta(ctx context.Context, meta *web.PageMeta, 
 	}
 
 	canonical := base + cleanPath
-	jsonLD := map[string]interface{}{
-		"@context":    "https://schema.org",
+	productJSONLD := map[string]interface{}{
 		"@type":       "Product",
 		"name":        title,
 		"description": meta.Description,
@@ -549,9 +551,23 @@ func (r *seoResolver) applyProductMeta(ctx context.Context, meta *web.PageMeta, 
 		},
 	}
 	if len(images) > 0 {
-		jsonLD["image"] = images
+		productJSONLD["image"] = images
 	}
-	meta.JSONLD = marshalJSONLD(jsonLD)
+	// Product + BreadcrumbList 用 @graph 输出，Offer 字段保持原样。
+	meta.JSONLD = marshalJSONLD(map[string]interface{}{
+		"@context": "https://schema.org",
+		"@graph": []interface{}{
+			productJSONLD,
+			map[string]interface{}{
+				"@type": "BreadcrumbList",
+				"itemListElement": []interface{}{
+					map[string]interface{}{"@type": "ListItem", "position": 1, "name": site.Name, "item": base + "/"},
+					map[string]interface{}{"@type": "ListItem", "position": 2, "name": staticText("products", locale), "item": base + "/products"},
+					map[string]interface{}{"@type": "ListItem", "position": 3, "name": title, "item": canonical},
+				},
+			},
+		},
+	})
 	meta.BodyHTML = r.productBodyHTML(ctx, locale, site, product)
 }
 
@@ -560,7 +576,7 @@ func (r *seoResolver) applyPostMeta(meta *web.PageMeta, base, cleanPath, locale 
 	if title == "" {
 		title = post.Slug
 	}
-	meta.Title = joinTitle(title, site.Name)
+	meta.Title = joinTitle(title, seoSiteName(site, locale))
 	meta.Description = truncateRunes(firstNonEmpty(
 		stripHTML(localized(asMap(post.SummaryJSON), locale)),
 		stripHTML(localized(asMap(post.ContentJSON), locale)),
@@ -781,6 +797,11 @@ func joinTitle(page, site string) string {
 	return page + " - " + site
 }
 
+// seoSiteName 返回标题用的站点名：优先当前语言的 seo.title，回落到品牌名。
+func seoSiteName(site seoSite, locale string) string {
+	return firstNonEmpty(localized(site.SeoTitle, locale), site.Name)
+}
+
 func truncateRunes(value string, max int) string {
 	value = strings.TrimSpace(value)
 	if max <= 0 || utf8.RuneCountInString(value) <= max {
@@ -875,18 +896,18 @@ func firstNonEmpty(values ...string) string {
 // staticText 返回服务端已知的静态页/落地页 SEO 文案，避免原始 HTML 只有空 title。
 func staticText(key, locale string) string {
 	texts := map[string][3]string{
-		"products":                 {"产品中心", "產品中心", "Products"},
+		"products":                 {"商品中心", "商品中心", "Products"},
 		"productsDesc":             {"浏览全部静态住宅 IP、IEPL 专线与跨境网络方案。", "瀏覽全部靜態住宅 IP、IEPL 專線與跨境網路方案。", "Browse static residential IPs, IEPL lines and cross-border networking plans."},
 		"blog":                     {"博客", "部落格", "Blog"},
-		"blogDesc":                 {"跨境网络、静态住宅 IP 与直播运营的实用指南。", "跨境網路、靜態住宅 IP 與直播運營的實用指南。", "Practical guides on cross-border networking, static residential IPs and live operations."},
+		"blogDesc":                 {"阅读跨境网络、静态住宅 IP 与直播运营的实用指南，内容涵盖线路选择、节点维护、设备配置、支付与交付说明。文章按发布时间更新，帮助跨境电商、直播团队和多店铺运营者了解可用方案、常见问题与最佳实践；如需针对具体地区或场景的建议，可通过页面上的联系方式咨询。", "閱讀跨境網路、靜態住宅 IP 與直播運營的實用指南，內容涵蓋線路選擇、節點維護、裝置設定、支付與交付說明。文章依發佈時間更新，協助跨境電商、直播團隊與多店鋪運營者了解可用方案、常見問題與最佳實踐；如需針對特定地區或場景的建議，可透過頁面上的聯絡方式諮詢。", "Guides on cross-border networking, static residential IPs and live operations: route selection, node maintenance, device setup, payment and delivery."},
 		"notice":                   {"公告", "公告", "Notices"},
-		"noticeDesc":               {"站点公告与服务更新。", "站點公告與服務更新。", "Site announcements and service updates."},
+		"noticeDesc":               {"查看站点公告、维护通知与服务更新，了解交付时间、线路调整、支付渠道变化和售后安排。公告按发布时间展示，涉及节点、价格或使用规则变更时以最新内容为准；建议在下单前阅读最新公告，避免维护窗口影响使用，如有疑问可通过页面联系方式咨询，我们会持续更新。", "查看站點公告、維護通知與服務更新，了解交付時間、線路調整、支付渠道變化與售後安排。公告依發佈時間展示，涉及節點、價格或使用規則變更時以最新內容為準；建議在下單前閱讀最新公告，避免維護窗口影響使用，如有疑問可透過頁面聯絡方式諮詢，我們會持續更新。", "Site notices on delivery windows, line adjustments, payment channel changes and after-sales arrangements. Read the latest notice before ordering."},
 		"about":                    {"关于我们", "關於我們", "About Us"},
-		"aboutDesc":                {"了解我们的团队、服务与交付方式。", "了解我們的團隊、服務與交付方式。", "Learn about our team, services and delivery."},
+		"aboutDesc":                {"了解站点提供的静态住宅 IP、IEPL 专线与跨境网络方案，以及覆盖地区、适用场景、下单流程、交付方式与售后支持。页面同时说明人工交付与自动交付的区别、常见使用要求和支持渠道，帮助你在购买前确认线路、地区、设备数量与合规使用范围。如有个性化需求，可通过 Telegram 联系客服获取方案建议。", "了解站點提供的靜態住宅 IP、IEPL 專線與跨境網路方案，以及覆蓋地區、適用場景、下單流程、交付方式與售後支援。頁面同時說明人工交付與自動交付的差異、常見使用要求與支援渠道，協助你在購買前確認線路、地區、裝置數量與合規使用範圍。如有客製化需求，可透過 Telegram 聯絡客服取得方案建議。", "Static residential IPs, IEPL lines and cross-border networking: coverage, use cases, ordering, delivery and support. Confirm region, route and device limits."},
 		"terms":                    {"服务条款", "服務條款", "Terms of Service"},
-		"termsDesc":                {"服务范围、交付、退款与使用规则。", "服務範圍、交付、退款與使用規則。", "Service scope, delivery, refunds and usage rules."},
+		"termsDesc":                {"阅读服务条款，了解服务范围、下单与支付、交付时间、退款规则、使用限制与责任说明。条款适用于本站提供的静态住宅 IP、IEPL 专线及相关网络服务；下单前请确认地区、线路、设备数量与使用场景，并遵守当地法律法规与平台规则。如对条款有疑问，建议先联系客服确认后再购买。", "閱讀服務條款，了解服務範圍、下單與支付、交付時間、退款規則、使用限制與責任說明。條款適用於本站提供的靜態住宅 IP、IEPL 專線及相關網路服務；下單前請確認地區、線路、裝置數量與使用場景，並遵守當地法律法規與平台規則。如對條款有疑問，建議先聯絡客服確認後再購買。", "Terms of service covering scope, ordering and payment, delivery windows, refunds, usage limits and liability. Confirm region, route and device count first."},
 		"privacy":                  {"隐私政策", "隱私政策", "Privacy Policy"},
-		"privacyDesc":              {"我们如何收集、使用与保护你的个人信息。", "我們如何收集、使用與保護你的個人資訊。", "How we collect, use and protect your personal information."},
+		"privacyDesc":              {"了解我们如何收集、使用、存储与保护你的个人信息，包括账号资料、订单信息、支付回执、必要的访问日志与设备信息。我们仅在提供服务、处理订单、保障账号与交易安全所需范围内使用这些数据，并说明 Cookie、第三方支付渠道与联系方式的处理方式；你可以通过页面上的联系方式咨询或申请相关权利。", "了解我們如何收集、使用、儲存與保護你的個人資訊，包括帳號資料、訂單資訊、支付回執、必要的存取日誌與裝置資訊。我們僅在提供服務、處理訂單、保障帳號與交易安全所需範圍內使用這些資料，並說明 Cookie、第三方支付渠道與聯絡方式的處理方式；你可以透過頁面上的聯絡方式諮詢或申請相關權利。", "How account details, orders, payment receipts, logs and device data are collected, used, stored and protected, including cookies and third-party payments."},
 		"bodyRegions":              {"覆盖地区", "覆蓋地區", "Regions"},
 		"bodyFeatured":             {"主推商品", "主推商品", "Featured products"},
 		"bodyAllProducts":          {"全部商品", "全部商品", "All products"},
@@ -898,7 +919,7 @@ func staticText(key, locale string) string {
 		"bodyContactTelegram":      {"通过 Telegram 联系我们", "透過 Telegram 聯絡我們", "Contact us on Telegram"},
 		"bodyBlogEmpty":            {"暂无文章", "暫無文章", "No posts yet"},
 		"bodyCategoryProducts":     {"分类商品", "分類商品", "Products in this category"},
-		"bodyFilterNote":           {"支持按国家/地区、使用场景、IP 类型与线路类型筛选。", "支援按國家/地區、使用場景、IP 類型與線路類型篩選。", "Filter by region, use case, IP type and line type."},
+		"bodyFilterNote":           {"支持按国家/地区、IP 类型与线路类型筛选。", "支援按國家/地區、IP 類型與線路類型篩選。", "Filter by region, IP type and line type."},
 		"bodyProductCount":         {"共 {count} 个商品", "共 {count} 個商品", "{count} products"},
 		"bodySpecPrice":            {"价格", "價格", "Price"},
 		"bodySpecDelivery":         {"交付方式", "交付方式", "Delivery"},

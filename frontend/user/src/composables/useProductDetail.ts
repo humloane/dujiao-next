@@ -10,6 +10,7 @@ import { useBuyNowStore } from '../stores/buyNow'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useUserProfileStore } from '../stores/userProfile'
 import { debounceAsync } from '../utils/debounce'
+import { resolveServerJSONLD } from './usePageSeo'
 import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 import { resolveSkuAvailableStock, resolveSkuStockDisplay, type PublicStockDisplay } from '../utils/publicStock'
 import { useLocalized, useProductLabels } from './useProduct'
@@ -554,8 +555,36 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     return `${base}/products/${product.value.slug}`
   })
 
+  const seoMeta = computed<Record<string, any>>(() => product.value?.seo_meta || {})
+  const seoTitle = computed(() => {
+    if (!product.value) return ''
+    return getLocalizedText(seoMeta.value.title) || getLocalizedText(product.value.title)
+  })
+  const seoDescription = computed(() => {
+    const value = seoMeta.value.description
+    const fromMeta = getLocalizedText(value) || (typeof value === 'string' ? value : '')
+    const raw = fromMeta || (product.value ? getLocalizedText(product.value.description) : '')
+    return raw.length > 160 ? `${raw.slice(0, 160)}…` : raw
+  })
+  const seoKeywords = computed(() => {
+    const value = seoMeta.value.keywords
+    return getLocalizedText(value) || (typeof value === 'string' ? value : '')
+  })
+  const siteName = computed(() => {
+    const lang = appStore.locale
+    const localized = appStore.config?.seo?.title?.[lang]
+    return String(localized || appStore.config?.brand?.site_name || '').trim()
+  })
+  const fullTitle = computed(() => {
+    const page = seoTitle.value
+    const site = siteName.value
+    if (!page) return site
+    if (!site || page === site || page.includes(site)) return page
+    return `${page} - ${site}`
+  })
+
   useHead({
-    title: () => product.value ? getLocalizedText(product.value.title) : '',
+    title: () => fullTitle.value,
     link: () => {
       if (!canonicalUrl.value) return []
       const base = canonicalUrl.value.split('?')[0]
@@ -569,20 +598,17 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     },
     meta: () => {
       if (!product.value) return []
-      const seoMeta = product.value.seo_meta || {}
-      const seoKeywords = getLocalizedText(seoMeta.keywords) || (typeof seoMeta.keywords === 'string' ? seoMeta.keywords : '')
-      const seoDescription = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '')
       const tags = []
 
-      if (seoKeywords) tags.push({ name: 'keywords', content: seoKeywords })
-      if (seoDescription) tags.push({ name: 'description', content: seoDescription })
+      if (seoKeywords.value) tags.push({ name: 'keywords', content: seoKeywords.value })
+      if (seoDescription.value) tags.push({ name: 'description', content: seoDescription.value })
 
       tags.push({ property: 'og:type', content: 'product' })
-      if (product.value.title) {
-        tags.push({ property: 'og:title', content: getLocalizedText(product.value.title) })
+      if (fullTitle.value) {
+        tags.push({ property: 'og:title', content: fullTitle.value })
       }
-      if (seoDescription) {
-        tags.push({ property: 'og:description', content: seoDescription })
+      if (seoDescription.value) {
+        tags.push({ property: 'og:description', content: seoDescription.value })
       }
       if (images.value && images.value.length > 0) {
         tags.push({ property: 'og:image', content: images.value[0] })
@@ -592,11 +618,11 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       }
 
       tags.push({ name: 'twitter:card', content: 'summary_large_image' })
-      if (product.value.title) {
-        tags.push({ name: 'twitter:title', content: getLocalizedText(product.value.title) })
+      if (fullTitle.value) {
+        tags.push({ name: 'twitter:title', content: fullTitle.value })
       }
-      if (seoDescription) {
-        tags.push({ name: 'twitter:description', content: seoDescription })
+      if (seoDescription.value) {
+        tags.push({ name: 'twitter:description', content: seoDescription.value })
       }
       if (images.value && images.value.length > 0) {
         tags.push({ name: 'twitter:image', content: images.value[0] })
@@ -606,9 +632,10 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     },
     script: () => {
       if (!product.value) return []
+      // 首屏 HTML 已由服务端注入同路径 JSON-LD 时不再重复输出。
+      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname)) return []
       const title = getLocalizedText(product.value.title)
-      const seoMeta = product.value.seo_meta || {}
-      const description = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '')
+      const description = seoDescription.value
       const priceAmount = product.value.price_amount || '0'
       const currency = siteCurrency.value || 'CNY'
 
@@ -632,10 +659,22 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
         jsonLd.category = getLocalizedText(product.value.category.name)
       }
 
-      return [{
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify(jsonLd),
-      }]
+      const siteBase = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+        || window.location.origin.replace(/\/+$/, '')
+      const breadcrumb = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: appStore.config?.brand?.site_name || 'Dujiao-Next', item: `${siteBase}/` },
+          { '@type': 'ListItem', position: 2, name: t('nav.products'), item: `${siteBase}/products` },
+          { '@type': 'ListItem', position: 3, name: title, item: canonicalUrl.value },
+        ],
+      }
+
+      return [
+        { type: 'application/ld+json', innerHTML: JSON.stringify(jsonLd) },
+        { type: 'application/ld+json', innerHTML: JSON.stringify(breadcrumb) },
+      ]
     },
   })
 

@@ -69,5 +69,5 @@ const { t } = useI18n()
 const {
   loading, posts, currentPage, totalPages, searchKeyword,
   getLocalizedText, formatDate, changePage,
-} = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog' })
+} = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog', description: () => t('blog.seoDescription') })
 </script>

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -120,5 +121,24 @@ func TestGenerateCachesRenderedDocument(t *testing.T) {
 	}
 	if catalog.calls != 2 || posts.calls != 1 {
 		t.Fatalf("cache miss source calls: catalog=%d posts=%d", catalog.calls, posts.calls)
+	}
+}
+
+func TestRobotsDisallowPathsIncludesConfiguredAdminPath(t *testing.T) {
+	cases := []struct {
+		admin string
+		want  []string
+	}{
+		{"", []string{"/admin/"}},
+		{"/admin", []string{"/admin/"}},
+		{"/admin/", []string{"/admin/"}},
+		{"/ythumoane", []string{"/admin/", "/ythumoane/"}},
+		{"ythumoane/", []string{"/admin/", "/ythumoane/"}},
+	}
+	for _, tc := range cases {
+		got := robotsDisallowPaths(tc.admin)
+		if !reflect.DeepEqual(got, tc.want) {
+			t.Fatalf("adminPath %q: got %v want %v", tc.admin, got, tc.want)
+		}
 	}
 }

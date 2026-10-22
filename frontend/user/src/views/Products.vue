@@ -188,7 +188,7 @@ usePageSeo({
   description: () => {
     return getLocalizedText(categorySeo.value.description)
       || categoryDescription.value
-      || t('products.subtitle')
+      || ''
   },
   keywords: () => getLocalizedText(categorySeo.value.keywords),
   jsonLd: () => {
@@ -206,7 +206,7 @@ usePageSeo({
         {
           '@type': 'CollectionPage',
           name,
-          description: categoryDescription.value || t('products.subtitle'),
+          description: categoryDescription.value || '',
           url: siteBase.value + route.path,
         },
         { '@type': 'BreadcrumbList', itemListElement: breadcrumbs },

@@ -31,7 +31,7 @@ const trimSlashEnd = (s: string) => s.replace(/\/+$/, '')
  * - 当前路径已有服务端数据：不再重复插入。
  * - 服务端数据属于别的路径（SPA 跳转）：移除过期节点，让前端补一份。
  */
-const resolveServerJSONLD = (path: string): boolean => {
+export const resolveServerJSONLD = (path: string): boolean => {
   if (typeof document === 'undefined') return false
   const nodes = Array.from(document.querySelectorAll<HTMLScriptElement>('script[data-seo-jsonld="server"]'))
   const matching = nodes.filter((node) => node.dataset.path === path)

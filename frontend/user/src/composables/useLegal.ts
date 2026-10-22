@@ -14,6 +14,7 @@ export function useLegal(type: () => 'terms' | 'privacy') {
 
   usePageSeo({
     title: () => type() === 'terms' ? t('footer.terms') : t('footer.privacy'),
+    description: () => type() === 'terms' ? t('footer.termsDescription') : t('footer.privacyDescription'),
     canonicalPath: () => type() === 'terms' ? '/terms' : '/privacy',
   })
 

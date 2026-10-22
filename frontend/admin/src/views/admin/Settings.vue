@@ -34,6 +34,7 @@ const homeAnnouncementTabRef = ref<InstanceType<typeof SettingsHomeAnnouncementT
 const upstreamSyncTabRef = ref<InstanceType<typeof SettingsUpstreamSyncTab>>()
 const siteIconPickerRef = ref<InstanceType<typeof MediaPicker> | null>(null)
 const siteLogoPickerRef = ref<InstanceType<typeof MediaPicker> | null>(null)
+const ogImagePickerRef = ref<InstanceType<typeof MediaPicker> | null>(null)
 const supportedLanguages = ['zh-CN', 'zh-TW', 'en-US'] as const
 type SupportedLanguage = (typeof supportedLanguages)[number]
 type SiteScriptPosition = 'head' | 'body_end'
@@ -198,6 +199,7 @@ const form = reactive({
     title: createLocalizedField(),
     keywords: createLocalizedField(),
     description: createLocalizedField(),
+    default_og_image: '',
   },
   about: {
     hero: {
@@ -409,6 +411,7 @@ const fetchSettings = async () => {
             Object.assign(form.seo[field as keyof typeof form.seo], seo[field])
           }
         })
+        form.seo.default_og_image = String(seo.default_og_image || '')
       }
       const about = data.about as Record<string, unknown> | undefined
       if (about) {
@@ -634,6 +637,14 @@ const openSiteIconPicker = () => {
 
 const openSiteLogoPicker = () => {
   siteLogoPickerRef.value?.openPicker()
+}
+
+const openOgImagePicker = () => {
+  ogImagePickerRef.value?.openPicker()
+}
+
+const clearOgImage = () => {
+  form.seo.default_og_image = ''
 }
 
 const clearSiteIcon = () => {
@@ -1029,6 +1040,28 @@ onMounted(() => {
           <div class="space-y-2">
             <label class="text-xs font-medium text-muted-foreground">{{ t('admin.settings.seo.description') }}</label>
             <Textarea v-model="form.seo.description[currentLang]" rows="3" :placeholder="t('admin.settings.seo.descriptionPlaceholder')" />
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-medium text-muted-foreground">{{ t('admin.settings.seo.ogImage') }}</label>
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                class="grid h-[54px] w-[96px] flex-none place-items-center overflow-hidden rounded-md border bg-muted/40"
+                :title="t('admin.settings.seo.ogImageTip')"
+                @click="openOgImagePicker"
+              >
+                <img v-if="form.seo.default_og_image" :src="getImageUrl(form.seo.default_og_image)" class="h-full w-full object-cover" alt="" />
+                <span v-else class="text-[10px] font-semibold text-muted-foreground">OG</span>
+              </button>
+              <Button type="button" variant="outline" size="sm" @click="openOgImagePicker">
+                {{ t('admin.settings.seo.ogImageSelect') }}
+              </Button>
+              <Button v-if="form.seo.default_og_image" type="button" variant="ghost" size="sm" @click="clearOgImage">
+                {{ t('admin.common.delete') }}
+              </Button>
+            </div>
+            <p class="text-xs text-muted-foreground">{{ t('admin.settings.seo.ogImageTip') }}</p>
+            <MediaPicker ref="ogImagePickerRef" v-model="form.seo.default_og_image" scene="common" dialog-only />
           </div>
         </div>
       </div>

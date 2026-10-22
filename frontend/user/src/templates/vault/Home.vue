@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 站长配置的横幅轮播（两种模式共用，顶部展示） -->
-    <VaultBannerHero />
+    <VaultBannerHero heading-level="h1" />
 
     <!-- ==================== 列表模式 ==================== -->
     <template v-if="isListMode">

@@ -1,5 +1,7 @@
 <template>
   <div class="home-page min-h-screen bg-background text-foreground">
+    <!-- 没有 banner 时保留一个唯一的 H1，避免首页缺失主标题。 -->
+    <h1 v-if="!showHeroSection && !bannerLoading" class="sr-only">{{ heroTitle }}</h1>
 
     <!-- ==================== LIST MODE ==================== -->
     <template v-if="templateMode === 'list'">

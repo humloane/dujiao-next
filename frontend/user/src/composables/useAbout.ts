@@ -12,7 +12,8 @@ export function useAbout() {
   const appStore = useAppStore()
 
   usePageSeo({
-    title: () => t('nav.about'),
+    title: () => t('about.title'),
+    description: () => t('about.seoDescription'),
     canonicalPath: () => '/about',
   })
 
@@ -37,8 +38,8 @@ export function useAbout() {
     return ''
   }
 
-  const heroTitle = computed(() => resolveLocalizedText(aboutConfig.value?.hero?.title))
-  const heroSubtitle = computed(() => resolveLocalizedText(aboutConfig.value?.hero?.subtitle))
+  const heroTitle = computed(() => resolveLocalizedText(aboutConfig.value?.hero?.title) || t('about.title'))
+  const heroSubtitle = computed(() => resolveLocalizedText(aboutConfig.value?.hero?.subtitle) || t('about.subtitle'))
   const introductionText = computed(() => resolveLocalizedText(aboutConfig.value?.introduction))
   const servicesTitle = computed(() => resolveLocalizedText(aboutConfig.value?.services?.title))
   const contactTitle = computed(() => resolveLocalizedText(aboutConfig.value?.contact?.title))

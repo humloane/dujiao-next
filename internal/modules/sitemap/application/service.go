@@ -67,13 +67,16 @@ func (s *Service) Generate(ctx context.Context, baseURL string) (string, error) 
 	return xmlStr, nil
 }
 
-// GenerateRobots 生成 robots.txt 内容
-func (s *Service) GenerateRobots(baseURL string) string {
+// GenerateRobots 生成 robots.txt 内容。
+// adminPath 是真实后台前缀：默认 /admin/ 始终保留，再叠加配置值，避免泄露或漏屏蔽。
+func (s *Service) GenerateRobots(baseURL, adminPath string) string {
 	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	var b strings.Builder
 	b.WriteString("User-agent: *\n")
 	b.WriteString("Disallow: /api/\n")
-	b.WriteString("Disallow: /admin/\n")
+	for _, path := range robotsDisallowPaths(adminPath) {
+		b.WriteString("Disallow: " + path + "\n")
+	}
 	b.WriteString("Disallow: /me/\n")
 	b.WriteString("Disallow: /cart\n")
 	b.WriteString("Disallow: /checkout\n")
@@ -89,6 +92,24 @@ func (s *Service) GenerateRobots(baseURL string) string {
 		b.WriteString("/sitemap.xml\n")
 	}
 	return b.String()
+}
+
+// robotsDisallowPaths 返回需要屏蔽的后台路径：/admin/ 永远保留，
+// 再叠加配置里的真实后台前缀（例如 /ythumoane/），去重且统一带尾斜杠。
+func robotsDisallowPaths(adminPath string) []string {
+	paths := []string{"/admin/"}
+	trimmed := strings.TrimSpace(adminPath)
+	if trimmed == "" {
+		return paths
+	}
+	if !strings.HasPrefix(trimmed, "/") {
+		trimmed = "/" + trimmed
+	}
+	normalized := strings.TrimRight(trimmed, "/") + "/"
+	if normalized != "/admin/" {
+		paths = append(paths, normalized)
+	}
+	return paths
 }
 
 // xmlEntry 是 sitemap.xml 的传输结构。

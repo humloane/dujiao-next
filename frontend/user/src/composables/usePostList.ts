@@ -12,13 +12,20 @@ import { usePageSeo } from './usePageSeo'
  */
 export function usePostList(
   type: 'blog' | 'notice',
-  seo: { title: () => string; canonicalPath: string },
+  seo: {
+    title: () => string
+    canonicalPath: string
+    description?: () => string
+    keywords?: () => string
+  },
 ) {
   const router = useRouter()
   const appStore = useAppStore()
 
   usePageSeo({
     title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
     canonicalPath: () => seo.canonicalPath,
   })
 

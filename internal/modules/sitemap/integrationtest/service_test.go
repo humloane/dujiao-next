@@ -242,11 +242,12 @@ func TestSitemapServiceIncludesActiveContent(t *testing.T) {
 func TestSitemapServiceGenerateRobotsIncludesSitemapURL(t *testing.T) {
 	svc, _ := newSitemapServiceForTest(t, nil)
 
-	body := svc.GenerateRobots("https://example.com")
+	body := svc.GenerateRobots("https://example.com", "/ythumoane")
 
 	mustContain := []string{
 		"User-agent: *",
 		"Disallow: /admin/",
+		"Disallow: /ythumoane/",
 		"Disallow: /me/",
 		"Sitemap: https://example.com/sitemap.xml",
 	}

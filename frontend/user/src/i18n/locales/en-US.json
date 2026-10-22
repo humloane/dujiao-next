@@ -102,6 +102,8 @@
     "rights": "All rights reserved",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
+    "termsDescription": "Terms of service covering scope, ordering and payment, delivery windows, refunds, usage limits and liability. Confirm region, route and device count first.",
+    "privacyDescription": "How account details, orders, payment receipts, logs and device data are collected, used, stored and protected, including cookies and third-party payments.",
     "email": "Email",
     "supportUrl": "Support"
   },
@@ -238,6 +240,7 @@
   },
   "blog": {
     "subtitle": "Latest articles and updates",
+    "seoDescription": "Guides on cross-border networking, static residential IPs and live operations: route selection, node maintenance, device setup, payment and delivery.",
     "readMore": "Read More",
     "empty": "No articles",
     "searchPlaceholder": "Search article title...",
@@ -252,6 +255,7 @@
   },
   "notice": {
     "subtitle": "Important notices and announcements",
+    "seoDescription": "Site notices on delivery windows, line adjustments, payment channel changes and after-sales arrangements. Read the latest notice before ordering.",
     "empty": "No notices"
   },
   "announcement": {
@@ -262,6 +266,7 @@
   "about": {
     "title": "About Us",
     "subtitle": "Learn about Dujiao-Next",
+    "seoDescription": "Static residential IPs, IEPL lines and cross-border networking: coverage, use cases, ordering, delivery and support. Confirm region, route and device limits.",
     "introduction": "Dujiao-Next is a professional online studio dedicated to providing high-quality products and services to our customers. Innovation, professionalism, and efficiency are our core values, and we constantly pursue excellence to create value for our customers.",
     "ourServices": "Our Services",
     "service1": "Premium Product Recommendations & Sales",

@@ -1,5 +1,5 @@
 <template>
-  <section v-if="showHeroSection" class="mx-auto w-full max-w-[1180px] px-4 pt-6 sm:px-6">
+  <section class="mx-auto w-full max-w-[1180px] px-4 pt-6 sm:px-6">
     <div
       class="relative overflow-hidden rounded-lg border bg-card shadow-[var(--shadow)]"
       @touchstart="onBannerTouchStart"
@@ -48,7 +48,10 @@
           <span class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.04em] text-white backdrop-blur-sm">
             <Zap class="h-3.5 w-3.5" /> {{ heroBadge }}
           </span>
-          <h2 class="text-xl font-extrabold leading-tight text-white sm:text-2xl md:text-[2rem]">{{ heroTitle }}</h2>
+          <component
+            :is="headingLevel"
+            class="text-xl font-extrabold leading-tight text-white sm:text-2xl md:text-[2rem]"
+          >{{ heroTitle }}</component>
           <p class="line-clamp-2 max-w-[52ch] text-sm leading-relaxed text-white/85 sm:text-base">{{ heroSubtitle }}</p>
 
           <div class="flex flex-wrap items-center gap-3 pt-1.5">
@@ -87,12 +90,14 @@ import { useBannerCarousel } from '../../../composables/useBannerCarousel'
 
 const { t } = useI18n()
 
+// 首页需要唯一的 H1；其它使用该组件的页面保持 h2，避免重复 H1。
+withDefaults(defineProps<{ headingLevel?: 'h1' | 'h2' }>(), { headingLevel: 'h2' })
+
 const {
   banners,
   bannerLoading,
   currentBannerIndex,
   bannerCount,
-  showHeroSection,
   heroImage,
   heroBadge,
   heroTitle,

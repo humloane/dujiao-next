@@ -27,6 +27,15 @@ export function useBlogDetail() {
     return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
   }
 
+  const postSeoMeta = computed(() => post.value?.seo_meta || {})
+  const seoTitle = computed(() => post.value
+    ? (getLocalizedText(postSeoMeta.value.title) || getLocalizedText(post.value.title))
+    : '')
+  const seoDescription = computed(() => post.value
+    ? (getLocalizedText(postSeoMeta.value.description) || getLocalizedText(post.value.summary))
+    : '')
+  const seoKeywords = computed(() => getLocalizedText(postSeoMeta.value.keywords))
+
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -38,8 +47,9 @@ export function useBlogDetail() {
   }
 
   usePageSeo({
-    title: () => post.value ? getLocalizedText(post.value.title) : '',
-    description: () => post.value ? getLocalizedText(post.value.summary) : '',
+    title: () => seoTitle.value,
+    description: () => seoDescription.value,
+    keywords: () => seoKeywords.value,
     image: () => post.value?.thumbnail || '',
     canonicalPath: () => `/blog/${(route.params.slug as string) || ''}`,
     type: () => 'article',
@@ -48,14 +58,14 @@ export function useBlogDetail() {
       const base = String(appStore.config?.brand?.site_url || '').replace(/\/+$/, '')
         || (typeof window !== 'undefined' ? window.location.origin : '')
       const canonical = `${base}/blog/${post.value.slug || route.params.slug || ''}`
-      const title = getLocalizedText(post.value.title)
+      const title = seoTitle.value
       const siteName = String(appStore.config?.brand?.site_name || 'Dujiao-Next')
       const published = post.value.published_at || post.value.created_at
       const article: Record<string, unknown> = {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: title,
-        description: getLocalizedText(post.value.summary) || '',
+        description: seoDescription.value || '',
         url: canonical,
         mainEntityOfPage: canonical,
         datePublished: published || undefined,
