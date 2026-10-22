@@ -1088,10 +1088,13 @@ func writeTextList(b *strings.Builder, heading, tag string, items []string) {
 
 const (
 	homeBodyProductLimit = 3
-	bodyProductLimit     = 20
-	blogBodyPostLimit    = 10
-	productBodyFAQLimit  = 6
-	postBodyExcerptRunes = 800
+	// homeBodyCoverageLimit 用于“覆盖地区”统计：不能只看前 3/20 个商品，
+	// 否则排在后排的 US/GB 不会出现在首页正文里。
+	homeBodyCoverageLimit = 200
+	bodyProductLimit      = 20
+	blogBodyPostLimit     = 10
+	productBodyFAQLimit   = 6
+	postBodyExcerptRunes  = 800
 	// staticPageBodyRunes 限制后台富文本注入正文的长度，避免单页 HTML 过大。
 	staticPageBodyRunes = 4000
 )
@@ -1304,7 +1307,7 @@ func (r *seoResolver) homeBodyHTML(ctx context.Context, locale, title, descripti
 	writeHeading(b, 1, title)
 	writeEscaped(b, "p", description)
 
-	products := r.seoProducts(bodyProductLimit, "")
+	products := r.seoProducts(homeBodyCoverageLimit, "")
 	featured := products
 	if len(featured) > homeBodyProductLimit {
 		featured = featured[:homeBodyProductLimit]

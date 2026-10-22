@@ -258,6 +258,18 @@ go run ./cmd/backfill-product-meta                 # dry-run, prints planned cha
 go run ./cmd/backfill-product-meta -dry-run=false  # apply
 ```
 
+Backfill multilingual SEO copy for products/categories, assign post categories and
+clean outdated region copy in notices/banners/site config with:
+
+```bash
+go run ./cmd/backfill-seo-content                     # dry-run
+go run ./cmd/backfill-seo-content -apply              # apply
+go run ./cmd/backfill-seo-content -report=seo.csv     # export the full change list
+```
+
+> `Post` has no `seo_meta` column yet; post SEO keeps using the existing title/summary.
+> The command never adds database columns and is safe to re-run (idempotent).
+
 ## Quick Start (Develop)
 
 Run the backend and the two frontends separately for hot reload:
