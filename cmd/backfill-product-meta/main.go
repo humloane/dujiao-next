@@ -5,7 +5,7 @@
 //	go run ./cmd/backfill-product-meta -dry-run=false
 //
 // 规则与 openclaw/code-change-plan.md 对齐，并保持现有 slug/URL 不变：
-//   - shared-ip-*                -> SHARED / shared / shared
+//   - shared-ip-*                -> (empty country) / shared / shared
 //   - XX-Residential-IEPL        -> XX / residential / iepl
 //   - XX-data-IP                 -> XX / datacenter / direct
 //   - XX-Residential-IP          -> XX / residential / direct
@@ -114,7 +114,9 @@ func inferMeta(slug string) productdomain.ProductMeta {
 	var scenarios []string
 
 	if strings.HasPrefix(lower, "shared-ip") {
-		country = productdomain.CountryShared
+		// SHARED 不是国家代码，前台筛选器也不应出现“共享节点”这一项。
+		// 共享节点只保留 IP 类型/线路类型的 shared 标记，国家留空。
+		country = ""
 		ipType = productdomain.IPTypeShared
 		lineType = productdomain.LineTypeShared
 		scenarios = []string{productdomain.ScenarioEcommerce, productdomain.ScenarioTest}

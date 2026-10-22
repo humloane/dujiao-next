@@ -123,7 +123,7 @@ let savedScrollY = 0
 let savedOverflow = ''
 let savedPaddingRight = ''
 
-const countryLabel = computed(() => createRegionNamer(locale.value, t('productFilters.shared')))
+const countryLabel = computed(() => createRegionNamer(locale.value))
 
 type GroupKey = 'country' | 'scenario' | 'ipType' | 'lineType' | 'sort'
 
@@ -148,12 +148,11 @@ interface RenderRow {
   active: boolean
 }
 
-const COUNTRY_PRESETS: string[] = PRODUCT_COUNTRY_CODES.filter((code) => code !== 'SHARED')
+const COUNTRY_PRESETS: string[] = [...PRODUCT_COUNTRY_CODES]
 
 const countryOptionRows = computed<GroupOption[]>(() => {
   const common = t('productFilters.countrySectionCommon')
   const other = t('productFilters.countrySectionOther')
-  const shared = t('productFilters.countrySectionShared')
   const rows: GroupOption[] = [{ value: '', label: t('productFilters.allCountries') }]
   const available = resolveMetaOptionCodes(
     props.metaOptions,
@@ -166,11 +165,8 @@ const countryOptionRows = computed<GroupOption[]>(() => {
     if (codes.has(code)) rows.push({ value: code, label: countryLabel.value(code), section: common })
   })
   available
-    .filter((code) => code !== 'SHARED' && !COUNTRY_PRESETS.includes(code))
+    .filter((code) => !COUNTRY_PRESETS.includes(code))
     .forEach((code) => rows.push({ value: code, label: countryLabel.value(code), section: other }))
-  if (codes.has('SHARED')) {
-    rows.push({ value: 'SHARED', label: countryLabel.value('SHARED'), section: shared })
-  }
   return rows
 })
 

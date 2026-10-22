@@ -4,7 +4,6 @@
  */
 export const createRegionNamer = (
   locale: string,
-  sharedLabel: string,
 ): ((code: string) => string) => {
   let displayNames: { of: (code: string) => string | undefined } | null = null
   try {
@@ -16,7 +15,12 @@ export const createRegionNamer = (
     displayNames = null
   }
   return (code: string) => {
-    if (code === 'SHARED') return sharedLabel
-    return displayNames?.of(code) || code
+    try {
+      return displayNames?.of(code) || code
+    } catch {
+      // Intl.DisplayNames 只接受合法 ISO 地区码；后台允许任意 1-8 位代码，
+      // 半成品或自定义代码不能让它抛异常拖垮整页渲染。
+      return code
+    }
   }
 }

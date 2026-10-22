@@ -2,7 +2,7 @@
  *  实际可用取值以后端 /public/product-filter-options 返回的商品数据为准，
  *  这里的常量只用于「接口未返回/失败」时的兜底与排序基准。 */
 export const PRODUCT_COUNTRY_CODES = [
-  'US', 'GB', 'DE', 'JP', 'TW', 'PH', 'SHARED',
+  'US', 'GB', 'DE', 'JP', 'TW', 'PH',
 ] as const
 
 export const PRODUCT_SCENARIOS = [
@@ -84,12 +84,20 @@ export const resolveMetaOptionCodes = (
 ): string[] => {
   const transform = optionTransform(key)
   const dynamic = normalizeOptionCodes(options?.[key], transform)
-  const source = options?.loaded === true && dynamic.length > 0
-    ? dynamic
-    : normalizeOptionCodes(fallback, transform)
+    .filter((code) => key !== 'countries' || code !== 'SHARED')
+  let source: string[]
+  if (key === 'countries') {
+    // 国家/地区是开放取值：接口加载成功后只使用商品里真实出现的代码，
+    // 即使结果为空也不回落到预设列表，避免前台出现没有商品的国家。
+    source = options?.loaded === true ? dynamic : []
+  } else {
+    source = options?.loaded === true && dynamic.length > 0
+      ? dynamic
+      : normalizeOptionCodes(fallback, transform)
+  }
   const result = [...source]
   const current = normalizeOptionCodes([selected], transform)[0] || ''
-  if (current && !result.includes(current)) result.push(current)
+  if (current && (key !== 'countries' || current !== 'SHARED') && !result.includes(current)) result.push(current)
 
   // 常量里的标准顺序优先，动态新增项按字母序排在后面。
   const rank = new Map<string, number>(

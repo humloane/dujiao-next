@@ -68,9 +68,6 @@
         <optgroup v-if="countryGroups.extras.length" :label="t('productFilters.countrySectionOther')">
           <option v-for="code in countryGroups.extras" :key="code" :value="code">{{ countryLabel(code) }}</option>
         </optgroup>
-        <optgroup v-if="countryGroups.hasShared" :label="t('productFilters.countrySectionShared')">
-          <option value="SHARED">{{ countryLabel('SHARED') }}</option>
-        </optgroup>
       </select>
 
       <select
@@ -197,9 +194,9 @@ onBeforeUnmount(() => {
   mediaQuery?.removeEventListener('change', syncPhone)
 })
 
-const countryLabel = computed(() => createRegionNamer(locale.value, t('productFilters.shared')))
+const countryLabel = computed(() => createRegionNamer(locale.value))
 
-const COUNTRY_PRESETS: string[] = PRODUCT_COUNTRY_CODES.filter((code) => code !== 'SHARED')
+const COUNTRY_PRESETS: string[] = [...PRODUCT_COUNTRY_CODES]
 
 const countryCodes = computed(() => resolveMetaOptionCodes(
   props.metaOptions,
@@ -208,13 +205,12 @@ const countryCodes = computed(() => resolveMetaOptionCodes(
   props.modelValue.country,
 ))
 
-// 国家分组：常用地区按预设顺序，其余按字母序，SHARED 单独一组。
+// 国家分组：常用地区按预设顺序，其余按字母序；只展示商品里真实出现的代码。
 const countryGroups = computed(() => {
   const available = new Set(countryCodes.value)
   return {
     presets: COUNTRY_PRESETS.filter((code) => available.has(code)),
-    extras: countryCodes.value.filter((code) => code !== 'SHARED' && !COUNTRY_PRESETS.includes(code)),
-    hasShared: available.has('SHARED'),
+    extras: countryCodes.value.filter((code) => !COUNTRY_PRESETS.includes(code)),
   }
 })
 

@@ -793,6 +793,8 @@ func TestListFilterOptionsAggregatesActiveProducts(t *testing.T) {
 
 	sg := createProduct("sg-live", "SG", "residential", "iepl", []string{"live", "ads"}, 1, true)
 	createProduct("us-live", "US", "datacenter", "direct", []string{"live"}, 1, true)
+	// SHARED 是历史占位值，不是国家/地区，不能出现在公开筛选项里。
+	createProduct("shared-node", "SHARED", "", "", nil, 1, true)
 	// 下架商品、停用分类下的商品、没有任何结构化字段的商品都不应进入筛选项。
 	createProduct("th-inactive", "TH", "isp", "shared", []string{"test"}, 1, false)
 	createProduct("vn-inactive-category", "VN", "isp", "shared", []string{"test"}, 2, true)

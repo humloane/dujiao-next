@@ -17,11 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MultiSelect } from '@/components/ui/multi-select'
 import { notifyError } from '@/utils/notify'
 import {
-  ADMIN_COUNTRY_CODES,
   ADMIN_IP_TYPES,
   ADMIN_LINE_TYPES,
   ADMIN_SCENARIOS,
-  mergeAdminCountryCodes,
 } from '@/constants/productMeta'
 import { getLocalizedText } from '@/utils/format'
 import { buildAdminCategoryPath, createAdminCategoryChildCountMap, createAdminCategoryMap, flattenAdminCategories, isAdminProductCategorySelectable } from '@/utils/category'
@@ -45,8 +43,6 @@ const isEditing = ref(false)
 const originalManualStockTotal = ref<number | null>(null)
 const paymentChannels = ref<AdminPaymentChannel[]>([])
 const editingIsMapped = ref(false)
-const countryFacetCodes = ref<string[]>([])
-const countryFacetsLoaded = ref(false)
 const initialCategoryID = ref<number | null>(null)
 const newTag = ref('')
 const currentLang = ref('zh-CN')
@@ -56,25 +52,6 @@ const languages = computed(() => [
   { code: 'zh-TW', name: t('admin.common.lang.zhTW') },
   { code: 'en-US', name: t('admin.common.lang.enUS') },
 ])
-
-const countryOptions = computed(() => {
-  let displayNames: { of: (code: string) => string | undefined } | null = null
-  try {
-    const DisplayNames = (Intl as unknown as { DisplayNames?: new (locales: string[], options: { type: string }) => { of: (code: string) => string | undefined } }).DisplayNames
-    displayNames = DisplayNames ? new DisplayNames([locale.value], { type: 'region' }) : null
-  } catch {
-    displayNames = null
-  }
-  const presets = new Set<string>(ADMIN_COUNTRY_CODES)
-  return mergeAdminCountryCodes(form.country, countryFacetCodes.value).map((code) => {
-    const base = code === 'SHARED'
-      ? t('admin.products.form.countryShared')
-      : (displayNames?.of(code) || code)
-    // 不在推荐列表里的取值标注「已有」，提示它不是预设项但会被保留。
-    const label = presets.has(code) ? base : `${base}${t('admin.products.form.countryExisting')}`
-    return { value: code, label }
-  })
-})
 
 const scenarioOptions = computed(() => ADMIN_SCENARIOS.map((value) => ({
   value,
@@ -236,23 +213,6 @@ const loadPaymentChannels = async () => {
     paymentChannels.value = (res.data?.data ?? []).filter((ch: AdminPaymentChannel) => ch.is_active)
   } catch {
     paymentChannels.value = []
-  }
-}
-
-// 国家/地区建议项来自在售商品；后台仍允许直接填写新代码，避免新增地区必须改代码。
-// 失败时不置 loaded，下次打开弹窗会重试。
-const loadCountryFacets = async () => {
-  if (countryFacetsLoaded.value) return
-  try {
-    const res = await adminAPI.getProductFilterOptions()
-    const countries = res.data?.data?.countries
-    countryFacetCodes.value = Array.isArray(countries)
-      ? countries.map((code: unknown) => String(code || '').trim().toUpperCase()).filter(Boolean)
-      : []
-    countryFacetsLoaded.value = true
-  } catch {
-    countryFacetCodes.value = []
-    countryFacetsLoaded.value = false
   }
 }
 
@@ -799,9 +759,6 @@ watch(
     if (paymentChannels.value.length === 0) {
       loadPaymentChannels()
     }
-    if (countryFacetsLoaded.value === false) {
-      loadCountryFacets()
-    }
     if (props.productId != null && props.productId > 0) {
       isEditing.value = true
       adminAPI.getProduct(props.productId).then((res) => {
@@ -898,14 +855,10 @@ watch(
             <Input
               v-model="form.country"
               class="h-9"
-              list="admin-country-suggestions"
               maxlength="8"
               :placeholder="t('admin.products.form.countryPlaceholder')"
               @blur="normalizeCountryInput"
             />
-            <datalist id="admin-country-suggestions">
-              <option v-for="item in countryOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
-            </datalist>
             <p class="mt-1 text-xs text-muted-foreground">{{ t('admin.products.form.countryTip') }}</p>
           </div>
 

@@ -351,6 +351,18 @@ func (r *ProductStore) ListFilterOptions(excludeProductIDs []uint) (productcontr
 	// 统一清洗大小写与别名：历史数据里的 "us" / "Residential" / "STORE_GROUP"
 	// 不能在筛选器里出现第二份取值。
 	options.Countries = normalizeFilterValues(options.Countries, productdomain.NormalizeCountryCode)
+	// SHARED 是历史遗留的“共享节点”占位值，不是国家/地区代码。
+	// 数据里即使还有存量值，也不要在公开筛选器里暴露成国家选项。
+	if len(options.Countries) > 0 {
+		countries := make([]string, 0, len(options.Countries))
+		for _, code := range options.Countries {
+			if code == productdomain.CountryShared {
+				continue
+			}
+			countries = append(countries, code)
+		}
+		options.Countries = countries
+	}
 	options.IPTypes = normalizeFilterValues(options.IPTypes, productdomain.NormalizeIPType)
 	options.LineTypes = normalizeFilterValues(options.LineTypes, productdomain.NormalizeLineType)
 	// 场景保留领域定义的固定顺序，未知取值丢弃（后端筛选同样会归一化掉）。

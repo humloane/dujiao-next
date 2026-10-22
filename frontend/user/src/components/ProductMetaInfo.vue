@@ -69,7 +69,6 @@ const lineTypeLabel = computed(() => {
 const countryLabel = computed(() => {
   const code = String(props.product?.country || '').trim().toUpperCase()
   if (!code) return ''
-  if (code === 'SHARED') return t('productFilters.shared')
   try {
     const DisplayNames = (Intl as unknown as { DisplayNames?: new (locales: string[], options: { type: string }) => { of: (value: string) => string | undefined } }).DisplayNames
     return DisplayNames ? (new DisplayNames([locale.value], { type: 'region' }).of(code) || code) : code

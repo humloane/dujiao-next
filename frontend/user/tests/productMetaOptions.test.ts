@@ -23,14 +23,18 @@ test('option codes are trimmed and deduplicated', () => {
   assert.deepEqual(normalizeOptionCodes('sg'), [])
 })
 
-test('unloaded options fall back to the canonical constants', () => {
+test('unloaded country options stay empty instead of showing presets', () => {
   assert.deepEqual(
     resolveMetaOptionCodes(undefined, 'countries', PRODUCT_COUNTRY_CODES),
-    [...PRODUCT_COUNTRY_CODES],
+    [],
   )
   assert.deepEqual(
     resolveMetaOptionCodes({ loaded: false, countries: ['SG'], scenarios: [], ipTypes: [], lineTypes: [] }, 'countries', PRODUCT_COUNTRY_CODES),
-    [...PRODUCT_COUNTRY_CODES],
+    [],
+  )
+  assert.deepEqual(
+    resolveMetaOptionCodes(undefined, 'scenarios', PRODUCT_SCENARIOS),
+    [...PRODUCT_SCENARIOS],
   )
 })
 
@@ -46,11 +50,11 @@ test('loaded options come from product data, not the constants', () => {
   )
 })
 
-test('empty product data falls back to the canonical constants', () => {
+test('empty country data stays empty; other groups keep their fallback', () => {
   const options = loadedOptions({ countries: [], scenarios: [] })
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
-    [...PRODUCT_COUNTRY_CODES],
+    [],
   )
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'ipTypes', ['residential', 'datacenter']),
@@ -63,6 +67,14 @@ test('selected value survives even when no product matches it', () => {
   assert.deepEqual(
     resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES, 'JP'),
     ['JP', 'SG'],
+  )
+})
+
+test('legacy SHARED placeholder is never exposed as a country', () => {
+  const options = loadedOptions({ countries: ['SG', 'SHARED'] })
+  assert.deepEqual(
+    resolveMetaOptionCodes(options, 'countries', PRODUCT_COUNTRY_CODES),
+    ['SG'],
   )
 })
 
