@@ -27,6 +27,7 @@ export function useProductList(options: UseProductListOptions = {}) {
 
   const loading = ref(true)
   const products = ref<any[]>([])
+  const totalCount = ref(0)
   const categories = ref<PublicCategory[]>([])
   const selectedCategory = ref<number | null>(null)
   const searchQuery = ref('')
@@ -46,6 +47,7 @@ export function useProductList(options: UseProductListOptions = {}) {
   const hasMetaFilters = computed(() => hasProductMetaFilter(metaFilter))
 
   let initializing = true
+  let productsAbort: AbortController | null = null
 
   const isParentExpanded = (categoryId: number) => {
     return expandedParentIds.value.includes(categoryId)
@@ -96,6 +98,10 @@ export function useProductList(options: UseProductListOptions = {}) {
   }
 
   const loadProducts = async () => {
+    // 快速连续切换筛选时，旧请求必须被取消，否则慢响应会覆盖新结果。
+    productsAbort?.abort()
+    const controller = new AbortController()
+    productsAbort = controller
     loading.value = true
     try {
       const params: any = {
@@ -114,15 +120,22 @@ export function useProductList(options: UseProductListOptions = {}) {
       if (metaFilter.ipType) params.ip_type = metaFilter.ipType
       if (metaFilter.lineType) params.line = metaFilter.lineType
       if (metaFilter.sort && metaFilter.sort !== 'recommended') params.sort = metaFilter.sort
-      const response = await productAPI.list(params)
+      const response = await productAPI.list(params, { signal: controller.signal })
+      if (controller.signal.aborted) return
       products.value = response.data.data || []
+      totalCount.value = response.data.pagination?.total || 0
       if (response.data.pagination) {
         totalPages.value = response.data.pagination.total_page || 0
       }
-    } catch (error) {
+    } catch (error: any) {
+      // 主动取消不是错误：既不打日志，也不改动已有列表。
+      if (error?.name === 'AbortError') return
       console.error('Failed to load products:', error)
     } finally {
-      loading.value = false
+      if (productsAbort === controller) {
+        productsAbort = null
+        loading.value = false
+      }
     }
   }
 
@@ -152,19 +165,27 @@ export function useProductList(options: UseProductListOptions = {}) {
   }
 
   const setMetaFilter = (value: ProductMetaFilter) => {
+    // 筛选是离散点击而非连续输入：立即请求，不再等 300ms 防抖。
+    debouncedLoadProducts.cancel()
     Object.assign(metaFilter, value)
     currentPage.value = 1
-    debouncedLoadProducts()
+    void loadProducts()
     if (!initializing) {
       syncMetaFilterToRoute()
     }
   }
 
+  const removeMetaFilter = (key: keyof ProductMetaFilter) => {
+    if (key === 'sort') return
+    setMetaFilter({ ...metaFilter, [key]: '' })
+  }
+
   const clearMetaFilters = () => {
     if (!hasMetaFilters.value) return
+    debouncedLoadProducts.cancel()
     Object.assign(metaFilter, emptyProductMetaFilter())
     currentPage.value = 1
-    debouncedLoadProducts()
+    void loadProducts()
     if (!initializing) {
       syncMetaFilterToRoute()
     }
@@ -273,11 +294,14 @@ export function useProductList(options: UseProductListOptions = {}) {
 
   const cleanup = () => {
     debouncedLoadProducts.cancel()
+    productsAbort?.abort()
+    productsAbort = null
   }
 
   return {
     loading,
     products,
+    totalCount,
     categories,
     selectedCategory,
     searchQuery,
@@ -292,6 +316,7 @@ export function useProductList(options: UseProductListOptions = {}) {
     metaFilter,
     hasMetaFilters,
     setMetaFilter,
+    removeMetaFilter,
     clearMetaFilters,
     isParentExpanded,
     toggleParentCategory,

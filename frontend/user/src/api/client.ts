@@ -25,6 +25,8 @@ interface RequestOptions {
     blob?: boolean
     silentBusinessError?: boolean
     credentials?: RequestCredentials
+    /** 外部取消信号：用于列表筛选等「后发请求覆盖先发请求」的场景 */
+    signal?: AbortSignal
     [key: string]: any
 }
 
@@ -93,6 +95,16 @@ function createClient(injectAuth: boolean) {
 
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), timeout)
+        // 调用方主动取消（例如新的筛选请求）时，用 AbortError 与超时区分开：
+        // 前者是正常流程，不打日志也不提示网络错误。
+        const externalSignal = opts.signal
+        if (externalSignal) {
+            if (externalSignal.aborted) {
+                controller.abort()
+            } else {
+                externalSignal.addEventListener('abort', () => controller.abort(), { once: true })
+            }
+        }
 
         let response: Response
         try {
@@ -105,6 +117,9 @@ function createClient(injectAuth: boolean) {
             })
         } catch (err: any) {
             if (err.name === 'AbortError') {
+                if (externalSignal?.aborted) {
+                    return Promise.reject(err)
+                }
                 const message = t('common.api.networkError')
                 console.error('Request Timeout:', message)
                 return Promise.reject(new Error(message))

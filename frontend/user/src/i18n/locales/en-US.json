@@ -1781,14 +1781,16 @@
       "price_desc": "Price: high to low",
       "newest": "Newest"
     },
-    "sheetTitle": "Filter and sort",
+    "sheetTitle": "Filters",
     "openFilters": "Filters",
     "search": "Search options",
     "noResults": "No matching options",
-    "apply": "Show results",
     "reset": "Reset",
     "activeCount": "{count} selected",
-    "close": "Close"
+    "close": "Close",
+    "resetAll": "Reset all",
+    "resultCount": "{count} results",
+    "selectedLabel": "Active filters"
   },
   "landing": {
     "nav": {

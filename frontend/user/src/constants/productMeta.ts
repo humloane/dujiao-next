@@ -20,6 +20,11 @@ export type ProductMetaFilter = {
   sort: string
 }
 
+/** 筛选抽屉与 chips 使用的字段顺序。 */
+export const PRODUCT_META_FILTER_KEYS = ['country', 'scenario', 'ipType', 'lineType'] as const
+
+export type ProductMetaFilterKey = (typeof PRODUCT_META_FILTER_KEYS)[number]
+
 export const emptyProductMetaFilter = (): ProductMetaFilter => ({
   country: '',
   scenario: '',

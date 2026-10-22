@@ -1781,14 +1781,16 @@
       "price_desc": "價格從高到低",
       "newest": "最新上架"
     },
-    "sheetTitle": "篩選與排序",
+    "sheetTitle": "篩選",
     "openFilters": "篩選",
     "search": "搜尋選項",
     "noResults": "沒有符合的選項",
-    "apply": "查看結果",
     "reset": "重設",
     "activeCount": "已選 {count} 項",
-    "close": "關閉"
+    "close": "關閉",
+    "resetAll": "重設全部",
+    "resultCount": "{count} 個結果",
+    "selectedLabel": "已選條件"
   },
   "landing": {
     "nav": {

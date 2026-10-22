@@ -35,7 +35,12 @@
 
       <!-- 商品区 -->
       <section>
-        <ProductMetaFilters :model-value="metaFilter" @update:model-value="setMetaFilter" />
+        <ProductMetaFilters
+          :model-value="metaFilter"
+          :total="totalCount"
+          @update:model-value="setMetaFilter"
+          @reset="clearMetaFilters"
+        />
 
         <div v-if="loading" class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(228px,1fr))]">
           <div v-for="i in 9" :key="i" class="h-[280px] rounded-lg border bg-card"></div>
@@ -113,6 +118,7 @@ const openQuickBuy = (product: any) => {
 const {
   loading,
   products,
+  totalCount,
   selectedCategory,
   searchQuery,
   currentPage,

@@ -29,7 +29,12 @@
 
         <!-- Main Content - Products Grid -->
         <main class="flex-1">
-          <ProductMetaFilters :model-value="metaFilter" @update:model-value="setMetaFilter" />
+          <ProductMetaFilters
+            :model-value="metaFilter"
+            :total="totalCount"
+            @update:model-value="setMetaFilter"
+            @reset="clearMetaFilters"
+          />
 
           <!-- Loading Skeleton -->
           <div v-if="loading" class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -125,6 +130,7 @@ const { t } = useI18n()
 const {
   loading,
   products,
+  totalCount,
   selectedCategory,
   searchQuery,
   currentPage,
