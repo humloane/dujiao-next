@@ -100,6 +100,15 @@ func (w *gzipResponseWriter) decide() {
 	w.enabled = true
 }
 
+// Flush 先刷出 gzip 缓冲，再刷新底层响应。
+// 没有启用压缩时直接透传，保证流式响应（SSE/导出）不会被压缩层吞掉。
+func (w *gzipResponseWriter) Flush() {
+	if w.gz != nil {
+		_ = w.gz.Flush()
+	}
+	w.ResponseWriter.Flush()
+}
+
 func (w *gzipResponseWriter) close() {
 	if w.gz == nil {
 		return
@@ -113,8 +122,11 @@ func compressibleContentType(contentType string) bool {
 	value := strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
 	switch value {
 	case "":
-		// 未显式声明类型时按文本处理：gin 的静态资源会先补全类型。
-		return true
+		// 未显式声明类型时不压缩：无法确认是文本，宁可透传。
+		return false
+	case "text/event-stream":
+		// SSE 需要逐条即时到达，压缩缓冲会破坏推送节奏。
+		return false
 	case "application/javascript", "application/x-javascript", "text/javascript",
 		"application/json", "application/ld+json", "application/xml", "text/xml",
 		"image/svg+xml", "application/manifest+json":

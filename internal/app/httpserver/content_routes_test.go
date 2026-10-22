@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,8 +15,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/dujiao-next/internal/app/httpserver/middleware"
 	"github.com/dujiao-next/internal/authz"
+	"github.com/dujiao-next/internal/constants"
+	productdomain "github.com/dujiao-next/internal/modules/catalog/product/domain"
+	contentdomain "github.com/dujiao-next/internal/modules/content/domain"
 	contenttransport "github.com/dujiao-next/internal/modules/content/transport/http"
 	admincontract "github.com/dujiao-next/internal/modules/identity/admin/contract"
 	admindomain "github.com/dujiao-next/internal/modules/identity/admin/domain"
@@ -23,6 +29,9 @@ import (
 	adminauthapp "github.com/dujiao-next/internal/modules/identity/adminauth/application"
 	"github.com/dujiao-next/internal/modules/identity/jwttoken"
 	"github.com/dujiao-next/internal/platform/http/response"
+	"github.com/dujiao-next/internal/shared/jsonmap"
+	"github.com/dujiao-next/internal/shared/money"
+	"github.com/dujiao-next/internal/web"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/golang-jwt/jwt/v5"
@@ -272,4 +281,169 @@ func newContentRouteAccessRouter(adminRepo admincontract.Store, authzService *au
 	})
 	contenttransport.RegisterAdminRoutes(admin, contenttransport.NewAdminHandler(nil, nil, nil, nil))
 	return router
+}
+func countH1(body string) int {
+	return strings.Count(body, "<h1>")
+}
+
+// 详情页正文只输出真实可推导的字段：库存来自 SKU/卡密汇总，列表查询拿不到，
+// 因此不能拿 product.ManualStockTotal 冒充库存，更不能绕过库存展示模式。
+func TestProductBodyHTMLOmitsStockAndEscapesContent(t *testing.T) {
+	product := &productdomain.Product{
+		Slug:             "test-product",
+		TitleJSON:        jsonmap.JSON{"zh-CN": `测试 <script>alert(1)</script>`},
+		DescriptionJSON:  jsonmap.JSON{"zh-CN": "描述 <b>加粗</b>"},
+		PriceAmount:      money.FromDecimal(decimal.NewFromInt(10)),
+		Country:          "US",
+		IPType:           productdomain.IPTypeResidential,
+		LineType:         productdomain.LineTypeIEPL,
+		FulfillmentType:  constants.FulfillmentTypeManual,
+		ManualStockTotal: 7,
+	}
+
+	body := (&seoResolver{}).productBodyHTML(context.Background(), "zh-CN", seoSite{Name: "站点", Currency: "CNY"}, product)
+
+	if got := countH1(body); got != 1 {
+		t.Fatalf("expected exactly one h1, got %d: %s", got, body)
+	}
+	if strings.Contains(body, "<script") {
+		t.Fatalf("body must not contain raw script tags: %s", body)
+	}
+	if !strings.Contains(body, "&lt;script&gt;") {
+		t.Fatalf("title should be html-escaped: %s", body)
+	}
+	if strings.Contains(body, "库存") || !strings.Contains(body, "交付方式") {
+		t.Fatalf("specs must keep delivery info without stock numbers: %s", body)
+	}
+}
+
+// /notice 与 /blog 共用标题文案，但不能复用博客列表正文，否则会输出
+// 「全部文章 / 暂无文章」这种与页面无关的内容。
+func TestNoticeBodyDoesNotRenderBlogList(t *testing.T) {
+	meta := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/notice"}, "zh-CN", seoSite{
+		Name:     "站点",
+		URL:      "https://example.com",
+		Currency: "CNY",
+	})
+
+	if !strings.Contains(meta.BodyHTML, "<h1>公告</h1>") {
+		t.Fatalf("notice body should have its own h1: %s", meta.BodyHTML)
+	}
+	if strings.Contains(meta.BodyHTML, "全部文章") || strings.Contains(meta.BodyHTML, "暂无文章") {
+		t.Fatalf("notice body must not reuse the blog list: %s", meta.BodyHTML)
+	}
+}
+
+// 首页没有文章时整段省略，不输出空状态。
+func TestHomeBodyHTMLEmitsNoEmptyPostSection(t *testing.T) {
+	body := (&seoResolver{}).homeBodyHTML(context.Background(), "zh-CN", "站点", "一句话介绍", seoSite{
+		Name:     "站点",
+		Currency: "CNY",
+	})
+
+	if got := countH1(body); got != 1 {
+		t.Fatalf("expected exactly one h1, got %d: %s", got, body)
+	}
+	if strings.Contains(body, "最新文章") || strings.Contains(body, "暂无文章") {
+		t.Fatalf("home body should omit the post section when there are no posts: %s", body)
+	}
+}
+
+// 列表页标题不能用「主推商品」，这个说法只适用于首页精选。
+func TestProductsBodyHTMLUsesListHeading(t *testing.T) {
+	body := (&seoResolver{}).productsBodyHTML("zh-CN", "产品中心", "描述", seoSite{Name: "站点", Currency: "CNY"})
+
+	if got := countH1(body); got != 1 {
+		t.Fatalf("expected exactly one h1, got %d: %s", got, body)
+	}
+	if strings.Contains(body, "主推商品") {
+		t.Fatalf("list page must not label products as featured: %s", body)
+	}
+}
+
+// 关于/条款/隐私页需要服务端 WebPage + BreadcrumbList，且每页只有一份。
+func TestStaticPagesEmitWebPageJSONLD(t *testing.T) {
+	for _, path := range []string{"/about", "/terms", "/privacy"} {
+		meta := (&seoResolver{}).buildMeta(web.MetaRequest{Path: path}, "zh-CN", seoSite{
+			Name:     "站点",
+			URL:      "https://example.com",
+			Currency: "CNY",
+		})
+		if meta.JSONLD == "" {
+			t.Fatalf("%s: expected JSON-LD", path)
+		}
+		if !strings.Contains(meta.JSONLD, `"WebPage"`) || !strings.Contains(meta.JSONLD, `"BreadcrumbList"`) {
+			t.Fatalf("%s: unexpected JSON-LD: %s", path, meta.JSONLD)
+		}
+		if strings.Count(meta.JSONLD, `"@context"`) != 1 {
+			t.Fatalf("%s: expected a single @context, got %s", path, meta.JSONLD)
+		}
+	}
+}
+
+// 静态页正文优先使用后台配置内容（关于/条款/隐私）。
+func TestStaticPageBodyUsesConfiguredContent(t *testing.T) {
+	site := seoSite{
+		Name:     "站点",
+		URL:      "https://example.com",
+		Currency: "CNY",
+		Telegram: "https://t.me/example",
+		About: map[string]interface{}{
+			"hero": map[string]interface{}{
+				"title":    map[string]interface{}{"zh-CN": "关于我们"},
+				"subtitle": map[string]interface{}{"zh-CN": "副标题"},
+			},
+			"introduction": map[string]interface{}{"zh-CN": "<p>我们提供真实住宅 IP。</p>"},
+			"services": map[string]interface{}{
+				"title": map[string]interface{}{"zh-CN": "服务"},
+				"items": []interface{}{map[string]interface{}{"zh-CN": "静态住宅 IP"}},
+			},
+			"contact": map[string]interface{}{
+				"title": map[string]interface{}{"zh-CN": "联系"},
+				"text":  map[string]interface{}{"zh-CN": "Telegram 客服"},
+			},
+		},
+		Legal: map[string]interface{}{
+			"terms": map[string]interface{}{"zh-CN": "条款第一段\n条款第二段"},
+		},
+	}
+
+	about := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/about"}, "zh-CN", site)
+	if got := countH1(about.BodyHTML); got != 1 {
+		t.Fatalf("about: expected one h1, got %d: %s", got, about.BodyHTML)
+	}
+	for _, want := range []string{"副标题", "我们提供真实住宅 IP。", "静态住宅 IP", "Telegram 客服"} {
+		if !strings.Contains(about.BodyHTML, want) {
+			t.Fatalf("about body missing %q: %s", want, about.BodyHTML)
+		}
+	}
+
+	terms := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/terms"}, "zh-CN", site)
+	if got := countH1(terms.BodyHTML); got != 1 {
+		t.Fatalf("terms: expected one h1, got %d: %s", got, terms.BodyHTML)
+	}
+	for _, want := range []string{"条款第一段", "条款第二段"} {
+		if !strings.Contains(terms.BodyHTML, want) {
+			t.Fatalf("terms body missing %q: %s", want, terms.BodyHTML)
+		}
+	}
+}
+
+// 公告列表不能链到 /blog，也不复用博客标题。
+func TestNoticeListBodyDoesNotLinkToBlog(t *testing.T) {
+	posts := []contentdomain.Post{
+		{Slug: "notice-1", TitleJSON: jsonmap.JSON{"zh-CN": "公告一"}},
+		{Slug: "notice-2", TitleJSON: jsonmap.JSON{"zh-CN": "公告二"}},
+	}
+	body := (&seoResolver{}).noticeListBodyHTML("zh-CN", seoSite{Name: "站点"}, "公告 - 站点", "站点公告", posts)
+
+	if !strings.Contains(body, "<h1>公告</h1>") || !strings.Contains(body, "全部公告") {
+		t.Fatalf("unexpected notice body: %s", body)
+	}
+	if strings.Contains(body, "/blog/") {
+		t.Fatalf("notice list must not link to blog: %s", body)
+	}
+	if !strings.Contains(body, "公告一") || !strings.Contains(body, "公告二") {
+		t.Fatalf("notice titles missing: %s", body)
+	}
 }
