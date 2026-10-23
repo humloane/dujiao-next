@@ -226,8 +226,10 @@ type seoSite struct {
 	SeoDesc     map[string]interface{}
 	SeoKeywords map[string]interface{}
 	Image       string
-	Currency    string
-	Telegram    string
+	// DefaultOGImage 用于 og:image 回退；与站点 Logo 分开，避免分享图覆盖品牌 Logo。
+	DefaultOGImage string
+	Currency       string
+	Telegram       string
 	// About / Legal 来自站点设置，用于静态页正文；未配置时正文退化为站点信息。
 	About map[string]interface{}
 	Legal map[string]interface{}
@@ -323,7 +325,7 @@ func (r *seoResolver) loadSite() seoSite {
 	site.SeoDesc = asMap(seo["description"])
 	site.SeoKeywords = asMap(seo["keywords"])
 	if image := asString(seo["default_og_image"]); image != "" {
-		site.Image = image
+		site.DefaultOGImage = image
 	}
 	if currency := asString(raw[constants.SettingFieldSiteCurrency]); currency != "" {
 		site.Currency = currency
@@ -343,7 +345,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		Description: localized(site.SeoDesc, locale),
 		Keywords:    localized(site.SeoKeywords, locale),
 		Canonical:   canonical,
-		Image:       absoluteAssetURL(base, site.Image),
+		Image:       absoluteAssetURL(base, site.DefaultOGImage),
 		Type:        "website",
 		Locale:      locale,
 		Path:        cleanPath,
@@ -415,10 +417,9 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 			postType = constants.PostTypeNotice
 		}
 		posts := r.seoPosts(ctx, postType, blogBodyPostLimit)
-		// 没有已发布内容时不要输出空的 CollectionPage。
-		if len(posts) > 0 {
-			meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
-		}
+		// 列表页始终输出一份 CollectionPage + BreadcrumbList；即使暂无内容，
+		// 也比空 JSON-LD 更利于搜索引擎理解页面结构。
+		meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
 		if cleanPath == "/blog" {
 			meta.BodyHTML = r.blogListBodyHTML(locale, site, meta.Title, meta.Description, posts)
 		} else {
@@ -572,16 +573,19 @@ func (r *seoResolver) applyProductMeta(ctx context.Context, meta *web.PageMeta, 
 }
 
 func (r *seoResolver) applyPostMeta(meta *web.PageMeta, base, cleanPath, locale string, site seoSite, post *contentdomain.Post) {
+	seo := asMap(post.SeoMetaJSON)
 	title := localized(asMap(post.TitleJSON), locale)
 	if title == "" {
 		title = post.Slug
 	}
-	meta.Title = joinTitle(title, seoSiteName(site, locale))
+	meta.Title = joinTitle(firstNonEmpty(asStringFromMap(seo["title"], locale), title), seoSiteName(site, locale))
 	meta.Description = truncateRunes(firstNonEmpty(
+		asStringFromMap(seo["description"], locale),
 		stripHTML(localized(asMap(post.SummaryJSON), locale)),
 		stripHTML(localized(asMap(post.ContentJSON), locale)),
 		localized(site.SeoDesc, locale),
 	), seoDescriptionMaxRunes)
+	meta.Keywords = asStringFromMap(seo["keywords"], locale)
 	meta.Type = "article"
 	if image := absoluteAssetURL(base, post.Thumbnail); image != "" {
 		meta.Image = image
@@ -791,15 +795,51 @@ func joinTitle(page, site string) string {
 	if page == "" {
 		return site
 	}
-	if site == "" || page == site || strings.Contains(page, site) {
+	if site == "" || titleContainsSite(page, site) {
 		return page
 	}
-	return page + " - " + site
+	suffix := firstNonEmpty(titleBrandCore(site), site)
+	return page + " - " + suffix
 }
 
-// seoSiteName 返回标题用的站点名：优先当前语言的 seo.title，回落到品牌名。
+// titleBrandCore 取站点名第一段作为品牌核心，例如
+// "霓途 Neaixt｜全球静态住宅 IP" -> "霓途 Neaixt"。
+func titleBrandCore(value string) string {
+	value = strings.TrimSpace(value)
+	for _, separator := range []string{"｜", "|", "·", "•", "—", "–", ":", "："} {
+		if index := strings.Index(value, separator); index > 0 {
+			value = strings.TrimSpace(value[:index])
+		}
+	}
+	return value
+}
+
+// titleContainsSite 判断页面标题是否已经包含站点名或品牌核心（忽略大小写/空白差异）。
+func titleContainsSite(page, site string) bool {
+	pageKey := normalizeTitleForMatch(page)
+	siteKey := normalizeTitleForMatch(site)
+	if pageKey == "" {
+		return false
+	}
+	if siteKey == "" {
+		return true
+	}
+	if strings.Contains(pageKey, siteKey) {
+		return true
+	}
+	coreKey := normalizeTitleForMatch(titleBrandCore(site))
+	return len([]rune(coreKey)) >= 2 && strings.Contains(pageKey, coreKey)
+}
+
+func normalizeTitleForMatch(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(value), " "))
+}
+
+// seoSiteName 返回标题用的站点名：优先当前语言的 seo.title，回落到品牌名；
+// 返回前截掉副标题，避免把整段营销文案追加到每个页面标题后面。
 func seoSiteName(site seoSite, locale string) string {
-	return firstNonEmpty(localized(site.SeoTitle, locale), site.Name)
+	name := firstNonEmpty(localized(site.SeoTitle, locale), site.Name)
+	return firstNonEmpty(titleBrandCore(name), name)
 }
 
 func truncateRunes(value string, max int) string {

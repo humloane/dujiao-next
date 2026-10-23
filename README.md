@@ -267,8 +267,8 @@ go run ./cmd/backfill-seo-content -apply              # apply
 go run ./cmd/backfill-seo-content -report=seo.csv     # export the full change list
 ```
 
-> `Post` has no `seo_meta` column yet; post SEO keeps using the existing title/summary.
-> The command never adds database columns and is safe to re-run (idempotent).
+> `seo_meta.title` 只写页面主题，不包含品牌；前台会自动追加一次站点名。
+> The command is safe to re-run (idempotent).
 
 Clean duplicated product content blocks (`核心亮点` / `适用场景` / `交付说明`) with:
 

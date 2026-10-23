@@ -119,6 +119,7 @@ func TestUpdateSiteSettingNormalized(t *testing.T) {
 				"zh-CN": "  标题  ",
 				"en-US": "  Title  ",
 			},
+			"default_og_image": "  /uploads/site/og.png  ",
 		},
 		"about": map[string]interface{}{
 			"hero": map[string]interface{}{
@@ -251,6 +252,13 @@ func TestUpdateSiteSettingNormalized(t *testing.T) {
 	}
 	if title["zh-TW"] != "" {
 		t.Fatalf("unexpected seo.title.zh-TW: %v", title["zh-TW"])
+	}
+	if seo["default_og_image"] != "/uploads/site/og.png" {
+		t.Fatalf("unexpected seo.default_og_image: %v", seo["default_og_image"])
+	}
+	storedSEO, ok := config["seo"].(map[string]interface{})
+	if !ok || storedSEO["default_og_image"] != "/uploads/site/og.png" {
+		t.Fatalf("stored seo.default_og_image was lost: %#v", config["seo"])
 	}
 
 	legal, ok := result["legal"].(map[string]interface{})

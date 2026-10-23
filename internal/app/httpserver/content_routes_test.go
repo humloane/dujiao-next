@@ -447,3 +447,83 @@ func TestNoticeListBodyDoesNotLinkToBlog(t *testing.T) {
 		t.Fatalf("notice titles missing: %s", body)
 	}
 }
+
+func TestSEOTitlesKeepBrandOnce(t *testing.T) {
+	site := seoSite{
+		Name:     "霓途 Neaixt",
+		URL:      "https://example.com",
+		Currency: "CNY",
+		SeoTitle: map[string]interface{}{"zh-CN": "霓途 Neaixt｜全球静态住宅 IP"},
+	}
+	brand := "霓途 Neaixt"
+
+	product := &productdomain.Product{
+		Slug:            "US-Residential-IP",
+		TitleJSON:       jsonmap.JSON{"zh-CN": "美国静态住宅 IP · 直连版"},
+		SeoMetaJSON:     jsonmap.JSON{"title": map[string]interface{}{"zh-CN": "美国静态住宅 IP · 直连版｜霓途 Neaixt"}},
+		DescriptionJSON: jsonmap.JSON{"zh-CN": "美国住宅出口"},
+		Country:         "US",
+		IPType:          productdomain.IPTypeResidential,
+		LineType:        productdomain.LineTypeDirect,
+	}
+	productMeta := &web.PageMeta{}
+	(&seoResolver{}).applyProductMeta(context.Background(), productMeta, "https://example.com", "/products/US-Residential-IP", "zh-CN", site, product)
+	if got := strings.Count(productMeta.Title, brand); got != 1 {
+		t.Fatalf("product title must contain brand once, got %d: %s", got, productMeta.Title)
+	}
+
+	categoryTitle := joinTitle("美国住宅 IP｜霓途 Neaixt", seoSiteName(site, "zh-CN"))
+	if got := strings.Count(categoryTitle, brand); got != 1 {
+		t.Fatalf("category title must contain brand once, got %d: %s", got, categoryTitle)
+	}
+
+	post := &contentdomain.Post{
+		Slug:        "post-with-seo",
+		TitleJSON:   jsonmap.JSON{"zh-CN": "文章标题"},
+		SeoMetaJSON: jsonmap.JSON{"title": map[string]interface{}{"zh-CN": "文章标题｜霓途 Neaixt"}},
+		SummaryJSON: jsonmap.JSON{"zh-CN": "文章摘要"},
+		CreatedAt:   time.Now(),
+	}
+	postMeta := &web.PageMeta{}
+	(&seoResolver{}).applyPostMeta(postMeta, "https://example.com", "/blog/post-with-seo", "zh-CN", site, post)
+	if got := strings.Count(postMeta.Title, brand); got != 1 {
+		t.Fatalf("post title must contain brand once, got %d: %s", got, postMeta.Title)
+	}
+}
+
+func TestBuildMetaUsesConfiguredDefaultOGImage(t *testing.T) {
+	site := seoSite{
+		Name:           "站点",
+		URL:            "https://example.com",
+		Currency:       "CNY",
+		DefaultOGImage: "/uploads/site/og.png",
+	}
+	meta := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/"}, "zh-CN", site)
+	if meta.Image != "https://example.com/uploads/site/og.png" {
+		t.Fatalf("unexpected og image: %q", meta.Image)
+	}
+
+	fallback := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/"}, "zh-CN", seoSite{
+		Name: "站点", URL: "https://example.com", Currency: "CNY",
+	})
+	if fallback.Image != "https://example.com/og-default.png" {
+		t.Fatalf("unexpected fallback og image: %q", fallback.Image)
+	}
+}
+
+func TestNoticeListAlwaysEmitsCollectionJSONLD(t *testing.T) {
+	meta := (&seoResolver{}).buildMeta(web.MetaRequest{Path: "/notice"}, "zh-CN", seoSite{
+		Name: "站点", URL: "https://example.com", Currency: "CNY",
+	})
+	if meta.JSONLD == "" {
+		t.Fatal("notice list must emit JSON-LD")
+	}
+	if strings.Count(meta.JSONLD, `"@context"`) != 1 {
+		t.Fatalf("notice JSON-LD must have a single @context: %s", meta.JSONLD)
+	}
+	for _, want := range []string{`"CollectionPage"`, `"BreadcrumbList"`} {
+		if !strings.Contains(meta.JSONLD, want) {
+			t.Fatalf("notice JSON-LD missing %s: %s", want, meta.JSONLD)
+		}
+	}
+}

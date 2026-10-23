@@ -39,7 +39,7 @@ func normalizeSiteSetting(value map[string]interface{}) jsonmap.JSON {
 
 	normalized["brand"] = normalizeSiteBrand(value["brand"])
 	normalized["contact"] = normalizeSiteContact(value["contact"])
-	normalized["seo"] = normalizeSiteLocalizedBlock(value["seo"], []string{"title", "keywords", "description"})
+	normalized["seo"] = normalizeSiteSEO(value["seo"])
 	normalized["legal"] = normalizeSiteLocalizedBlock(value["legal"], []string{"terms", "privacy"})
 	normalized["about"] = normalizeSiteAbout(value["about"])
 	normalized["scripts"] = normalizeSiteScripts(value["scripts"])
@@ -180,6 +180,18 @@ func normalizeSiteBrand(raw interface{}) map[string]interface{} {
 	// 未配置 Logo 时保留空字符串，让前台继续使用各主题原有的 fallback 行为。
 	result["site_logo"] = normalizeSettingText(brandMap["site_logo"])
 	result["site_description"] = normalizeSiteLocalizedField(brandMap["site_description"])
+	return result
+}
+
+// normalizeSiteSEO 归一化站点 SEO：保留三语标题/关键词/描述，并保留分享图路径。
+func normalizeSiteSEO(raw interface{}) map[string]interface{} {
+	result := normalizeSiteLocalizedBlock(raw, []string{"title", "keywords", "description"})
+	block, _ := raw.(map[string]interface{})
+	if block != nil {
+		result["default_og_image"] = normalizeSettingText(block["default_og_image"])
+	} else {
+		result["default_og_image"] = ""
+	}
 	return result
 }
 

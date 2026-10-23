@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useHead } from '@unhead/vue'
 import { useAppStore } from '../stores/app'
 import { getImageUrl } from '../utils/image'
+import { joinSeoTitle } from '../utils/seoTitle'
 
 export interface PageSeoOptions {
   /** 页面专属标题；若与站点名相同，仅展示站点名 */
@@ -94,10 +95,8 @@ export function usePageSeo(options: PageSeoOptions = {}) {
   })
 
   const fullTitle = computed(() => {
-    if (pageTitle.value && siteName.value && pageTitle.value !== siteName.value) {
-      return `${pageTitle.value} - ${siteName.value}`
-    }
-    return pageTitle.value || siteName.value || undefined
+    const brandAlias = String(appStore.config?.brand?.site_name || '').trim()
+    return joinSeoTitle(pageTitle.value, siteName.value, brandAlias ? [brandAlias] : [])
   })
 
   const fullDescription = computed(() => {

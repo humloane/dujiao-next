@@ -10,6 +10,7 @@ import { useBuyNowStore } from '../stores/buyNow'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useUserProfileStore } from '../stores/userProfile'
 import { debounceAsync } from '../utils/debounce'
+import { joinSeoTitle } from '../utils/seoTitle'
 import { resolveServerJSONLD } from './usePageSeo'
 import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 import { resolveSkuAvailableStock, resolveSkuStockDisplay, type PublicStockDisplay } from '../utils/publicStock'
@@ -576,11 +577,8 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     return String(localized || appStore.config?.brand?.site_name || '').trim()
   })
   const fullTitle = computed(() => {
-    const page = seoTitle.value
-    const site = siteName.value
-    if (!page) return site
-    if (!site || page === site || page.includes(site)) return page
-    return `${page} - ${site}`
+    const brandAlias = String(appStore.config?.brand?.site_name || '').trim()
+    return joinSeoTitle(seoTitle.value, siteName.value, brandAlias ? [brandAlias] : [])
   })
 
   useHead({

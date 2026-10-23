@@ -11,14 +11,14 @@ import (
 
 func TestProductSEOTitle(t *testing.T) {
 	us := &productdomain.Product{Slug: "US-Residential-IEPL", Country: "US", IPType: productdomain.IPTypeResidential, LineType: productdomain.LineTypeIEPL}
-	if got := productSEOTitle(us, "zh-CN", "霓途 Neaixt"); got != "美国静态住宅 IP｜IEPL｜霓途 Neaixt" {
+	if got := productSEOTitle(us, "zh-CN"); got != "美国静态住宅 IP｜IEPL" {
 		t.Fatalf("unexpected zh title: %q", got)
 	}
-	if got := productSEOTitle(us, "en-US", "Neaixt"); got != "United States Static Residential IP | IEPL | Neaixt" {
+	if got := productSEOTitle(us, "en-US"); got != "United States Static Residential IP | IEPL" {
 		t.Fatalf("unexpected en title: %q", got)
 	}
 	shared := &productdomain.Product{Slug: "shared-ip-260g-unlimited", IPType: productdomain.IPTypeShared}
-	if got := productSEOTitle(shared, "zh-CN", "霓途 Neaixt"); got != "260GB 不限时流量包｜共享 IP｜霓途 Neaixt" {
+	if got := productSEOTitle(shared, "zh-CN"); got != "260GB 不限时流量包｜共享 IP" {
 		t.Fatalf("unexpected shared title: %q", got)
 	}
 }

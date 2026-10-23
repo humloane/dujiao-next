@@ -4,8 +4,8 @@
 //
 //	go run ./cmd/backfill-seo-content -apply
 //
-// 说明：Post 模型目前没有 seo_meta 字段（只有 title/summary/content），
-// 因此文章 SEO 只能复用现有标题/摘要；本命令不新增数据库列。
+// 说明：Post 已有可空的 seo_meta 字段，文章 SEO 在后台编辑页维护；
+// 本命令只处理商品/分类 SEO、文章分类分配、公告/横幅/站点文案清理。
 package main
 
 import (
@@ -155,7 +155,7 @@ func backfillProducts(db *gorm.DB, brand map[string]string, apply bool) []change
 		changed := false
 		for _, loc := range locales {
 			if strings.TrimSpace(titles[loc]) == "" {
-				value := productSEOTitle(product, loc, brand[loc])
+				value := productSEOTitle(product, loc)
 				titles[loc] = value
 				changes = append(changes, change{"product", product.Slug, "seo_meta.title." + loc, "", value})
 				changed = true
@@ -214,7 +214,7 @@ func backfillCategories(db *gorm.DB, brand map[string]string, apply bool) []chan
 				changed = true
 			}
 			if strings.TrimSpace(titles[loc]) == "" {
-				value := categorySEOTitle(name, brand[loc], loc)
+				value := categorySEOTitle(name)
 				titles[loc] = value
 				changes = append(changes, change{"category", category.Slug, "seo_meta.title." + loc, "", value})
 				changed = true
@@ -489,28 +489,28 @@ func seoBrand(siteConfig jsonmap.JSON, locale string) string {
 	return firstNonEmpty(localizedText(seo["title"], locale), stringValue(brand["site_name"]), "Dujiao-Next")
 }
 
-func productSEOTitle(product *productdomain.Product, locale, brand string) string {
+func productSEOTitle(product *productdomain.Product, locale string) string {
 	region := regionLabel(product.Country, locale)
 	line := lineLabel(product.LineType, locale)
 	if product.IPType == productdomain.IPTypeShared || strings.HasPrefix(product.Slug, "shared-ip") {
 		spec := sharedSpec(product.Slug)
 		switch locale {
 		case "zh-TW":
-			return fmt.Sprintf("%sGB 不限時流量包｜共享 IP｜%s", spec, brand)
+			return fmt.Sprintf("%sGB 不限時流量包｜共享 IP", spec)
 		case "en-US":
-			return fmt.Sprintf("%sGB No-Expiry Pack | Shared IP | %s", spec, brand)
+			return fmt.Sprintf("%sGB No-Expiry Pack | Shared IP", spec)
 		default:
-			return fmt.Sprintf("%sGB 不限时流量包｜共享 IP｜%s", spec, brand)
+			return fmt.Sprintf("%sGB 不限时流量包｜共享 IP", spec)
 		}
 	}
 	kind := ipTypeLabel(product.IPType, locale)
 	switch locale {
 	case "zh-TW":
-		return fmt.Sprintf("%s%s IP｜%s｜%s", region, kind, line, brand)
+		return fmt.Sprintf("%s%s IP｜%s", region, kind, line)
 	case "en-US":
-		return fmt.Sprintf("%s %s IP | %s | %s", region, kind, line, brand)
+		return fmt.Sprintf("%s %s IP | %s", region, kind, line)
 	default:
-		return fmt.Sprintf("%s%s IP｜%s｜%s", region, kind, line, brand)
+		return fmt.Sprintf("%s%s IP｜%s", region, kind, line)
 	}
 }
 
@@ -547,11 +547,8 @@ func categoryDescription(name string, count int64, locale string) string {
 	}
 }
 
-func categorySEOTitle(name, brand, locale string) string {
-	if locale == "en-US" {
-		return name + " | " + brand
-	}
-	return name + "｜" + brand
+func categorySEOTitle(name string) string {
+	return name
 }
 
 func categoryKeywords(name, brand, locale string) string {
