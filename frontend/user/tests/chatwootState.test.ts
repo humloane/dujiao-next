@@ -24,7 +24,7 @@ test('chatwoot polling covers ready at 0, 9.9, 10.1, 12 and 15 seconds', async (
   const { ready } = stateModule.useChatwootState()
   const ensure = () => {
     fakeWindow.$chatwoot = undefined
-    stateModule.ensureChatwootPolling()
+    stateModule.useChatwootState()
   }
 
   // 0s: 第一次轮询就可用。

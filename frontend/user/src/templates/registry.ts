@@ -70,7 +70,17 @@ type ViewLoader = () => Promise<unknown>
  * 用法：`component: templateView('Home', () => import('../views/Home.vue'))`
  */
 export const templateView = (name: string, classicLoader: ViewLoader): ViewLoader => {
-    return () => {
+    return async () => {
+        // 模板路由要等配置确定后再选择 classic/vault；首屏已由 index.html/App 骨架承接，
+        // 这里等待的是路由组件而不是首帧，同时复用 store 里同一个配置请求。
+        try {
+            const appStore = useAppStore()
+            if (!appStore.config && !appStore.configSettled) {
+                await appStore.loadConfig()
+            }
+        } catch {
+            /* 配置失败时回退默认模板，不影响页面继续加载 */
+        }
         if (getActiveTemplate() === 'vault') {
             const loader = vaultViews[`./vault/${name}.vue`]
             if (loader) return loader()

@@ -54,18 +54,18 @@ func TestInjectMetaHTMLWithoutTitleIsNoop(t *testing.T) {
 	}
 }
 
-func TestInjectMetaHTMLReplacesBootSkeleton(t *testing.T) {
+func TestInjectMetaHTMLKeepsBootSkeletonForFirstPaint(t *testing.T) {
 	index := []byte(`<html><head></head><body><div id="app"><!--boot-skeleton-start--><div class="boot-skeleton">Dujiao-Next</div><!--boot-skeleton-end--></div></body></html>`)
 	meta := &PageMeta{
 		Title:    "IEPL",
 		BodyHTML: `<article><h1>IEPL 专线</h1></article>`,
 	}
 	body := string(injectMetaHTML(index, meta))
-	if !strings.Contains(body, `<div id="app"><article><h1>IEPL 专线</h1></article></div>`) {
-		t.Fatalf("body snapshot not injected into app skeleton: %s", body)
+	if !strings.Contains(body, `<div id="app"><!--boot-skeleton-start--><div class="boot-skeleton">Dujiao-Next</div><!--boot-skeleton-end--><article><h1>IEPL 专线</h1></article></div>`) {
+		t.Fatalf("body snapshot should be inserted after boot skeleton: %s", body)
 	}
-	if strings.Contains(body, "boot-skeleton") || strings.Contains(body, "Dujiao-Next") {
-		t.Fatalf("boot skeleton must be replaced for crawlers: %s", body)
+	if !strings.Contains(body, "boot-skeleton") {
+		t.Fatalf("boot skeleton must remain for browser first paint: %s", body)
 	}
 }
 

@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { isChatwootReady } from '../utils/chatwoot.ts'
 
-export const CHATWOOT_READY_TIMEOUT_MS = 10000
+const CHATWOOT_READY_TIMEOUT_MS = 10000
 
 // 模块级单例：整个应用只允许一个轮询。
 const ready = ref(isChatwootReady())
@@ -15,7 +15,7 @@ const stop = () => {
   }
 }
 
-export const ensureChatwootPolling = () => {
+const ensureChatwootPolling = () => {
   if (ready.value || timer !== null || typeof window === 'undefined') return
   startedAt = Date.now()
   timer = setInterval(() => {

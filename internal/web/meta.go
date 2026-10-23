@@ -155,17 +155,13 @@ func injectMetaHTML(index []byte, meta *PageMeta) []byte {
 
 	// 正文摘要直接写进 SPA 挂载点：爬虫不执行 JS 也能读到，Vue 挂载时整体替换。
 	if strings.TrimSpace(meta.BodyHTML) != "" {
-		// 首屏骨架是静态发布的，服务和客户端共用同一 #app 容器；
-		// 注入正文时只替换骨架标记区间，避免把骨架文本一并暴露给爬虫。
-		startMarker := []byte("<!--boot-skeleton-start-->")
+		// 首屏骨架必须保留给浏览器首次绘制；正文快照插到骨架之后，
+		// 这样首屏先看到骨架，爬虫仍能读到正文，客户端挂载时再由 Vue 整体替换。
 		endMarker := []byte("<!--boot-skeleton-end-->")
-		start := bytes.Index(result, startMarker)
-		if start >= 0 {
-			rest := result[start:]
-			if endOffset := bytes.Index(rest, endMarker); endOffset >= 0 {
-				end := start + endOffset + len(endMarker)
-				result = append(append(append([]byte{}, result[:start]...), []byte(meta.BodyHTML)...), result[end:]...)
-			}
+		end := bytes.Index(result, endMarker)
+		if end >= 0 {
+			end += len(endMarker)
+			result = append(append(append([]byte{}, result[:end]...), []byte(meta.BodyHTML)...), result[end:]...)
 		} else {
 			appRoot := []byte(`<div id="app"></div>`)
 			body := append([]byte(`<div id="app">`), []byte(meta.BodyHTML)...)
