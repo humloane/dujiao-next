@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8" />
@@ -9,10 +9,48 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="theme-color" content="#2563eb" />
   <title></title>
+<style>
+    html, body { margin: 0; min-height: 100%; background: #ffffff; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #app { min-height: 100vh; }
+    .boot-skeleton { min-height: 100vh; box-sizing: border-box; background: #ffffff; }
+    .boot-skeleton__top { height: 56px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+    .boot-skeleton__shell { width: min(1180px, 100% - 48px); margin: 0 auto; padding: 32px 0 72px; }
+    .boot-skeleton__brand { margin: 0 auto 28px; color: #64748b; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; text-align: center; }
+    .boot-skeleton__hero, .boot-skeleton__card { border-radius: 18px; background: #e2e8f0; animation: boot-skeleton-pulse 1.4s ease-in-out infinite alternate; }
+    .boot-skeleton__hero { height: min(48vh, 420px); min-height: 240px; }
+    .boot-skeleton__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .boot-skeleton__card { height: 150px; border-radius: 14px; }
+    @keyframes boot-skeleton-pulse { from { opacity: 0.65; } to { opacity: 1; } }
+    @media (prefers-color-scheme: dark) {
+      html, body, .boot-skeleton { background: #0b0b0c; color: #f4f4f5; }
+      .boot-skeleton__top { border-color: #27272a; background: #18181b; }
+      .boot-skeleton__brand { color: #a1a1aa; }
+      .boot-skeleton__hero, .boot-skeleton__card { background: #27272a; }
+    }
+    @media (max-width: 640px) {
+      .boot-skeleton__shell { width: min(100% - 32px, 1180px); padding-top: 24px; }
+      .boot-skeleton__grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <!--boot-skeleton-start-->
+    <div class="boot-skeleton" aria-hidden="true">
+      <div class="boot-skeleton__top"></div>
+      <div class="boot-skeleton__shell">
+        <div class="boot-skeleton__brand">Dujiao-Next</div>
+        <div class="boot-skeleton__hero"></div>
+        <div class="boot-skeleton__grid">
+          <div class="boot-skeleton__card"></div>
+          <div class="boot-skeleton__card"></div>
+          <div class="boot-skeleton__card"></div>
+        </div>
+      </div>
+    </div>
+    <!--boot-skeleton-end-->
+  </div>
   <script type="module" data-cfasync="false" src="/src/main.ts"></script>
 </body>
 

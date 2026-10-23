@@ -337,16 +337,19 @@ router.beforeEach(async (to, _from, next) => {
     const appStore = useAppStore()
     void captureAffiliateFromRoute(to)
 
-    // Ensure config is loaded before checking template mode
+    // Ensure config is applied before checking template mode. The local snapshot is
+    // synchronous; a network refresh runs in the background and must never block
+    // the first route / first paint.
     if (!appStore.config) {
-        await appStore.loadConfig()
+        const usedSnapshot = appStore.applyConfigSnapshot()
+        void appStore.loadConfig(usedSnapshot)
     }
 
     if (to.meta.requiresUserAuth) {
         if (!userAuthStore.isAuthenticated) {
             const redirect = encodeURIComponent(to.fullPath)
             next(`/auth/login?redirect=${redirect}`)
-        } else if (to.meta.resellerConsole && !appStore.canAccessResellerConsole) {
+        } else if (to.meta.resellerConsole && appStore.config && !appStore.canAccessResellerConsole) {
             next('/me/orders')
         } else {
             next()

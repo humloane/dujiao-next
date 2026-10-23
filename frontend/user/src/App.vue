@@ -1,5 +1,18 @@
 <template>
   <div id="app" class="min-h-screen bg-background text-foreground flex flex-col">
+    <div v-if="!appStore.configSettled" class="min-h-screen bg-background text-foreground">
+      <div class="h-14 border-b border-border bg-muted/40"></div>
+      <div class="mx-auto w-full max-w-[1180px] px-4 py-8 sm:px-6">
+        <div class="mx-auto mb-7 h-4 w-32 animate-pulse rounded-full bg-muted"></div>
+        <div class="min-h-[240px] h-[min(48vh,420px)] animate-pulse rounded-2xl bg-muted"></div>
+        <div class="mt-6 grid gap-4 sm:grid-cols-3">
+          <div class="h-[150px] animate-pulse rounded-xl bg-muted"></div>
+          <div class="h-[150px] animate-pulse rounded-xl bg-muted"></div>
+          <div class="h-[150px] animate-pulse rounded-xl bg-muted"></div>
+        </div>
+      </div>
+    </div>
+    <template v-else>
     <!-- 落地页是独立投放页：不套站点外壳，避免深色页面与站点浅色主题混搭 -->
     <ErrorBoundary v-if="isLandingPage">
       <RouterView v-slot="{ Component }">
@@ -37,10 +50,10 @@
       <MobileBottomNav v-if="!isResellerConsole" />
     </template>
 
-    <Loading :loading="appStore.loading" />
     <ChatwootFab />
     <Toast />
     <ConfirmDialog />
+    </template>
   </div>
 </template>
 
@@ -52,7 +65,6 @@ import { getActiveTemplate } from './templates/registry'
 import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
 import ChatwootFab from './components/ChatwootFab.vue'
-import Loading from './components/Loading.vue'
 import Toast from './components/Toast.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'

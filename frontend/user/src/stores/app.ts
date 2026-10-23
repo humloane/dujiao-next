@@ -13,6 +13,63 @@ export const useAppStore = defineStore('app', () => {
     const locale = ref(detectLocale())
     const config = ref<any>(null)
     const loading = ref(false)
+    // 配置请求已结束（成功、失败或套用本地快照），供首屏骨架判断何时接管。
+    const configSettled = ref(false)
+
+    const CONFIG_CACHE_KEY = 'dj-app-config-snapshot'
+    const CONFIG_CACHE_TTL_MS = 10 * 60 * 1000
+    const CONFIG_CACHE_VERSION = 1
+
+    type ConfigSnapshot = {
+        data: any
+        savedAt: number
+        version: number
+    }
+
+    const readConfigSnapshot = (): ConfigSnapshot | null => {
+        if (typeof localStorage === 'undefined') return null
+        try {
+            const raw = localStorage.getItem(CONFIG_CACHE_KEY)
+            if (!raw) return null
+            const parsed = JSON.parse(raw) as ConfigSnapshot
+            if (!parsed || parsed.version !== CONFIG_CACHE_VERSION || !parsed.data) return null
+            const age = Date.now() - Number(parsed.savedAt)
+            if (!Number.isFinite(age) || age < 0 || age > CONFIG_CACHE_TTL_MS) return null
+            return parsed
+        } catch {
+            return null
+        }
+    }
+
+    const writeConfigSnapshot = (data: any) => {
+        if (typeof localStorage === 'undefined') return
+        try {
+            localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({
+                data,
+                savedAt: Date.now(),
+                version: CONFIG_CACHE_VERSION,
+            } satisfies ConfigSnapshot))
+        } catch {
+            // 存储配额不足或隐私模式禁用 localStorage 时忽略缓存。
+        }
+    }
+
+    const applyConfigSnapshot = (): boolean => {
+        if (config.value) {
+            configSettled.value = true
+            return true
+        }
+        const snapshot = readConfigSnapshot()
+        if (!snapshot) return false
+        config.value = snapshot.data
+        if (snapshot.data?.server_time) {
+            serverTimeOffset.value = snapshot.data.server_time - snapshot.savedAt
+        }
+        configSettled.value = true
+        applySEO()
+        applyCustomScripts(snapshot.data?.scripts)
+        return true
+    }
     // 服务器与客户端的时间偏移量（毫秒），serverTime = clientTime + offset
     const serverTimeOffset = ref(0)
     const siteIconHref = computed(() => {
@@ -69,40 +126,67 @@ export const useAppStore = defineStore('app', () => {
     }
 
     // 加载全局配置
-    const loadConfig = async (force = false) => {
+    // 同一时间只允许一个非强制请求：路由守卫和页面 onMounted 都会调用，
+    // 共享同一个 Promise，避免首屏发出两份 /public/config。
+    let configRequest: Promise<void> | null = null
+
+    const loadConfig = (force = false): Promise<void> => {
         if (config.value && !force) {
+            configSettled.value = true
             applySEO()
             applyCustomScripts(config.value?.scripts)
-            return
+            return Promise.resolve()
+        }
+        if (!force && configRequest) {
+            return configRequest
         }
         if (!force) loading.value = true
-        try {
-            const requestTime = Date.now()
-            const response = await configAPI.get()
-            config.value = response.data.data
-            // 计算服务器与客户端的时间偏移量
-            if (config.value?.server_time) {
-                const responseTime = Date.now()
-                const roundTripTime = responseTime - requestTime
-                const estimatedServerNow = config.value.server_time + roundTripTime / 2
-                serverTimeOffset.value = estimatedServerNow - responseTime
+
+        const request = (async () => {
+            try {
+                const requestTime = Date.now()
+                const response = await configAPI.get()
+                const nextConfig = response.data.data
+                // 快照已经提供给首屏使用时，只有内容真的变化才替换响应式对象。
+                const configChanged = !config.value || JSON.stringify(config.value) !== JSON.stringify(nextConfig)
+                if (configChanged) {
+                    config.value = nextConfig
+                }
+                if (nextConfig?.server_time) {
+                    const responseTime = Date.now()
+                    const roundTripTime = responseTime - requestTime
+                    const estimatedServerNow = nextConfig.server_time + roundTripTime / 2
+                    serverTimeOffset.value = estimatedServerNow - responseTime
+                }
+                writeConfigSnapshot(nextConfig)
+                applySEO()
+                applyCustomScripts(nextConfig?.scripts)
+                // Print version to console (dev only)
+                if (import.meta.env.DEV && nextConfig?.app_version) {
+                    console.log(
+                        '%c Version %c ' + nextConfig.app_version + ' %c',
+                        'background:#34c759;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:bold;',
+                        'background:#1d1d1f;color:#f5f5f7;padding:2px 6px;border-radius:0 4px 4px 0;',
+                        'background:transparent;',
+                    )
+                }
+            } catch (error) {
+                console.error('Failed to load config:', error)
+            } finally {
+                if (!force) loading.value = false
+                configSettled.value = true
             }
-            applySEO()
-            applyCustomScripts(config.value?.scripts)
-            // Print version to console (dev only)
-            if (import.meta.env.DEV && config.value?.app_version) {
-                console.log(
-                    '%c Version %c ' + config.value.app_version + ' %c',
-                    'background:#34c759;color:#fff;padding:2px 6px;border-radius:4px 0 0 4px;font-weight:bold;',
-                    'background:#1d1d1f;color:#f5f5f7;padding:2px 6px;border-radius:0 4px 4px 0;',
-                    'background:transparent;',
-                )
-            }
-        } catch (error) {
-            console.error('Failed to load config:', error)
-        } finally {
-            if (!force) loading.value = false
+        })()
+
+        if (!force) {
+            let wrapped: Promise<void>
+            wrapped = request.finally(() => {
+                if (configRequest === wrapped) configRequest = null
+            })
+            configRequest = wrapped
+            return wrapped
         }
+        return request
     }
 
     // 获取校正后的服务器当前时间（毫秒时间戳）
@@ -115,11 +199,13 @@ export const useAppStore = defineStore('app', () => {
         locale,
         config,
         loading,
+        configSettled,
         serverTimeOffset,
         isResellerTenant,
         canAccessResellerConsole,
         setLocale,
         loadConfig,
+        applyConfigSnapshot,
         applySEO,
         getServerTime,
         getServerDate,

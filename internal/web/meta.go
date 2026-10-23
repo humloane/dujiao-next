@@ -155,11 +155,24 @@ func injectMetaHTML(index []byte, meta *PageMeta) []byte {
 
 	// 正文摘要直接写进 SPA 挂载点：爬虫不执行 JS 也能读到，Vue 挂载时整体替换。
 	if strings.TrimSpace(meta.BodyHTML) != "" {
-		appRoot := []byte(`<div id="app"></div>`)
-		body := append([]byte(`<div id="app">`), []byte(meta.BodyHTML)...)
-		body = append(body, []byte(`</div>`)...)
-		if bytes.Contains(result, appRoot) {
-			result = bytes.Replace(result, appRoot, body, 1)
+		// 首屏骨架是静态发布的，服务和客户端共用同一 #app 容器；
+		// 注入正文时只替换骨架标记区间，避免把骨架文本一并暴露给爬虫。
+		startMarker := []byte("<!--boot-skeleton-start-->")
+		endMarker := []byte("<!--boot-skeleton-end-->")
+		start := bytes.Index(result, startMarker)
+		if start >= 0 {
+			rest := result[start:]
+			if endOffset := bytes.Index(rest, endMarker); endOffset >= 0 {
+				end := start + endOffset + len(endMarker)
+				result = append(append(append([]byte{}, result[:start]...), []byte(meta.BodyHTML)...), result[end:]...)
+			}
+		} else {
+			appRoot := []byte(`<div id="app"></div>`)
+			body := append([]byte(`<div id="app">`), []byte(meta.BodyHTML)...)
+			body = append(body, []byte(`</div>`)...)
+			if bytes.Contains(result, appRoot) {
+				result = bytes.Replace(result, appRoot, body, 1)
+			}
 		}
 	}
 

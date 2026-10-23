@@ -33,13 +33,14 @@ app.use(head)
 app.use(router)
 app.use(i18n)
 
-// 非默认语言的语言包为懒加载 chunk，挂载前并行加载，避免首屏文案闪现兜底语言
-Promise.all([
+// 先挂载，让首屏骨架立即交给 Vue 接管；语言包和 Telegram 初始化在后台完成，
+// 不得在 mount 前 await 任何网络请求。
+app.mount('#app')
+
+void Promise.allSettled([
   useTelegramMiniAppStore(pinia).init(),
   setI18nLocale(detectLocale()),
-]).then(() => {
-  app.mount('#app')
-})
+])
 
 void router.isReady().then(() => {
     warmupCommonRoutes()
