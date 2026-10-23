@@ -25,8 +25,8 @@ export const resellerAPI = {
     productSettingDetail: (productId: number) => userApi.get(`/reseller/product-settings/${productId}`),
     updateProductSettings: (productId: number, data: ResellerProductSettingUpdatePayload) =>
         userApi.put(`/reseller/product-settings/${productId}`, data),
-    previewProductSettings: (productId: number, data: ResellerProductSettingUpdatePayload) =>
-        userApi.post(`/reseller/product-settings/${productId}/preview`, data),
+    previewProductSettings: (productId: number, data: ResellerProductSettingUpdatePayload, options?: { signal?: AbortSignal }) =>
+        userApi.post(`/reseller/product-settings/${productId}/preview`, data, options),
     resetProductSetting: (productId: number, skuId = 0) =>
         userApi.delete(`/reseller/product-settings/${productId}`, { params: { sku_id: skuId } }),
     dashboard: () => userApi.get('/reseller/dashboard'),

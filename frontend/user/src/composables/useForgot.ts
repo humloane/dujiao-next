@@ -1,8 +1,9 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useI18n } from 'vue-i18n'
 import { debounceAsync } from '../utils/debounce'
+import { createCountdownTimer } from '../utils/timers'
 import { useAppStore } from '../stores/app'
 import type { CaptchaPayload } from '../api'
 import ImageCaptcha from '../components/captcha/ImageCaptcha.vue'
@@ -35,7 +36,12 @@ export function useForgot() {
   const turnstileToken = ref('')
   const imageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
   const turnstileRef = ref<InstanceType<typeof TurnstileCaptcha> | null>(null)
-  let timer: number | undefined
+  const countdownTimer = createCountdownTimer(() => {
+    countdown.value -= 1
+    if (countdown.value <= 0) {
+      countdownTimer.stop()
+    }
+  })
 
   const captchaConfig = computed(() => appStore.config?.captcha || null)
   const captchaProvider = computed(() => String(captchaConfig.value?.provider || 'none'))
@@ -44,13 +50,7 @@ export function useForgot() {
 
   const startCountdown = () => {
     countdown.value = 60
-    timer = window.setInterval(() => {
-      countdown.value -= 1
-      if (countdown.value <= 0 && timer) {
-        clearInterval(timer)
-        timer = undefined
-      }
-    }, 1000)
+    countdownTimer.start()
   }
 
   const getCaptchaPayload = (): CaptchaPayload | undefined => {
@@ -138,6 +138,13 @@ export function useForgot() {
 
   onMounted(async () => {
     await appStore.loadConfig(true)
+  })
+
+  onUnmounted(() => {
+    // 页面切换后停止倒计时，并取消尚未触发的防抖提交。
+    countdownTimer.stop()
+    handleSendCode.cancel()
+    handleReset.cancel()
   })
 
   return {

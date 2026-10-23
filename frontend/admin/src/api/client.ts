@@ -33,6 +33,8 @@ interface RequestOptions {
   headers?: Record<string, string>
   blob?: boolean
   data?: any
+  /** 外部取消信号：用于编辑器预览等「后发覆盖先发」场景。 */
+  signal?: AbortSignal
   [key: string]: any
 }
 
@@ -119,6 +121,16 @@ async function request(method: string, path: string, bodyOrOptions?: any, option
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
+  // 调用方主动取消（例如关闭编辑器）时按正常的 AbortError 返回，不弹网络错误。
+  const externalSignal = opts.signal
+  const abortFromExternal = () => controller.abort()
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort()
+    } else {
+      externalSignal.addEventListener('abort', abortFromExternal, { once: true })
+    }
+  }
 
   let response: Response
   try {
@@ -130,11 +142,20 @@ async function request(method: string, path: string, bodyOrOptions?: any, option
     })
   } catch (err: any) {
     clearTimeout(timer)
+    if (err?.name === 'AbortError') {
+      if (externalSignal?.aborted) {
+        return Promise.reject(err)
+      }
+      const message = t('common.api.networkError')
+      notifyError(message)
+      return Promise.reject(createNotifiedError(message))
+    }
     const message = t('common.api.networkError')
     notifyError(message)
     return Promise.reject(createNotifiedError(message))
   } finally {
     clearTimeout(timer)
+    externalSignal?.removeEventListener('abort', abortFromExternal)
   }
 
   // Blob response

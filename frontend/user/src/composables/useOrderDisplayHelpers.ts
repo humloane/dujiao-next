@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, onUnmounted, ref, type Ref } from 'vue'
 import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
@@ -24,6 +24,14 @@ export function useOrderDisplayHelpers(order: Ref<any>) {
 
   const fulfillmentCopied = ref(false)
   let fulfillmentCopiedTimer: ReturnType<typeof setTimeout> | null = null
+
+  onUnmounted(() => {
+    // 详情页切走后复制成功态无需继续计时。
+    if (fulfillmentCopiedTimer) {
+      clearTimeout(fulfillmentCopiedTimer)
+      fulfillmentCopiedTimer = null
+    }
+  })
 
   const showTimeCard = computed(() => {
     if (!order.value) return false

@@ -523,7 +523,8 @@ export const adminAPI = {
     resellerId: number,
     productId: number,
     data: AdminResellerProductSettingUpdatePayload,
-  ) => api.post(`/admin/resellers/product-settings/${resellerId}/${productId}/preview`, data),
+    options?: { signal?: AbortSignal },
+  ) => api.post(`/admin/resellers/product-settings/${resellerId}/${productId}/preview`, data, options),
   resetResellerProductSetting: (resellerId: number, productId: number, skuId = 0) =>
     api.delete(`/admin/resellers/product-settings/${resellerId}/${productId}`, { params: { sku_id: skuId } }),
   refundOrderToWallet: (id: number, data: AdminRefundToWalletPayload) =>

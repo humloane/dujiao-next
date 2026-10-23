@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -60,6 +60,7 @@ type PreviewEntry = { effective: string; valid: boolean; errorCode: string }
 // key 0 = 商品级规则，其余为 sku_id。生效价随编辑实时由后端预览接口刷新，与保存/下单口径一致。
 const previewByKey = reactive<Record<number, PreviewEntry>>({})
 let previewTimer: ReturnType<typeof setTimeout> | null = null
+let previewAbort: AbortController | null = null
 let previewSeq = 0
 
 const filters = reactive({
@@ -170,8 +171,18 @@ const runPreview = async () => {
   if (!selectedScope.value || !detail.value) return
   const scope = selectedScope.value
   const seq = ++previewSeq
+  // 只保留最后一次预览请求，关闭/切换编辑器时也能真正取消。
+  previewAbort?.abort()
+  const controller = new AbortController()
+  previewAbort = controller
   try {
-    const response = await adminAPI.previewResellerProductSettings(scope.resellerId, scope.productId, buildPayload())
+    const response = await adminAPI.previewResellerProductSettings(
+      scope.resellerId,
+      scope.productId,
+      buildPayload(),
+      { signal: controller.signal },
+    )
+    if (controller.signal.aborted) return
     const data = response.data.data as AdminResellerProductSettingPreviewData
     // 丢弃过期结果（编辑器已切换或有更新的请求在途）。
     if (seq !== previewSeq || selectedScope.value?.resellerId !== scope.resellerId || selectedScope.value?.productId !== scope.productId) return
@@ -185,8 +196,11 @@ const runPreview = async () => {
     })
     clearPreview()
     Object.assign(previewByKey, next)
-  } catch {
+  } catch (err: any) {
+    if (controller.signal.aborted || err?.name === 'AbortError') return
     // 预览失败静默：保留上次值；保存时后端仍会做权威校验。
+  } finally {
+    if (previewAbort === controller) previewAbort = null
   }
 }
 
@@ -365,6 +379,8 @@ const closeEditor = () => {
     clearTimeout(previewTimer)
     previewTimer = null
   }
+  previewAbort?.abort()
+  previewAbort = null
   previewSeq++
   clearPreview()
   selectedScope.value = null
@@ -376,6 +392,16 @@ const closeEditor = () => {
 onMounted(() => {
   initFiltersFromQuery()
   fetchRows()
+})
+
+onUnmounted(() => {
+  if (previewTimer) {
+    clearTimeout(previewTimer)
+    previewTimer = null
+  }
+  previewAbort?.abort()
+  previewAbort = null
+  previewSeq++
 })
 </script>
 
