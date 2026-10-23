@@ -78,7 +78,7 @@
           {{ t('navbar.logout') }}
         </Button>
         <!-- Theme Switcher -->
-        <Button v-if="chatwootReady" variant="ghost" size="sm"
+        <Button v-if="chatwootEntryVisible" variant="ghost" size="sm"
           class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex"
           @click="openChatwoot()">
           <Headphones class="w-4 h-4 shrink-0 opacity-70" />
@@ -209,7 +209,7 @@
           </a>
 
           <button
-            v-if="chatwootReady"
+            v-if="chatwootEntryVisible"
             type="button"
             class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-foreground"
             @click="openChatwoot(); showMobileMenu = false"
@@ -264,7 +264,7 @@ import {
   EllipsisVertical, X, Send, Headphones,
 } from 'lucide-vue-next'
 import { openChatwoot } from '../utils/chatwoot'
-import { useChatwootReady } from '../composables/useChatwootReady'
+import { useChatwootEntryVisible } from '../composables/useChatwootEntry'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -274,7 +274,7 @@ const cartStore = useCartStore()
 const userAuthStore = useUserAuthStore()
 const { theme, toggleTheme } = useTheme()
 const { primaryNavItems } = useNavConfig()
-const { ready: chatwootReady } = useChatwootReady()
+const chatwootEntryVisible = useChatwootEntryVisible()
 
 const showMobileMenu = ref(false)
 const langOpen = ref(false)

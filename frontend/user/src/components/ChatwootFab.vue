@@ -1,20 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { MessageCircle } from 'lucide-vue-next'
 import { openChatwoot } from '../utils/chatwoot'
-import { useChatwootReady } from '../composables/useChatwootReady'
+import { useChatwootEntryVisible } from '../composables/useChatwootEntry'
 
 const { t } = useI18n()
-const route = useRoute()
-const { ready } = useChatwootReady()
-
-const visible = computed(() => {
-  if (!ready.value) return false
-  if (route.name === 'landing-page') return false
-  return !route.path.startsWith('/checkout') && !route.path.startsWith('/pay')
-})
+const visible = useChatwootEntryVisible()
 
 const handleClick = () => {
   openChatwoot()

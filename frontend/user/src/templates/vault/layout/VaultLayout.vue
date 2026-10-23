@@ -40,7 +40,7 @@
 
           <!-- 在线客服（桌面） -->
           <button
-            v-if="chatwootReady"
+            v-if="chatwootEntryVisible"
             type="button"
             class="inline-flex items-center gap-1.5 rounded-full border-2 border-hairline-strong px-3.5 py-1.5 text-[13px] font-bold text-foreground transition-colors hover:border-[color:var(--ink)] max-[900px]:hidden"
             @click="openChatwoot"
@@ -157,7 +157,7 @@
               {{ t('navbar.telegram') }}
             </a>
             <button
-              v-if="chatwootReady"
+              v-if="chatwootEntryVisible"
               type="button"
               class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-foreground"
               @click="openChatwoot(); closeMobileMenu()"
@@ -226,7 +226,7 @@
           <a v-if="contact?.whatsapp" :href="contact.whatsapp" target="_blank" rel="noopener noreferrer" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><MessageCircle class="h-4 w-4" /> WhatsApp</a>
           <a v-if="contact?.email" :href="`mailto:${contact.email}`" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><Mail class="h-4 w-4" /> {{ t('footer.email') }}</a>
           <a v-if="contact?.support_url" :href="contact.support_url" :target="contact.support_url.startsWith('https://') ? '_blank' : undefined" rel="noopener noreferrer" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><Headphones class="h-4 w-4" /> {{ t('footer.supportUrl') }}</a>
-          <button v-if="chatwootReady" type="button" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary" @click="openChatwoot"><Headphones class="h-4 w-4" /> {{ t('chatwoot.online') }}</button>
+          <button v-if="chatwootEntryVisible" type="button" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary" @click="openChatwoot"><Headphones class="h-4 w-4" /> {{ t('chatwoot.online') }}</button>
         </div>
         <div>
           <h4 class="mb-3 text-sm font-bold">{{ t('vault.footer.legal') }}</h4>
@@ -260,7 +260,7 @@ import { useTheme } from '../../../utils/theme'
 import { getImageUrl } from '../../../utils/image'
 import { getLocalizedText } from '../../../utils/resellerSiteConfig'
 import { openChatwoot } from '../../../utils/chatwoot'
-import { useChatwootReady } from '../../../composables/useChatwootReady'
+import { useChatwootEntryVisible } from '../../../composables/useChatwootEntry'
 // 本地自托管字体（替代 Google Fonts CDN），仅 vault 模板加载
 import '@fontsource/rubik/latin-400.css'
 import '@fontsource/rubik/latin-500.css'
@@ -278,7 +278,7 @@ const appStore = useAppStore()
 const cartStore = useCartStore()
 const userAuthStore = useUserAuthStore()
 const { theme, toggleTheme } = useTheme()
-const { ready: chatwootReady } = useChatwootReady()
+const chatwootEntryVisible = useChatwootEntryVisible()
 
 const langOpen = ref(false)
 const langEl = ref<HTMLElement | null>(null)

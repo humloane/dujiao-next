@@ -58,7 +58,8 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import BackToTop from './components/BackToTop.vue'
 import MobileBottomNav from './components/MobileBottomNav.vue'
-import { hideNativeChatwootLauncher, openChatwoot } from './utils/chatwoot'
+import { cancelChatwootRetry, hideNativeChatwootLauncher, isChatwootReady, openChatwoot } from './utils/chatwoot'
+import { CHATWOOT_READY_TIMEOUT_MS, ensureChatwootPolling, useChatwootState } from './composables/useChatwootState'
 
 // vault 外壳按需加载，classic 用户不会拉取其 chunk/样式
 const VaultLayout = defineAsyncComponent(() => import('./templates/vault/layout/VaultLayout.vue'))
@@ -71,6 +72,7 @@ const isResellerConsole = computed(() => route.meta.resellerConsole === true)
 const isLandingPage = computed(() => route.name === 'landing-page')
 // getActiveTemplate 读取 appStore.config（响应式），config 加载后会重新计算
 const isVault = computed(() => getActiveTemplate() === 'vault')
+const { ready: chatwootReady } = useChatwootState()
 
 // 结算/支付页隐藏 Chatwoot 气泡，避免遮挡支付按钮。
 const chatwootHidden = computed(() => route.path.startsWith('/checkout') || route.path.startsWith('/pay'))
@@ -85,28 +87,31 @@ const handleChatwootTrigger = (event: MouseEvent) => {
   const trigger = target.closest('a[href="#chatwoot"], [data-chatwoot]')
   if (!trigger) return
   event.preventDefault()
+  if (!isChatwootReady() || chatwootHidden.value) return
   openChatwoot()
 }
 
-// Chatwoot 脚本异步加载：确认可用后再隐藏原生气泡，避免加载前把唯一入口藏掉。
+// Chatwoot 脚本异步加载：与自定义入口共用同一个截止时间。
+// 到达截止时间仍不可用时停止隐藏，保留原生气泡作为唯一入口。
 let nativeLauncherTimer: number | undefined
-let nativeLauncherAttempts = 0
+let nativeLauncherDeadline = 0
 const hideNativeLauncherWhenReady = () => {
-  if (hideNativeChatwootLauncher()) return
-  nativeLauncherAttempts += 1
-  if (nativeLauncherAttempts <= 30) {
-    nativeLauncherTimer = window.setTimeout(hideNativeLauncherWhenReady, 500)
-  }
+  if (chatwootReady.value && hideNativeChatwootLauncher()) return
+  if (Date.now() >= nativeLauncherDeadline) return
+  nativeLauncherTimer = window.setTimeout(hideNativeLauncherWhenReady, 500)
 }
 
 onMounted(() => {
   document.addEventListener('click', handleChatwootTrigger)
+  ensureChatwootPolling()
+  nativeLauncherDeadline = Date.now() + CHATWOOT_READY_TIMEOUT_MS
   hideNativeLauncherWhenReady()
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleChatwootTrigger)
   if (nativeLauncherTimer) window.clearTimeout(nativeLauncherTimer)
+  cancelChatwootRetry()
   document.body.classList.remove('chatwoot-hidden')
   document.body.classList.remove('chatwoot-native-hidden')
 })

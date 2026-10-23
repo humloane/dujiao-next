@@ -180,7 +180,7 @@
           </div>
 
           <Button
-            v-if="chatwootReady"
+            v-if="chatwootEntryVisible"
             type="button"
             variant="outline"
             class="mt-3 h-11 w-full rounded-full text-sm font-bold"
@@ -267,13 +267,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { processHtmlForDisplay } from '../../utils/content'
 import { openChatwoot } from '../../utils/chatwoot'
-import { useChatwootReady } from '../../composables/useChatwootReady'
+import { useChatwootEntryVisible } from '../../composables/useChatwootEntry'
 import { useProductDetail } from '../../composables/useProductDetail'
 import VaultProductMobileBar from './components/VaultProductMobileBar.vue'
 import ProductMetaInfo from '../../components/ProductMetaInfo.vue'
 
 const { t } = useI18n()
-const { ready: chatwootReady } = useChatwootReady()
+const chatwootEntryVisible = useChatwootEntryVisible()
 
 // 移动端固定购买条：IntersectionObserver 监听桌面购买区是否出屏
 const purchaseActionsRef = ref<HTMLElement | null>(null)

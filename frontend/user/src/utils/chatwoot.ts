@@ -61,16 +61,20 @@ const tryOpen = (): boolean => {
   return false
 }
 
+export const cancelChatwootRetry = () => {
+  if (retryTimer) {
+    clearTimeout(retryTimer)
+    retryTimer = null
+  }
+}
+
 /**
  * 打开 Chatwoot 面板：脚本尚未加载时最多重试 10 次（每 300ms），
  * 未配置 Chatwoot 也不会抛错。
  */
 export const openChatwoot = (): boolean => {
   if (typeof window === 'undefined') return false
-  if (retryTimer) {
-    clearTimeout(retryTimer)
-    retryTimer = null
-  }
+  cancelChatwootRetry()
   if (tryOpen()) return true
 
   let attempts = 0
