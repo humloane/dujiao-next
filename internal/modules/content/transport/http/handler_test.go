@@ -2,6 +2,7 @@ package contenthttp
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	contentapp "github.com/dujiao-next/internal/modules/content/application"
 	contentcontract "github.com/dujiao-next/internal/modules/content/contract"
 	contentdomain "github.com/dujiao-next/internal/modules/content/domain"
+	"github.com/dujiao-next/internal/shared/jsonmap"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,6 +70,7 @@ func TestAdminHandlerPassesRequestContextToUseCase(t *testing.T) {
 type publicPostQueriesStub struct {
 	receivedContext context.Context
 	receivedQuery   contentapp.PublicPostQuery
+	posts           []contentdomain.Post
 }
 
 var _ PublicPostQueries = (*publicPostQueriesStub)(nil)
@@ -75,7 +78,7 @@ var _ PublicPostQueries = (*publicPostQueriesStub)(nil)
 func (s *publicPostQueriesStub) ListPublic(ctx context.Context, query contentapp.PublicPostQuery) ([]contentdomain.Post, int64, error) {
 	s.receivedContext = ctx
 	s.receivedQuery = query
-	return []contentdomain.Post{}, 0, nil
+	return s.posts, int64(len(s.posts)), nil
 }
 
 func (s *publicPostQueriesStub) GetPublicBySlug(context.Context, string) (*contentdomain.Post, error) {
@@ -103,4 +106,49 @@ func (s *adminMediaUseCasesStub) Rename(context.Context, uint, string) error { r
 func (s *adminMediaUseCasesStub) Delete(context.Context, uint) error         { return nil }
 func (s *adminMediaUseCasesStub) BatchDelete(context.Context, []uint) (int, []uint) {
 	return 0, []uint{}
+}
+
+func TestGetPostsReturnsSeoMetaAndCategoryID(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	categoryID := uint(7)
+	posts := &publicPostQueriesStub{posts: []contentdomain.Post{{
+		ID:          11,
+		Slug:        "seo-post",
+		Type:        "blog",
+		TitleJSON:   jsonmap.JSON{"zh-CN": "文章标题"},
+		SeoMetaJSON: jsonmap.JSON{"title": map[string]interface{}{"zh-CN": "SEO 标题"}},
+		CategoryID:  &categoryID,
+	}}}
+	handler := NewPublicHandler(posts, nil, nil)
+	router := gin.New()
+	router.GET("/posts", handler.GetPosts)
+
+	request := httptest.NewRequest(http.MethodGet, "/posts?type=blog&category_id=7", nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if posts.receivedQuery.CategoryID == nil || *posts.receivedQuery.CategoryID != 7 {
+		t.Fatalf("category_id not mapped: %#v", posts.receivedQuery)
+	}
+	var body struct {
+		Data []struct {
+			SeoMeta    map[string]interface{} `json:"seo_meta"`
+			CategoryID *uint                  `json:"category_id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("unexpected data: %s", response.Body.String())
+	}
+	if body.Data[0].CategoryID == nil || *body.Data[0].CategoryID != 7 {
+		t.Fatalf("category_id missing in response: %s", response.Body.String())
+	}
+	title, _ := body.Data[0].SeoMeta["title"].(map[string]interface{})
+	if title["zh-CN"] != "SEO 标题" {
+		t.Fatalf("seo_meta missing in response: %s", response.Body.String())
+	}
 }

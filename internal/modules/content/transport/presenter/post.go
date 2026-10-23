@@ -17,6 +17,8 @@ type PostResp struct {
 	Title           jsonmap.JSON         `json:"title"`
 	Summary         jsonmap.JSON         `json:"summary"`
 	Content         jsonmap.JSON         `json:"content"`
+	SeoMeta         jsonmap.JSON         `json:"seo_meta"`
+	CategoryID      *uint                `json:"category_id"`
 	Thumbnail       string               `json:"thumbnail,omitempty"`
 	PublishedAt     *time.Time           `json:"published_at"`
 	RelatedProducts []RelatedProductCard `json:"related_products,omitempty"`
@@ -55,6 +57,10 @@ func NewRelatedProductCardList(products []contentcontract.RelatedProduct) []Rela
 
 // NewPostResp 从 Content 文章领域对象构造响应。
 func NewPostResp(p *contentdomain.Post) PostResp {
+	seo := p.SeoMetaJSON
+	if seo == nil {
+		seo = jsonmap.JSON{}
+	}
 	return PostResp{
 		ID:          p.ID,
 		Slug:        p.Slug,
@@ -62,6 +68,8 @@ func NewPostResp(p *contentdomain.Post) PostResp {
 		Title:       p.TitleJSON,
 		Summary:     p.SummaryJSON,
 		Content:     p.ContentJSON,
+		SeoMeta:     seo,
+		CategoryID:  p.CategoryID,
 		Thumbnail:   p.Thumbnail,
 		PublishedAt: p.PublishedAt,
 	}

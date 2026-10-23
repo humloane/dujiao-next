@@ -51,6 +51,9 @@ func (s *PostStore) List(ctx context.Context, query contract.PostQuery) ([]domai
 	if query.Type != "" {
 		statement = statement.Where("type = ?", query.Type)
 	}
+	if query.CategoryID != nil {
+		statement = statement.Where("category_id = ?", *query.CategoryID)
+	}
 	if search := strings.TrimSpace(query.Search); search != "" {
 		like := "%" + search + "%"
 		condition, argCount := gormutil.BuildLocalizedLikeCondition(db, []string{"slug"}, []string{"title_json"})

@@ -16,6 +16,7 @@ type CreatePostInput struct {
 	TitleJSON   map[string]interface{}
 	SummaryJSON map[string]interface{}
 	ContentJSON map[string]interface{}
+	SeoMetaJSON map[string]interface{}
 	Thumbnail   string
 	IsPublished *bool
 	ProductIDs  *[]uint
@@ -24,10 +25,11 @@ type CreatePostInput struct {
 
 // PublicPostQuery 描述公开文章列表查询。
 type PublicPostQuery struct {
-	Type     string
-	Search   string
-	Page     int
-	PageSize int
+	Type       string
+	Search     string
+	Page       int
+	PageSize   int
+	CategoryID *uint
 }
 
 // AdminPostQuery 描述后台文章列表查询。
@@ -66,6 +68,7 @@ func (s *PostService) ListPublic(ctx context.Context, query PublicPostQuery) ([]
 		PageSize:      query.PageSize,
 		Type:          query.Type,
 		Search:        query.Search,
+		CategoryID:    query.CategoryID,
 		OnlyPublished: true,
 		Order:         contract.PostOrderPublishedDesc,
 	})
@@ -122,6 +125,7 @@ func (s *PostService) Create(ctx context.Context, input CreatePostInput) (*domai
 		TitleJSON:   jsonmap.JSON(input.TitleJSON),
 		SummaryJSON: jsonmap.JSON(input.SummaryJSON),
 		ContentJSON: jsonmap.JSON(input.ContentJSON),
+		SeoMetaJSON: jsonmap.JSON(input.SeoMetaJSON),
 		Thumbnail:   input.Thumbnail,
 		IsPublished: isPublished,
 		CategoryID:  categoryID,
@@ -176,6 +180,10 @@ func (s *PostService) Update(ctx context.Context, id string, input CreatePostInp
 	post.TitleJSON = jsonmap.JSON(input.TitleJSON)
 	post.SummaryJSON = jsonmap.JSON(input.SummaryJSON)
 	post.ContentJSON = jsonmap.JSON(input.ContentJSON)
+	// 旧客户端未提交 seo_meta 时保留已有值，避免更新文章时误清空 SEO。
+	if input.SeoMetaJSON != nil {
+		post.SeoMetaJSON = jsonmap.JSON(input.SeoMetaJSON)
+	}
 	post.Thumbnail = input.Thumbnail
 	post.CategoryID = categoryID
 	if input.IsPublished != nil {

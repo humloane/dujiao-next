@@ -61,6 +61,28 @@ const languages = computed(() => [
   { code: 'en-US', name: t('admin.common.lang.enUS') },
 ])
 
+const emptyLocalizedField = () => ({ 'zh-CN': '', 'zh-TW': '', 'en-US': '' })
+const normalizeLocalizedField = (value: unknown) => {
+  const result = emptyLocalizedField()
+  if (typeof value === 'string') {
+    result['zh-CN'] = value
+    return result
+  }
+  if (value && typeof value === 'object') {
+    Object.assign(result, value)
+  }
+  return result
+}
+const normalizePostSeoMeta = (raw?: Record<string, LocalizedText> | null): {
+  title: Record<string, string>
+  description: Record<string, string>
+  keywords: Record<string, string>
+} => ({
+  title: normalizeLocalizedField(raw?.title),
+  description: normalizeLocalizedField(raw?.description),
+  keywords: normalizeLocalizedField(raw?.keywords),
+})
+
 const posts = ref<AdminPost[]>([])
 const categories = ref<CategoryItem[]>([])
 const pagination = reactive({
@@ -75,6 +97,7 @@ const form = reactive({
   slug: '',
   summary: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as Record<string, string>,
   content: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' } as Record<string, string>,
+  seo_meta: normalizePostSeoMeta(),
   type: 'blog',
   thumbnail: '',
   is_published: true,
@@ -256,6 +279,7 @@ const openCreateModal = () => {
     slug: '',
     summary: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
     content: { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+    seo_meta: normalizePostSeoMeta(),
     type: currentTab.value,
     thumbnail: '',
     is_published: true,
@@ -275,6 +299,7 @@ const openEditModal = (post: AdminPost) => {
     slug: post.slug,
     summary: post.summary || { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
     content: post.content || { 'zh-CN': '', 'zh-TW': '', 'en-US': '' },
+    seo_meta: normalizePostSeoMeta(post.seo_meta),
     type: post.type,
     thumbnail: post.thumbnail,
     is_published: post.is_published,
@@ -542,6 +567,31 @@ watch(
                 {{ t('admin.posts.form.content', { lang: getCurrentLangName() }) }}
               </label>
               <RichEditor :model-value="form.content[currentLang] || ''" @update:model-value="(v: string) => form.content[currentLang] = v" :placeholder="t('admin.posts.form.contentPlaceholder')" />
+            </div>
+
+            <div class="col-span-1 md:col-span-2 space-y-4 border-t border-border pt-4">
+              <h3 class="text-sm font-semibold text-foreground">{{ t('admin.posts.form.seo') }}</h3>
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {{ t('admin.posts.form.seoTitle', { lang: getCurrentLangName() }) }}
+                  </label>
+                  <Input v-model="form.seo_meta.title[currentLang]" maxlength="70" :placeholder="t('admin.posts.form.titlePlaceholder')" />
+                  <p class="mt-1 text-xs text-muted-foreground">{{ t('admin.posts.form.seoTitleTip') }}</p>
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {{ t('admin.posts.form.seoKeywords', { lang: getCurrentLangName() }) }}
+                  </label>
+                  <Input v-model="form.seo_meta.keywords[currentLang]" :placeholder="t('admin.posts.form.seoKeywords')" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    {{ t('admin.posts.form.seoDescription', { lang: getCurrentLangName() }) }}
+                  </label>
+                  <Textarea v-model="form.seo_meta.description[currentLang]" rows="3" :placeholder="t('admin.posts.form.summaryPlaceholder')" />
+                </div>
+              </div>
             </div>
 
             <div v-if="form.type === 'blog'" class="col-span-1 md:col-span-2 border-t border-border pt-4">

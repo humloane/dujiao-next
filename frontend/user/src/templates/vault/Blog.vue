@@ -32,8 +32,8 @@
             <Badge :variant="post.type === 'blog' ? 'info' : 'warning'" size="sm" class="rounded-full">{{ post.type === 'blog' ? t('nav.blog') : t('nav.notice') }}</Badge>
             <span class="text-xs font-semibold text-muted-foreground">{{ formatDate(post.published_at) }}</span>
           </div>
-          <h3 class="text-lg font-bold">{{ getLocalizedText(post.title) }}</h3>
-          <p class="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{{ getLocalizedText(post.summary) }}</p>
+          <h3 class="text-lg font-bold">{{ getPostTitle(post) }}</h3>
+          <p class="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{{ getPostSummary(post) }}</p>
           <span class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
             {{ t('blog.readMore') }} <ArrowRight class="h-4 w-4 transition group-hover:translate-x-0.5" />
           </span>
@@ -68,6 +68,6 @@ const { t } = useI18n()
 
 const {
   loading, posts, currentPage, totalPages, searchKeyword,
-  getLocalizedText, formatDate, changePage,
+  getLocalizedText, getPostTitle, getPostSummary, formatDate, changePage,
 } = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog', description: () => t('blog.seoDescription') })
 </script>

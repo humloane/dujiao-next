@@ -13,6 +13,7 @@ type CreatePostRequest struct {
 	TitleJSON   map[string]interface{} `json:"title" binding:"required"`
 	SummaryJSON map[string]interface{} `json:"summary"`
 	ContentJSON map[string]interface{} `json:"content"`
+	SeoMetaJSON map[string]interface{} `json:"seo_meta"`
 	Thumbnail   string                 `json:"thumbnail"`
 	IsPublished *bool                  `json:"is_published"`
 	ProductIDs  *[]uint                `json:"product_ids"`
@@ -26,6 +27,7 @@ func (request CreatePostRequest) toInput() contentapp.CreatePostInput {
 		TitleJSON:   request.TitleJSON,
 		SummaryJSON: request.SummaryJSON,
 		ContentJSON: request.ContentJSON,
+		SeoMetaJSON: request.SeoMetaJSON,
 		Thumbnail:   request.Thumbnail,
 		IsPublished: request.IsPublished,
 		ProductIDs:  request.ProductIDs,

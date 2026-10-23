@@ -56,11 +56,11 @@
 
               <h2
                 class="text-2xl font-bold mb-4 text-foreground transition-colors line-clamp-2 leading-tight">
-                {{ getLocalizedText(post.title) }}
+                {{ getPostTitle(post) }}
               </h2>
 
               <p class="text-muted-foreground text-sm mb-8 line-clamp-3 leading-relaxed flex-1">
-                {{ getLocalizedText(post.summary) }}
+                {{ getPostSummary(post) }}
               </p>
 
               <div
@@ -104,7 +104,7 @@ const { t } = useI18n()
 
 const {
   loading, posts, currentPage, totalPages, searchKeyword,
-  getLocalizedText, formatDate, goToPost, changePage,
+  getLocalizedText, getPostTitle, getPostSummary, formatDate, goToPost, changePage,
 } = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog', description: () => t('blog.seoDescription') })
 </script>
 

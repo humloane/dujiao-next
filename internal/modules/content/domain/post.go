@@ -14,6 +14,7 @@ type Post struct {
 	TitleJSON   jsonmap.JSON `gorm:"type:json;not null" json:"title"`         // 多语言标题
 	SummaryJSON jsonmap.JSON `gorm:"type:json" json:"summary"`                // 多语言摘要
 	ContentJSON jsonmap.JSON `gorm:"type:json" json:"content"`                // 多语言内容
+	SeoMetaJSON jsonmap.JSON `gorm:"type:json" json:"seo_meta"`               // 多语言 SEO 元数据（可空）
 	Thumbnail   string       `json:"thumbnail"`                               // 缩略图
 	CategoryID  *uint        `gorm:"index" json:"category_id"`                // 文章分类ID
 	IsPublished bool         `gorm:"default:false;index" json:"is_published"` // 是否发布

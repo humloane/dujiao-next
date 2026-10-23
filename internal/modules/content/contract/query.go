@@ -14,6 +14,7 @@ type PostQuery struct {
 	PageSize      int
 	Type          string
 	Search        string
+	CategoryID    *uint
 	OnlyPublished bool
 	Order         PostOrder
 }

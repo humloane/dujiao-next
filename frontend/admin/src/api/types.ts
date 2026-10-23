@@ -427,6 +427,7 @@ export interface AdminPost {
   title: LocalizedText
   summary: LocalizedText
   content: LocalizedText
+  seo_meta?: Record<string, LocalizedText>
   thumbnail: string
   is_published: boolean
   published_at?: string

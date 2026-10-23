@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { postAPI } from '../api'
 import { debounceAsync } from '../utils/debounce'
@@ -20,6 +20,7 @@ export function usePostList(
   },
 ) {
   const router = useRouter()
+  const route = useRoute()
   const appStore = useAppStore()
 
   usePageSeo({
@@ -36,12 +37,23 @@ export function usePostList(
   const total = ref(0)
   const totalPages = ref(0)
   const searchKeyword = ref('')
+  const categoryID = ref<number | null>(null)
+
+  const readCategoryFromRoute = () => {
+    const parsed = Number(route.query.category_id)
+    categoryID.value = Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+  readCategoryFromRoute()
 
   const getLocalizedText = (jsonData: any) => {
     if (!jsonData) return ''
     const locale = appStore.locale
     return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
   }
+
+  // 列表卡片优先展示文章级 SEO 文案，缺失时回退正文标题/摘要。
+  const getPostTitle = (post: any) => getLocalizedText(post?.seo_meta?.title) || getLocalizedText(post?.title)
+  const getPostSummary = (post: any) => getLocalizedText(post?.seo_meta?.description) || getLocalizedText(post?.summary)
 
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
@@ -64,6 +76,9 @@ export function usePostList(
       const keyword = searchKeyword.value.trim()
       if (keyword) {
         params.search = keyword
+      }
+      if (categoryID.value) {
+        params.category_id = categoryID.value
       }
       const response = await postAPI.list(params)
       posts.value = response.data.data || []
@@ -96,6 +111,13 @@ export function usePostList(
     debouncedLoadPosts()
   })
 
+  watch(categoryID, () => {
+    currentPage.value = 1
+    debouncedLoadPosts()
+  })
+
+  watch(() => route.query.category_id, readCategoryFromRoute)
+
   onMounted(() => {
     loadPosts()
   })
@@ -111,7 +133,10 @@ export function usePostList(
     totalPages,
     total,
     searchKeyword,
+    categoryID,
     getLocalizedText,
+    getPostTitle,
+    getPostSummary,
     formatDate,
     goToPost,
     changePage,

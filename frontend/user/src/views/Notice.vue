@@ -44,11 +44,11 @@
 
             <h2
               class="text-xl font-bold text-foreground group-hover:text-primary transition-colors truncate mb-1">
-              {{ getLocalizedText(notice.title) }}
+              {{ getPostTitle(notice) }}
             </h2>
 
             <p class="text-muted-foreground text-sm line-clamp-1">
-              {{ getLocalizedText(notice.summary) }}
+              {{ getPostSummary(notice) }}
             </p>
           </div>
 
@@ -88,7 +88,7 @@ const { t } = useI18n()
 
 const {
   loading, posts: notices, currentPage, totalPages,
-  getLocalizedText, formatDate, goToPost: goToNotice, changePage,
+  getLocalizedText, getPostTitle, getPostSummary, formatDate, goToPost: goToNotice, changePage,
 } = usePostList('notice', { title: () => t('nav.notice'), canonicalPath: '/notice', description: () => t('notice.seoDescription') })
 </script>
 

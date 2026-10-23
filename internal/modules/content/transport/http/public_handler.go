@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/dujiao-next/internal/constants"
 	contentapp "github.com/dujiao-next/internal/modules/content/application"
@@ -47,11 +48,19 @@ func NewPublicHandler(posts PublicPostQueries, categories PublicPostCategoryQuer
 // GetPosts 获取公开文章或公告列表。
 func (h *PublicHandler) GetPosts(c *gin.Context) {
 	page, pageSize := ginutil.ParsePagination(c)
+	var categoryID *uint
+	if raw := strings.TrimSpace(c.Query("category_id")); raw != "" {
+		if parsed, parseErr := strconv.ParseUint(raw, 10, 64); parseErr == nil && parsed > 0 {
+			id := uint(parsed)
+			categoryID = &id
+		}
+	}
 	posts, total, err := h.posts.ListPublic(c.Request.Context(), contentapp.PublicPostQuery{
-		Type:     c.Query("type"),
-		Search:   c.Query("search"),
-		Page:     page,
-		PageSize: pageSize,
+		Type:       c.Query("type"),
+		Search:     c.Query("search"),
+		Page:       page,
+		PageSize:   pageSize,
+		CategoryID: categoryID,
 	})
 	if err != nil {
 		ginutil.RespondError(c, response.CodeInternal, "error.post_fetch_failed", err)

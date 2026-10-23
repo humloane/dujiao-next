@@ -321,3 +321,40 @@ func TestLocalizedSearchDialectExpressions(t *testing.T) {
 		t.Fatalf("sqlite localized search expression mismatch args=%d sql=%s", sqliteArgs, sqliteCondition)
 	}
 }
+
+func TestPostStoreFiltersByCategoryAndPersistsSeoMeta(t *testing.T) {
+	db := setupContentStoreTest(t)
+	store := NewPostStore(db)
+	ctx := context.Background()
+
+	first := contentdomain.PostCategory{Slug: "network", NameJSON: jsonmap.JSON{"zh-CN": "网络"}, IsActive: true}
+	second := contentdomain.PostCategory{Slug: "live", NameJSON: jsonmap.JSON{"zh-CN": "直播"}, IsActive: true}
+	if err := db.Create(&first).Error; err != nil {
+		t.Fatalf("create first category: %v", err)
+	}
+	if err := db.Create(&second).Error; err != nil {
+		t.Fatalf("create second category: %v", err)
+	}
+
+	posts := []contentdomain.Post{
+		{Slug: "post-a", Type: constants.PostTypeBlog, TitleJSON: jsonmap.JSON{"zh-CN": "A"}, CategoryID: &first.ID, IsPublished: true, SeoMetaJSON: jsonmap.JSON{"title": map[string]interface{}{"zh-CN": "A SEO"}}},
+		{Slug: "post-b", Type: constants.PostTypeBlog, TitleJSON: jsonmap.JSON{"zh-CN": "B"}, CategoryID: &second.ID, IsPublished: true},
+	}
+	for index := range posts {
+		if err := db.Create(&posts[index]).Error; err != nil {
+			t.Fatalf("create post %q: %v", posts[index].Slug, err)
+		}
+	}
+
+	listed, total, err := store.List(ctx, contentcontract.PostQuery{Page: 1, PageSize: 10, CategoryID: &first.ID, OnlyPublished: true})
+	if err != nil {
+		t.Fatalf("list posts by category: %v", err)
+	}
+	if total != 1 || len(listed) != 1 || listed[0].Slug != "post-a" {
+		t.Fatalf("unexpected category filter result: total=%d posts=%#v", total, listed)
+	}
+	title, _ := listed[0].SeoMetaJSON["title"].(map[string]interface{})
+	if title["zh-CN"] != "A SEO" {
+		t.Fatalf("seo_meta did not round-trip: %#v", listed[0].SeoMetaJSON)
+	}
+}

@@ -32,8 +32,8 @@
               <Badge variant="warning" size="sm" class="rounded-full">{{ t('nav.notice') }}</Badge>
               <span class="text-xs font-semibold text-muted-foreground">{{ formatDate(notice.published_at) }}</span>
             </div>
-            <h2 class="truncate text-lg font-bold">{{ getLocalizedText(notice.title) }}</h2>
-            <p class="mt-0.5 truncate text-sm text-muted-foreground">{{ getLocalizedText(notice.summary) }}</p>
+            <h2 class="truncate text-lg font-bold">{{ getPostTitle(notice) }}</h2>
+            <p class="mt-0.5 truncate text-sm text-muted-foreground">{{ getPostSummary(notice) }}</p>
           </div>
           <ChevronRight class="h-5 w-5 flex-none text-muted-foreground transition group-hover:text-primary" />
         </button>
@@ -66,6 +66,6 @@ const { t } = useI18n()
 
 const {
   loading, posts: notices, currentPage, totalPages,
-  getLocalizedText, formatDate, goToPost: goToNotice, changePage,
+  getLocalizedText, getPostTitle, getPostSummary, formatDate, goToPost: goToNotice, changePage,
 } = usePostList('notice', { title: () => t('nav.notice'), canonicalPath: '/notice', description: () => t('notice.seoDescription') })
 </script>
