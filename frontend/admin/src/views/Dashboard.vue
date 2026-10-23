@@ -10,6 +10,7 @@ import { formatMoney, getLocalizedText } from '@/utils/format'
 import { formatSkuDisplayLabel } from '@/utils/sku'
 import type { AdminDashboardInventoryAlert } from '@/api/types'
 import DashboardAd from '@/components/admin/DashboardAd.vue'
+import { useAdminSiteBrandStore } from '@/stores/siteBrand'
 
 interface DashboardAlertItem {
   type: string
@@ -114,6 +115,19 @@ interface DashboardRankings {
 }
 
 const { t, locale } = useI18n()
+const siteBrandStore = useAdminSiteBrandStore()
+
+const truncateText = (value: string, max = 76): string => {
+  const chars = Array.from(String(value || '').trim())
+  return chars.length > max ? `${chars.slice(0, max).join('')}…` : chars.join('')
+}
+
+const dashboardTitle = computed(() => siteBrandStore.brandName
+  ? `${siteBrandStore.brandName} · ${t('admin.dashboard.title')}`
+  : t('admin.dashboard.title'))
+const dashboardSubtitle = computed(() => truncateText(
+  siteBrandStore.localizedDescription(String(locale.value || '')) || t('admin.dashboard.subtitle'),
+))
 
 const rankingSkuLabel = (item: DashboardProductRanking) =>
   formatSkuDisplayLabel({ sku_code: item.sku_code, spec_values: item.sku_spec_values }, locale.value)
@@ -383,8 +397,8 @@ onMounted(() => {
   <div class="space-y-6">
     <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">{{ t('admin.dashboard.title') }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">{{ t('admin.dashboard.subtitle') }}</p>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ dashboardTitle }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ dashboardSubtitle }}</p>
       </div>
       <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <div class="w-full sm:w-[150px]">

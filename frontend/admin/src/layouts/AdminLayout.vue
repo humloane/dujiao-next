@@ -60,6 +60,7 @@ import { adminAPI } from '@/api/admin'
 import { applySiteIcon } from '@/utils/favicon'
 import { adminUrl } from '@/utils/adminBase'
 import { brandInitials, resolveAdminBrandName } from '@/utils/brand'
+import { useAdminSiteBrandStore } from '@/stores/siteBrand'
 
 interface NavGroupItem {
   label: string
@@ -107,11 +108,16 @@ const readExpandedGroups = () => {
 const { t, locale } = useI18n()
 const route = useRoute()
 const authStore = useAdminAuthStore()
+const siteBrandStore = useAdminSiteBrandStore()
 const isDark = ref(false)
 const appVersion = ref('')
 const siteUrl = ref('')
 const siteName = ref('')
 const collapsedBrandName = computed(() => brandInitials(siteName.value || t('admin.brand')))
+
+watch([siteName, locale], () => {
+  document.title = siteName.value ? `${siteName.value} Admin` : 'Admin'
+}, { immediate: true })
 
 // 版本检测与一键升级的完整交互都在 SystemUpdateDialog 内，这里只负责开关
 const updateCheckOpen = ref(false)
@@ -746,6 +752,7 @@ onMounted(() => {
     if (name) {
       siteName.value = name
     }
+    siteBrandStore.setPublicConfig(payload)
   }).catch(() => {})
 })
 

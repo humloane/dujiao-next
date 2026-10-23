@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
@@ -10,12 +10,14 @@ import { useAdminAuthStore } from '@/stores/auth'
 import { adminAPI, type CaptchaPayload } from '@/api/admin'
 import { applySiteIcon } from '@/utils/favicon'
 import { resolveAdminBrandName } from '@/utils/brand'
+import { useAdminSiteBrandStore } from '@/stores/siteBrand'
 import ImageCaptcha from '@/components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '@/components/captcha/TurnstileCaptcha.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const authStore = useAdminAuthStore()
+const siteBrandStore = useAdminSiteBrandStore()
 
 type Step = 'password' | 'totp'
 const step = ref<Step>('password')
@@ -29,6 +31,9 @@ const error = ref('')
 const loadingCaptcha = ref(false)
 const captchaConfig = ref<any>(null)
 const siteName = ref('')
+watch([siteName, locale], () => {
+  document.title = siteName.value ? `${siteName.value} Admin` : 'Admin'
+}, { immediate: true })
 const captchaPayload = ref<CaptchaPayload>({})
 const turnstileToken = ref('')
 const imageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
@@ -169,6 +174,7 @@ const loadCaptchaConfig = async () => {
     captchaConfig.value = payload?.captcha || null
     const resolvedBrand = resolveAdminBrandName(payload, String(locale.value || ''))
     siteName.value = resolvedBrand
+    siteBrandStore.setPublicConfig(payload)
     document.title = resolvedBrand ? `${resolvedBrand} Admin` : 'Admin'
   } catch {
     captchaConfig.value = null
