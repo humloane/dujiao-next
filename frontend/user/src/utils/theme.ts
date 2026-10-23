@@ -4,15 +4,10 @@ const TEA_THEME_KEY = 'dujiao_theme'
 
 type Theme = 'light' | 'dark'
 
-const getSystemTheme = (): Theme => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
-const getSavedTheme = (): Theme | null => {
-    return localStorage.getItem(TEA_THEME_KEY) as Theme | null
-}
-
-const theme = ref<Theme>(getSavedTheme() || getSystemTheme())
+// 首屏内联脚本已按 localStorage / 系统偏好写好 html.dark，这里只复用结果，
+// 避免应用启动时再次判断主题造成骨架与应用配色不一致。
+const initial: Theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+const theme = ref<Theme>(initial)
 
 const applyTheme = (newTheme: Theme) => {
     const root = document.documentElement
