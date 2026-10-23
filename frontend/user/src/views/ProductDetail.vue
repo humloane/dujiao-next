@@ -315,7 +315,7 @@
                 <div v-if="deliveryReassurance" class="rounded-xl bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
                   {{ deliveryReassurance }}
                 </div>
-                <Button type="button" variant="outline" class="w-full h-11 font-bold" @click="openChatwoot">
+                <Button v-if="chatwootReady" type="button" variant="outline" class="w-full h-11 font-bold" @click="openChatwoot">
                   <MessageCircle class="h-4 w-4" />
                   {{ t('chatwoot.consult') }}
                 </Button>
@@ -426,6 +426,7 @@ import { ArrowLeft, Lock, MessageCircle, Minus, Pencil, Plus, RotateCw, Tag, Use
 import { getImageUrl } from '../utils/image'
 import { processHtmlForDisplay } from '../utils/content'
 import { openChatwoot } from '../utils/chatwoot'
+import { useChatwootReady } from '../composables/useChatwootReady'
 import { useProductDetail } from '../composables/useProductDetail'
 import ProductImageGallery from '../components/product/ProductImageGallery.vue'
 import ProductMetaInfo from '../components/ProductMetaInfo.vue'
@@ -437,6 +438,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
+const { ready: chatwootReady } = useChatwootReady()
 
 // 视图专属：移动端固定购买条（IntersectionObserver 监听桌面购买区是否出屏）
 const purchaseActionsRef = ref<HTMLElement | null>(null)

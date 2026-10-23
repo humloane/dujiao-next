@@ -28,7 +28,7 @@ const normalizeScriptEnabled = (raw: unknown): boolean => {
 const normalizeCustomScripts = (raw: unknown): CustomScript[] => {
   if (!Array.isArray(raw)) return []
 
-  return raw
+  const normalized = raw
     .map((item) => {
       if (!item || typeof item !== 'object') return null
       const value = item as Record<string, unknown>
@@ -43,7 +43,22 @@ const normalizeCustomScripts = (raw: unknown): CustomScript[] => {
       } as CustomScript
     })
     .filter((item): item is CustomScript => !!item && item.enabled)
+
+  // 同一条脚本被重复配置时只执行一次，避免 Chatwoot 等片段重复插入 SDK。
+  const seen = new Set<string>()
+  return normalized.filter((item) => {
+    const key = JSON.stringify([item.position, item.code])
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
+
+const buildScriptsSignature = (scripts: CustomScript[]): string => {
+  return JSON.stringify(scripts.map((item) => [item.position, item.code]))
+}
+
+let appliedScriptsSignature: string | null = null
 
 function createManagedScriptNode(code: string, name: string, group: string): HTMLScriptElement {
   const node = document.createElement('script')
@@ -91,6 +106,7 @@ function createManagedNodesFromHTML(snippet: string, name: string, group: string
 }
 
 export const clearCustomScripts = () => {
+  appliedScriptsSignature = null
   if (typeof document === 'undefined') return
   document.querySelectorAll(`script[${managedScriptAttr}="1"], [${managedScriptAttr}="1"]:not(script)`).forEach((node) => {
     node.parentElement?.removeChild(node)
@@ -100,8 +116,12 @@ export const clearCustomScripts = () => {
 export const applyCustomScripts = (rawScripts: unknown) => {
   if (typeof document === 'undefined') return
 
-  clearCustomScripts()
   const scripts = normalizeCustomScripts(rawScripts)
+  const signature = buildScriptsSignature(scripts)
+  // 配置未变化时不要重复执行脚本；Chatwoot 片段一旦重复执行会再插入一个 sdk.js。
+  if (signature === appliedScriptsSignature) return
+
+  clearCustomScripts()
 
   scripts.forEach((item, index) => {
     const name = item.name || `script-${index + 1}`
@@ -123,4 +143,5 @@ export const applyCustomScripts = (rawScripts: unknown) => {
 
     nodes.forEach((node) => target.appendChild(node))
   })
+  appliedScriptsSignature = signature
 }
