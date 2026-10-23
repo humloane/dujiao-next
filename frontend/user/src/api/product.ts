@@ -3,12 +3,12 @@ import { api } from './client'
 export const productAPI = {
     list: (params?: any, options?: Record<string, any>) => api.get('/public/products', { params, ...options }),
     filterOptions: () => api.get('/public/product-filter-options'),
-    detail: (slug: string) => api.get(`/public/products/${slug}`),
+    detail: (slug: string, options?: Record<string, any>) => api.get(`/public/products/${slug}`, options),
 }
 
 export const postAPI = {
     list: (params?: any) => api.get('/public/posts', { params }),
-    detail: (slug: string) => api.get(`/public/posts/${slug}`),
+    detail: (slug: string, options?: Record<string, any>) => api.get(`/public/posts/${slug}`, options),
 }
 
 export const bannerAPI = {

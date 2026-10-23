@@ -1,9 +1,8 @@
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { postAPI } from '../api'
-import { debounceAsync } from '../utils/debounce'
 import { useLocalized } from './useProduct'
 import { usePageSeo } from './usePageSeo'
 
@@ -19,6 +18,7 @@ export function useBlogDetail() {
 
   const loading = ref(true)
   const post = ref<any>(null)
+  let postRequest: AbortController | null = null
   const relatedProducts = computed<any[]>(() => post.value?.related_products || [])
 
   const getLocalizedText = (jsonData: any) => {
@@ -99,27 +99,43 @@ export function useBlogDetail() {
   })
 
   const loadPost = async () => {
+    postRequest?.abort()
+    const controller = new AbortController()
+    postRequest = controller
     loading.value = true
+    post.value = null
     try {
       const slug = route.params.slug as string
-      const response = await postAPI.detail(slug)
+      const response = await postAPI.detail(slug, { signal: controller.signal })
+      if (controller.signal.aborted) return
       post.value = response.data.data || null
-    } catch (error) {
+    } catch (error: any) {
+      if (controller.signal.aborted || error?.name === 'AbortError') return
       console.error('Failed to load post:', error)
       post.value = null
     } finally {
-      loading.value = false
+      if (postRequest === controller) {
+        postRequest = null
+        loading.value = false
+      }
     }
   }
-
-  const debouncedLoadPost = debounceAsync(loadPost, 300)
 
   onMounted(() => {
     loadPost()
   })
 
+  watch(
+    () => route.params.slug,
+    (slug, previous) => {
+      if (!slug || slug === previous) return
+      void loadPost()
+    },
+  )
+
   onUnmounted(() => {
-    debouncedLoadPost.cancel()
+    postRequest?.abort()
+    postRequest = null
   })
 
   return {

@@ -9,7 +9,6 @@ import { useCartStore } from '../stores/cart'
 import { useBuyNowStore } from '../stores/buyNow'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useUserProfileStore } from '../stores/userProfile'
-import { debounceAsync } from '../utils/debounce'
 import { joinSeoTitle } from '../utils/seoTitle'
 import { resolveServerJSONLD } from './usePageSeo'
 import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
@@ -62,6 +61,7 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
 
   const loading = ref(true)
   const product = ref<any>(null)
+  let productRequest: AbortController | null = null
   const relatedPosts = computed<any[]>(() => product.value?.related_posts || [])
   const formatRelatedPostDate = (dateString: string) => {
     if (!dateString) return ''
@@ -527,27 +527,37 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
   }
 
   const loadProduct = async () => {
+    productRequest?.abort()
+    const controller = new AbortController()
+    productRequest = controller
     loading.value = true
+    product.value = null
+    selectedSkuId.value = 0
+    currentImage.value = ''
     try {
       const slug = route.params.slug as string
-      const response = await productAPI.detail(slug)
+      const response = await productAPI.detail(slug, { signal: controller.signal })
+      if (controller.signal.aborted) return
       product.value = response.data.data || null
       if (images.value.length > 0) {
         currentImage.value = images.value[0] || ''
       }
       syncSelectedSku()
       await nextTick()
+      if (controller.signal.aborted) return
       options.onLoaded?.()
-    } catch (error) {
+    } catch (error: any) {
+      if (controller.signal.aborted || error?.name === 'AbortError') return
       console.error('Failed to load product:', error)
       product.value = null
       selectedSkuId.value = 0
     } finally {
-      loading.value = false
+      if (productRequest === controller) {
+        productRequest = null
+        loading.value = false
+      }
     }
   }
-
-  const debouncedLoadProduct = debounceAsync(loadProduct, 300)
 
   const canonicalUrl = computed(() => {
     if (!product.value?.slug) return ''
@@ -681,6 +691,14 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     ensureMemberLevels()
   })
 
+  watch(
+    () => route.params.slug,
+    (slug, previous) => {
+      if (!slug || slug === previous) return
+      void loadProduct()
+    },
+  )
+
   watch(userMemberLevelId, () => {
     ensureMemberLevels()
   })
@@ -706,7 +724,8 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
   })
 
   onUnmounted(() => {
-    debouncedLoadProduct.cancel()
+    productRequest?.abort()
+    productRequest = null
   })
 
   return {
