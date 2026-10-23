@@ -5,6 +5,7 @@ import { useAppStore } from '../stores/app'
 import { postAPI } from '../api'
 import { useLocalized } from './useProduct'
 import { usePageSeo } from './usePageSeo'
+import { absoluteAssetUrl } from '../utils/seoJsonLd'
 
 /**
  * 文章/公告详情共享逻辑（classic + vault 双模板共用）。
@@ -53,6 +54,7 @@ export function useBlogDetail() {
     image: () => post.value?.thumbnail || '',
     canonicalPath: () => `/blog/${(route.params.slug as string) || ''}`,
     type: () => 'article',
+    noindex: () => !loading.value && !post.value,
     jsonLd: () => {
       if (!post.value) return undefined
       const base = String(appStore.config?.brand?.site_url || '').replace(/\/+$/, '')
@@ -62,22 +64,20 @@ export function useBlogDetail() {
       const siteName = String(appStore.config?.brand?.site_name || 'Dujiao-Next')
       const published = post.value.published_at || post.value.created_at
       const article: Record<string, unknown> = {
-        '@context': 'https://schema.org',
         '@type': 'Article',
         headline: title,
         description: seoDescription.value || '',
         url: canonical,
         mainEntityOfPage: canonical,
         datePublished: published || undefined,
-        dateModified: post.value.updated_at || published || undefined,
+        dateModified: published || undefined,
         author: { '@type': 'Organization', name: siteName },
         publisher: { '@type': 'Organization', name: siteName },
       }
-      if (post.value.thumbnail) article.image = [post.value.thumbnail]
+      if (post.value.thumbnail) article.image = [absoluteAssetUrl(post.value.thumbnail)]
       return [
         article,
         {
-          '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: siteName, item: base + '/' },

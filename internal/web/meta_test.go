@@ -54,6 +54,18 @@ func TestInjectMetaHTMLWithoutTitleIsNoop(t *testing.T) {
 	}
 }
 
+func TestInjectMetaHTMLWritesRobotsNoindex(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div id="app"></div></body></html>`)
+	meta := &PageMeta{
+		Title:  "Not Found",
+		Robots: "noindex, nofollow",
+	}
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `<meta name="robots" content="noindex, nofollow">`) {
+		t.Fatalf("robots noindex missing: %s", body)
+	}
+}
+
 func TestInjectMetaHTMLWritesBodySnapshot(t *testing.T) {
 	index := []byte(`<html><head><title></title></head><body><div id="app"></div></body></html>`)
 	meta := &PageMeta{
@@ -68,5 +80,8 @@ func TestInjectMetaHTMLWritesBodySnapshot(t *testing.T) {
 	}
 	if !strings.Contains(body, `data-path="/lp/iepl"`) {
 		t.Fatalf("server JSON-LD path marker missing: %s", body)
+	}
+	if !strings.Contains(body, `data-locale="zh-CN"`) {
+		t.Fatalf("server JSON-LD locale marker missing: %s", body)
 	}
 }

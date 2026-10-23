@@ -1,9 +1,11 @@
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { postAPI } from '../api'
 import { debounceAsync } from '../utils/debounce'
 import { usePageSeo } from './usePageSeo'
+import { buildCollectionPageJsonLd } from '../utils/seoJsonLd'
+import { joinSeoTitle } from '../utils/seoTitle'
 
 /**
  * 文章/公告列表共享逻辑（Blog/Notice，classic + vault 双模板共用）。
@@ -23,11 +25,34 @@ export function usePostList(
   const route = useRoute()
   const appStore = useAppStore()
 
+  const siteBase = computed(() => {
+    const configured = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+    return configured || (typeof window !== 'undefined' ? window.location.origin : '')
+  })
+  const siteName = computed(() => String(appStore.config?.brand?.site_name || 'Dujiao-Next'))
+  const siteSeoName = computed(() => {
+    const localized = appStore.config?.seo?.title?.[appStore.locale]
+    return String(localized || appStore.config?.brand?.site_name || '').trim()
+  })
+  const pageTitle = computed(() => seo.title())
+  const fullPageTitle = computed(() => joinSeoTitle(pageTitle.value, siteSeoName.value, [siteName.value]))
+  const pageDescription = computed(() => seo.description?.() || '')
+  const pageUrl = computed(() => `${siteBase.value}${seo.canonicalPath}`)
+
   usePageSeo({
-    title: seo.title,
-    description: seo.description,
+    title: () => pageTitle.value,
+    description: () => pageDescription.value,
     keywords: seo.keywords,
     canonicalPath: () => seo.canonicalPath,
+    jsonLd: () => buildCollectionPageJsonLd({
+      title: fullPageTitle.value,
+      description: pageDescription.value,
+      url: pageUrl.value,
+      locale: appStore.locale,
+      siteName: siteName.value,
+      siteBase: siteBase.value,
+      breadcrumbName: seo.canonicalPath.replace(/^\/+/, ''),
+    }),
   })
 
   const loading = ref(true)

@@ -141,6 +141,7 @@ const {
   expandedParentIds,
   categoryGroups,
   categoryMap,
+  categoriesLoaded,
   selectedCategoryData,
   metaFilter,
   setMetaFilter,
@@ -171,6 +172,9 @@ const categorySeo = computed<Record<string, unknown>>(() => {
   const raw = selectedCategoryData.value?.seo_meta
   return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
 })
+const categoryMissing = computed(() =>
+  route.name === 'category-products' && categoriesLoaded.value && !selectedCategoryData.value,
+)
 const siteBase = computed(() => {
   const configured = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
   if (configured) return configured
@@ -191,7 +195,9 @@ usePageSeo({
       || ''
   },
   keywords: () => getLocalizedText(categorySeo.value.keywords),
+  noindex: () => categoryMissing.value,
   jsonLd: () => {
+    if (categoryMissing.value) return undefined
     const name = seoCategoryName.value || t('nav.products')
     const breadcrumbs = [
       { '@type': 'ListItem', position: 1, name: appStore.config?.brand?.site_name || 'Dujiao-Next', item: siteBase.value + '/' },

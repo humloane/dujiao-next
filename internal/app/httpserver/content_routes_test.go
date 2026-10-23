@@ -527,3 +527,41 @@ func TestNoticeListAlwaysEmitsCollectionJSONLD(t *testing.T) {
 		}
 	}
 }
+
+func TestMissingDetailRoutesAreNoIndex(t *testing.T) {
+	site := seoSite{Name: "站点", URL: "https://example.com", Currency: "CNY"}
+	for _, path := range []string{"/products/no-such-product", "/categories/no-such-category", "/blog/no-such-post"} {
+		meta := (&seoResolver{}).buildMeta(web.MetaRequest{Path: path}, "zh-CN", site)
+		if !strings.Contains(meta.Robots, "noindex") {
+			t.Fatalf("%s should be noindex, got %q", path, meta.Robots)
+		}
+	}
+}
+
+func TestPostDateModifiedUsesPublishedAt(t *testing.T) {
+	created := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	published := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
+	post := &contentdomain.Post{
+		Slug:        "date-post",
+		TitleJSON:   jsonmap.JSON{"zh-CN": "文章标题"},
+		CreatedAt:   created,
+		PublishedAt: &published,
+	}
+	meta := &web.PageMeta{}
+	(&seoResolver{}).applyPostMeta(meta, "https://example.com", "/blog/date-post", "zh-CN", seoSite{
+		Name: "站点", URL: "https://example.com", Currency: "CNY",
+	}, post)
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(meta.JSONLD), &payload); err != nil {
+		t.Fatalf("decode json-ld: %v", err)
+	}
+	graph, _ := payload["@graph"].([]interface{})
+	if len(graph) == 0 {
+		t.Fatalf("missing json-ld graph: %s", meta.JSONLD)
+	}
+	article, _ := graph[0].(map[string]interface{})
+	if got := article["dateModified"]; got != published.Format(time.RFC3339) {
+		t.Fatalf("dateModified = %v, want %s", got, published.Format(time.RFC3339))
+	}
+}

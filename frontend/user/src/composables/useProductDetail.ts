@@ -11,6 +11,7 @@ import { useUserAuthStore } from '../stores/userAuth'
 import { useUserProfileStore } from '../stores/userProfile'
 import { joinSeoTitle } from '../utils/seoTitle'
 import { resolveServerJSONLD } from './usePageSeo'
+import { absoluteAssetUrl, buildJsonLdScript } from '../utils/seoJsonLd'
 import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 import { resolveSkuAvailableStock, resolveSkuStockDisplay, type PublicStockDisplay } from '../utils/publicStock'
 import { useLocalized, useProductLabels } from './useProduct'
@@ -342,6 +343,12 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
     }
     return imageArray.map(img => getImageUrl(img))
   })
+  const absoluteImages = computed(() => images.value.map((image) => absoluteAssetUrl(image)))
+  const defaultSocialImage = computed(() => {
+    const configured = String(appStore.config?.seo?.default_og_image || '').trim()
+    return absoluteAssetUrl(configured || '/og-default.png')
+  })
+  const productNotFound = computed(() => !loading.value && !product.value)
 
   const skuDisplayText = (sku: any) => {
     return buildSkuDisplayText({
@@ -605,8 +612,11 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       ]
     },
     meta: () => {
-      if (!product.value) return []
       const tags = []
+      if (productNotFound.value) {
+        tags.push({ name: 'robots', content: 'noindex, nofollow' })
+      }
+      if (!product.value) return tags
 
       if (seoKeywords.value) tags.push({ name: 'keywords', content: seoKeywords.value })
       if (seoDescription.value) tags.push({ name: 'description', content: seoDescription.value })
@@ -618,8 +628,9 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       if (seoDescription.value) {
         tags.push({ property: 'og:description', content: seoDescription.value })
       }
-      if (images.value && images.value.length > 0) {
-        tags.push({ property: 'og:image', content: images.value[0] })
+      const socialImage = absoluteImages.value[0] || defaultSocialImage.value
+      if (socialImage) {
+        tags.push({ property: 'og:image', content: socialImage })
       }
       if (canonicalUrl.value) {
         tags.push({ property: 'og:url', content: canonicalUrl.value })
@@ -632,28 +643,32 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       if (seoDescription.value) {
         tags.push({ name: 'twitter:description', content: seoDescription.value })
       }
-      if (images.value && images.value.length > 0) {
-        tags.push({ name: 'twitter:image', content: images.value[0] })
+      if (socialImage) {
+        tags.push({ name: 'twitter:image', content: socialImage })
       }
 
       return tags
     },
     script: () => {
       if (!product.value) return []
-      // 首屏 HTML 已由服务端注入同路径 JSON-LD 时不再重复输出。
-      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname)) return []
+      // 首屏 HTML 已由服务端注入同路径、同语言 JSON-LD 时不再重复输出。
+      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname, appStore.locale)) return []
       const title = getLocalizedText(product.value.title)
       const description = seoDescription.value
       const priceAmount = product.value.price_amount || '0'
       const currency = siteCurrency.value || 'CNY'
+      const canonical = canonicalUrl.value || window.location.href
+      const brandName = String(appStore.config?.brand?.site_name || 'Dujiao-Next').trim()
 
       const jsonLd: Record<string, any> = {
-        '@context': 'https://schema.org',
         '@type': 'Product',
         name: title,
-        url: canonicalUrl.value || window.location.href,
+        url: canonical,
+        sku: product.value.slug,
+        brand: { '@type': 'Brand', name: brandName },
         offers: {
           '@type': 'Offer',
+          url: canonical,
           price: priceAmount,
           priceCurrency: currency,
           availability: product.value.stock_status === 'out_of_stock'
@@ -662,7 +677,9 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
         },
       }
       if (description) jsonLd.description = description
-      if (images.value.length > 0) jsonLd.image = images.value
+      jsonLd.image = absoluteImages.value.length > 0
+        ? absoluteImages.value
+        : (defaultSocialImage.value ? [defaultSocialImage.value] : [])
       if (product.value.category?.name) {
         jsonLd.category = getLocalizedText(product.value.category.name)
       }
@@ -670,19 +687,16 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       const siteBase = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
         || window.location.origin.replace(/\/+$/, '')
       const breadcrumb = {
-        '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: appStore.config?.brand?.site_name || 'Dujiao-Next', item: `${siteBase}/` },
+          { '@type': 'ListItem', position: 1, name: brandName, item: `${siteBase}/` },
           { '@type': 'ListItem', position: 2, name: t('nav.products'), item: `${siteBase}/products` },
           { '@type': 'ListItem', position: 3, name: title, item: canonicalUrl.value },
         ],
       }
 
-      return [
-        { type: 'application/ld+json', innerHTML: JSON.stringify(jsonLd) },
-        { type: 'application/ld+json', innerHTML: JSON.stringify(breadcrumb) },
-      ]
+      const script = buildJsonLdScript([jsonLd, breadcrumb])
+      return script ? [script] : []
     },
   })
 

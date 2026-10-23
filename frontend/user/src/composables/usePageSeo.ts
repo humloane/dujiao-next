@@ -3,6 +3,11 @@ import { useHead } from '@unhead/vue'
 import { useAppStore } from '../stores/app'
 import { getImageUrl } from '../utils/image'
 import { joinSeoTitle } from '../utils/seoTitle'
+import {
+  absoluteAssetUrl,
+  buildJsonLdScript,
+  isServerJsonLdReusable,
+} from '../utils/seoJsonLd'
 
 export interface PageSeoOptions {
   /** 页面专属标题；若与站点名相同，仅展示站点名 */
@@ -32,13 +37,15 @@ const trimSlashEnd = (s: string) => s.replace(/\/+$/, '')
  * - 当前路径已有服务端数据：不再重复插入。
  * - 服务端数据属于别的路径（SPA 跳转）：移除过期节点，让前端补一份。
  */
-export const resolveServerJSONLD = (path: string): boolean => {
+export const resolveServerJSONLD = (path: string, locale: string): boolean => {
   if (typeof document === 'undefined') return false
   const nodes = Array.from(document.querySelectorAll<HTMLScriptElement>('script[data-seo-jsonld="server"]'))
-  const matching = nodes.filter((node) => node.dataset.path === path)
+  const matching = nodes.filter((node) =>
+    isServerJsonLdReusable(node.dataset.path, node.dataset.locale, path, locale),
+  )
   if (matching.length > 0) {
     nodes.forEach((node) => {
-      if (node.dataset.path !== path) node.remove()
+      if (!matching.includes(node)) node.remove()
     })
     return true
   }
@@ -50,11 +57,9 @@ const resolveImage = (raw: string, baseUrl: string): string => {
   const trimmed = raw.trim()
   if (!trimmed) return ''
   if (/^https?:\/\//i.test(trimmed)) return trimmed
-  // 优先走 getImageUrl 处理 uploads 路径，得到的可能是相对 /uploads/...
+  // 优先走 getImageUrl 处理 uploads 路径，再补成绝对 URL。
   const resolved = getImageUrl(trimmed) || trimmed
-  if (/^https?:\/\//i.test(resolved)) return resolved
-  if (baseUrl && resolved.startsWith('/')) return baseUrl + resolved
-  return resolved
+  return absoluteAssetUrl(resolved, baseUrl)
 }
 
 export function usePageSeo(options: PageSeoOptions = {}) {
@@ -191,18 +196,12 @@ export function usePageSeo(options: PageSeoOptions = {}) {
       return tags
     },
     script: () => {
-      // 服务端首屏已注入同一路径的 JSON-LD 时跳过，避免同一页面出现两份结构化数据。
-      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname)) {
+      // 服务端首屏已注入同路径、同语言的 JSON-LD 时跳过，避免重复。
+      if (typeof window !== 'undefined' && resolveServerJSONLD(window.location.pathname, appStore.locale)) {
         return []
       }
-      const jsonLd = options.jsonLd?.()
-      if (!jsonLd) return []
-      const items = Array.isArray(jsonLd) ? jsonLd : [jsonLd]
-      return items.filter(Boolean).map((item) => ({
-        key: `jsonld-${JSON.stringify(item).length}-${JSON.stringify(item).slice(0, 32)}`,
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify(item),
-      }))
+      const script = buildJsonLdScript(options.jsonLd?.())
+      return script ? [script] : []
     },
   })
 }

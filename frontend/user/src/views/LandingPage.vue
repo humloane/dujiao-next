@@ -479,9 +479,8 @@ usePageSeo({
     const title = text('title')
     const canonical = `${siteBase.value}/lp/${slug.value}`
     const graph: Record<string, unknown>[] = [
-      { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description: text('subtitle'), url: canonical },
+      { '@type': 'WebPage', name: title, description: text('subtitle'), url: canonical },
       {
-        '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: String(appStore.config?.brand?.site_name || 'Dujiao-Next'), item: `${siteBase.value}/` },
@@ -491,7 +490,6 @@ usePageSeo({
     ]
     if (faq.value.length > 0) {
       graph.push({
-        '@context': 'https://schema.org',
         '@type': 'FAQPage',
         mainEntity: faq.value.map((item) => ({
           '@type': 'Question',

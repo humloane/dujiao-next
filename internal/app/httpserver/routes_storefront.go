@@ -397,16 +397,22 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 			meta.Keywords = asStringFromMap(seo["keywords"], locale)
 			meta.JSONLD = marshalJSONLD(collectionJSONLD(base, cleanPath, meta.Title, meta.Description, site, locale))
 			meta.BodyHTML = r.categoryBodyHTML(locale, site, category, meta.Description)
+		} else {
+			meta.Robots = "noindex, nofollow"
 		}
 	case strings.HasPrefix(cleanPath, "/products/"):
 		slug := strings.TrimPrefix(cleanPath, "/products/")
 		if product := r.findProduct(slug); product != nil {
 			r.applyProductMeta(ctx, meta, base, cleanPath, locale, site, product)
+		} else {
+			meta.Robots = "noindex, nofollow"
 		}
 	case strings.HasPrefix(cleanPath, "/blog/"):
 		slug := strings.TrimPrefix(cleanPath, "/blog/")
 		if post := r.findPost(ctx, slug); post != nil {
 			r.applyPostMeta(meta, base, cleanPath, locale, site, post)
+		} else {
+			meta.Robots = "noindex, nofollow"
 		}
 	case cleanPath == "/blog" || cleanPath == "/notice":
 		key := strings.TrimPrefix(cleanPath, "/")
@@ -597,13 +603,12 @@ func (r *seoResolver) applyPostMeta(meta *web.PageMeta, base, cleanPath, locale 
 		published = *post.PublishedAt
 	}
 	jsonLD := map[string]interface{}{
-		"@context":         "https://schema.org",
 		"@type":            "Article",
 		"headline":         title,
 		"description":      meta.Description,
 		"url":              canonical,
 		"datePublished":    published.UTC().Format(time.RFC3339),
-		"dateModified":     post.CreatedAt.UTC().Format(time.RFC3339),
+		"dateModified":     published.UTC().Format(time.RFC3339),
 		"author":           map[string]interface{}{"@type": "Organization", "name": site.Name},
 		"publisher":        map[string]interface{}{"@type": "Organization", "name": site.Name},
 		"mainEntityOfPage": canonical,
@@ -685,6 +690,11 @@ func collectionJSONLD(base, cleanPath, title, description string, site seoSite, 
 				"description": description,
 				"url":         base + cleanPath,
 				"inLanguage":  locale,
+				"isPartOf": map[string]interface{}{
+					"@type": "WebSite",
+					"name":  site.Name,
+					"url":   base + "/",
+				},
 			},
 			map[string]interface{}{
 				"@type":           "BreadcrumbList",
@@ -1018,6 +1028,11 @@ func staticPageJSONLD(base, cleanPath, title, description string, site seoSite, 
 				"description": description,
 				"url":         base + cleanPath,
 				"inLanguage":  locale,
+				"isPartOf": map[string]interface{}{
+					"@type": "WebSite",
+					"name":  site.Name,
+					"url":   base + "/",
+				},
 			},
 			map[string]interface{}{
 				"@type": "BreadcrumbList",

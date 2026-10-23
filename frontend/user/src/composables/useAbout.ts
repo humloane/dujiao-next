@@ -2,6 +2,8 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { usePageSeo } from './usePageSeo'
+import { buildWebPageJsonLd } from '../utils/seoJsonLd'
+import { joinSeoTitle } from '../utils/seoTitle'
 
 /**
  * 关于页共享逻辑（classic + vault 双模板共用）。
@@ -11,10 +13,31 @@ export function useAbout() {
   const { t, locale } = useI18n()
   const appStore = useAppStore()
 
+  const siteBase = computed(() => {
+    const configured = String(appStore.config?.brand?.site_url || '').trim().replace(/\/+$/, '')
+    return configured || (typeof window !== 'undefined' ? window.location.origin : '')
+  })
+  const siteName = computed(() => String(appStore.config?.brand?.site_name || 'Dujiao-Next'))
+  const siteSeoName = computed(() => {
+    const localized = appStore.config?.seo?.title?.[appStore.locale]
+    return String(localized || appStore.config?.brand?.site_name || '').trim()
+  })
+  const pageTitle = computed(() => t('about.title'))
+  const pageDescription = computed(() => t('about.seoDescription'))
+  const fullPageTitle = computed(() => joinSeoTitle(pageTitle.value, siteSeoName.value, [siteName.value]))
+
   usePageSeo({
-    title: () => t('about.title'),
-    description: () => t('about.seoDescription'),
+    title: () => pageTitle.value,
+    description: () => pageDescription.value,
     canonicalPath: () => '/about',
+    jsonLd: () => buildWebPageJsonLd({
+      title: fullPageTitle.value,
+      description: pageDescription.value,
+      url: `${siteBase.value}/about`,
+      locale: appStore.locale,
+      siteName: siteName.value,
+      siteBase: siteBase.value,
+    }),
   })
 
   const aboutConfig = computed(() => appStore.config?.about || null)

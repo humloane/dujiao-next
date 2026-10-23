@@ -140,7 +140,8 @@ func injectMetaHTML(index []byte, meta *PageMeta) []byte {
 		if strings.TrimSpace(meta.Path) != "" {
 			pathAttr = ` data-path="` + html.EscapeString(meta.Path) + `"`
 		}
-		head.WriteString(`<script type="application/ld+json" data-seo-jsonld="server"` + pathAttr + `>` + safe + `</script>`)
+		localeAttr := ` data-locale="` + html.EscapeString(locale) + `"`
+		head.WriteString(`<script type="application/ld+json" data-seo-jsonld="server"` + pathAttr + localeAttr + `>` + safe + `</script>`)
 	}
 
 	if head.Len() > 0 {

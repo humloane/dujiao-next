@@ -37,6 +37,7 @@ export function useProductList(options: UseProductListOptions = {}) {
   // 后端按在售商品聚合的筛选取值；请求失败时回落到常量。
   const metaOptions = reactive<ProductMetaOptions>(emptyProductMetaOptions())
   const categories = ref<PublicCategory[]>([])
+  const categoriesLoaded = ref(false)
   const selectedCategory = ref<number | null>(null)
   const searchQuery = ref('')
   const currentPage = ref(1)
@@ -150,6 +151,7 @@ export function useProductList(options: UseProductListOptions = {}) {
     try {
       const response = await categoryAPI.list()
       categories.value = response.data.data || []
+      categoriesLoaded.value = true
     } catch (error) {
       console.error('Failed to load categories:', error)
     }
@@ -322,6 +324,7 @@ export function useProductList(options: UseProductListOptions = {}) {
     totalCount,
     metaOptions,
     categories,
+    categoriesLoaded,
     selectedCategory,
     searchQuery,
     currentPage,
