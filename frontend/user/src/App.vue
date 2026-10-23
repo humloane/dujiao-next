@@ -36,7 +36,8 @@
     <!-- classic 模板 / 分销控制台（保持原有结构不变） -->
     <template v-else>
       <Navbar v-if="!isResellerConsole" />
-      <main class="flex-1" :class="isResellerConsole ? '' : 'pb-14 md:pb-0'">
+      <!-- 预留视口高度：异步路由内容到达前，避免 Footer 位于顶部后下移造成 CLS -->
+      <main class="flex-1 min-h-[calc(100vh-5rem)]" :class="isResellerConsole ? '' : 'pb-14 md:pb-0'">
         <ErrorBoundary>
           <RouterView v-slot="{ Component }">
             <Transition name="page-fade" mode="out-in">

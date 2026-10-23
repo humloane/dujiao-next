@@ -14,6 +14,32 @@ const cfAsyncModuleScriptPlugin = () => ({
   },
 })
 
+const asyncMainStylePlugin = () => ({
+  name: 'async-main-style',
+  enforce: 'post' as const,
+  transformIndexHtml: {
+    order: 'post' as const,
+    handler(html: string) {
+      const fallbackLinks: string[] = []
+      let first = true
+      const output = html.replace(/<link\b[^>]*\brel="stylesheet"[^>]*>/gi, (tag) => {
+        const href = tag.match(/\bhref="([^"]+)"/)?.[1]
+        if (!href) return tag
+        const crossorigin = /\bcrossorigin(?:\s|=|>)/.test(tag) ? ' crossorigin' : ''
+        const id = first ? ' id="main-style"' : ''
+        fallbackLinks.push(`<link rel="stylesheet" href="${href}"${crossorigin}>`)
+        first = false
+        return `<link rel="stylesheet" href="${href}"${crossorigin} media="print" onload="this.media='all'"${id}>`
+      })
+      if (fallbackLinks.length === 0) return html
+      return output.replace(
+        '</head>',
+        `  <noscript>${fallbackLinks.join('')}</noscript>\n</head>`,
+      )
+    },
+  },
+})
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -24,6 +50,7 @@ export default defineConfig(({ mode }) => ({
       dropMessageCompiler: true,
     }),
     cfAsyncModuleScriptPlugin(),
+    asyncMainStylePlugin(),
   ],
   resolve: {
     alias: {
