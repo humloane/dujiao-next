@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, onUnmounted, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from './stores/app'
 import { getActiveTemplate } from './templates/registry'
@@ -70,8 +70,8 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import BackToTop from './components/BackToTop.vue'
 import MobileBottomNav from './components/MobileBottomNav.vue'
-import { cancelChatwootRetry, hideNativeChatwootLauncher, isChatwootReady, openChatwoot } from './utils/chatwoot'
-import { CHATWOOT_READY_TIMEOUT_MS, ensureChatwootPolling, useChatwootState } from './composables/useChatwootState'
+import { cancelChatwootRetry, openChatwoot } from './utils/chatwoot'
+import { useChatwootEntryVisible } from './composables/useChatwootEntry'
 
 // vault 外壳按需加载，classic 用户不会拉取其 chunk/样式
 const VaultLayout = defineAsyncComponent(() => import('./templates/vault/layout/VaultLayout.vue'))
@@ -84,13 +84,7 @@ const isResellerConsole = computed(() => route.meta.resellerConsole === true)
 const isLandingPage = computed(() => route.name === 'landing-page')
 // getActiveTemplate 读取 appStore.config（响应式），config 加载后会重新计算
 const isVault = computed(() => getActiveTemplate() === 'vault')
-const { ready: chatwootReady } = useChatwootState()
-
-// 结算/支付页隐藏 Chatwoot 气泡，避免遮挡支付按钮。
-const chatwootHidden = computed(() => route.path.startsWith('/checkout') || route.path.startsWith('/pay'))
-watch(chatwootHidden, (hidden) => {
-  document.body.classList.toggle('chatwoot-hidden', hidden)
-}, { immediate: true })
+const chatwootEntryVisible = useChatwootEntryVisible()
 
 // v-html 商品内容/运营位里可以用 <a href="#chatwoot" data-chatwoot> 打开客服。
 const handleChatwootTrigger = (event: MouseEvent) => {
@@ -99,33 +93,17 @@ const handleChatwootTrigger = (event: MouseEvent) => {
   const trigger = target.closest('a[href="#chatwoot"], [data-chatwoot]')
   if (!trigger) return
   event.preventDefault()
-  if (!isChatwootReady() || chatwootHidden.value) return
+  if (!chatwootEntryVisible.value) return
   openChatwoot()
-}
-
-// Chatwoot 脚本异步加载：与自定义入口共用同一个截止时间。
-// 到达截止时间仍不可用时停止隐藏，保留原生气泡作为唯一入口。
-let nativeLauncherTimer: number | undefined
-let nativeLauncherDeadline = 0
-const hideNativeLauncherWhenReady = () => {
-  if (chatwootReady.value && hideNativeChatwootLauncher()) return
-  if (Date.now() >= nativeLauncherDeadline) return
-  nativeLauncherTimer = window.setTimeout(hideNativeLauncherWhenReady, 500)
 }
 
 onMounted(() => {
   document.addEventListener('click', handleChatwootTrigger)
-  ensureChatwootPolling()
-  nativeLauncherDeadline = Date.now() + CHATWOOT_READY_TIMEOUT_MS
-  hideNativeLauncherWhenReady()
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleChatwootTrigger)
-  if (nativeLauncherTimer) window.clearTimeout(nativeLauncherTimer)
   cancelChatwootRetry()
-  document.body.classList.remove('chatwoot-hidden')
-  document.body.classList.remove('chatwoot-native-hidden')
 })
 </script>
 
@@ -151,8 +129,9 @@ onUnmounted(() => {
     transform-origin: bottom right;
   }
 }
-body.chatwoot-hidden #chatwoot-container,
-body.chatwoot-hidden .woot-widget-bubble {
+/* 原生 launcher 只保留一个 CSS 兜底：自定义入口接管或当前页面不应有客服入口时隐藏圆球。
+   面板（.woot-widget-holder）不受影响；关闭按钮（.woot--close）不隐藏。 */
+html.chatwoot-custom-entry .woot-widget-bubble:not(.woot--close) {
   display: none !important;
 }
 
@@ -166,10 +145,5 @@ body.chatwoot-hidden .woot-widget-bubble {
   .back-to-top {
     bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px) + 5rem) !important;
   }
-}
-
-/* 原生 launcher 只在 Chatwoot 确认加载后被隐藏；保留关闭按钮（woot--close）。 */
-body.chatwoot-native-hidden .woot-widget-bubble:not(.woot--close) {
-  display: none !important;
 }
 </style>

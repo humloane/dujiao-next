@@ -1,6 +1,5 @@
 interface ChatwootWidget {
   toggle?: (state?: 'open' | 'close') => void
-  toggleBubbleVisibility?: (state: 'hide' | 'show') => void
 }
 
 interface ChatwootSDK {
@@ -14,7 +13,7 @@ declare global {
   }
 }
 
-const BUBBLE_SELECTOR = '.woot-widget-bubble:not(.woot--close)'
+const OPEN_TARGET_SELECTOR = '.woot-widget-bubble:not(.woot--close)'
 const RETRY_INTERVAL_MS = 300
 const MAX_RETRIES = 10
 let retryTimer: ReturnType<typeof setTimeout> | null = null
@@ -49,7 +48,7 @@ const tryOpen = (): boolean => {
       // 继续尝试泡泡按钮
     }
   }
-  const bubble = document.querySelector<HTMLElement>(BUBBLE_SELECTOR)
+  const bubble = document.querySelector<HTMLElement>(OPEN_TARGET_SELECTOR)
   if (bubble) {
     try {
       bubble.click()
@@ -87,28 +86,5 @@ export const openChatwoot = (): boolean => {
     }
   }
   retryTimer = setTimeout(retry, RETRY_INTERVAL_MS)
-  return false
-}
-
-/**
- * 隐藏 Chatwoot 原生气泡。API 未就绪时返回 false，让调用方稍后再试，
- * 避免在脚本加载前就把唯一的入口隐藏掉。
- */
-export const hideNativeChatwootLauncher = (): boolean => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return false
-  const widget = window.$chatwoot
-  if (widget && typeof widget.toggleBubbleVisibility === 'function') {
-    try {
-      widget.toggleBubbleVisibility('hide')
-      document.body.classList.add('chatwoot-native-hidden')
-      return true
-    } catch {
-      return false
-    }
-  }
-  if (isChatwootReady()) {
-    document.body.classList.add('chatwoot-native-hidden')
-    return true
-  }
   return false
 }

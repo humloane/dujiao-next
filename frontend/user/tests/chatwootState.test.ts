@@ -71,10 +71,9 @@ test('chatwoot entry visibility excludes checkout, pay and landing pages', () =>
   assert.equal(entryModule.isChatwootEntryPathVisible('/products/x'), true)
 })
 
-test('unavailable chatwoot does not hide the native launcher', async () => {
-  const { hideNativeChatwootLauncher, isChatwootReady } = await import('../src/utils/chatwoot.ts')
+test('unavailable chatwoot stays not ready', async () => {
+  const { isChatwootReady } = await import('../src/utils/chatwoot.ts')
   delete fakeWindow.$chatwoot
   delete fakeWindow.chatwootSDK
   assert.equal(isChatwootReady(), false)
-  assert.equal(hideNativeChatwootLauncher(), false)
 })
