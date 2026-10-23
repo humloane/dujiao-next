@@ -1086,6 +1086,7 @@
       "passwordLabel": "密碼",
       "passwordPlaceholder": "設定登入密碼",
       "codeLabel": "驗證碼",
+      "registerCaptchaLabel": "註冊驗證",
       "codePlaceholder": "輸入信箱驗證碼",
       "sendCode": "發送驗證碼",
       "create": "建立帳號",

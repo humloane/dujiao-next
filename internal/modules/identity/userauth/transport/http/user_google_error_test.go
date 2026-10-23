@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +15,8 @@ import (
 	"time"
 
 	"github.com/dujiao-next/internal/constants"
+	captchacontract "github.com/dujiao-next/internal/modules/captcha/contract"
+	captchahttp "github.com/dujiao-next/internal/modules/captcha/transport/http"
 	userdomain "github.com/dujiao-next/internal/modules/identity/user/domain"
 	resellercontract "github.com/dujiao-next/internal/modules/reseller/contract"
 	"github.com/dujiao-next/internal/platform/http/response"
@@ -736,6 +739,141 @@ func assertGoogleRedirectSecurityHeaders(t *testing.T, recorder *httptest.Respon
 	} {
 		if got := recorder.Header().Get(header); got != expected {
 			t.Fatalf("%s = %q, want %q", header, got, expected)
+		}
+	}
+}
+
+type registerSettingsStub struct {
+	registrationEnabled bool
+	emailVerification   bool
+}
+
+func (s registerSettingsStub) GetRegistrationEnabled(bool) (bool, error) {
+	return s.registrationEnabled, nil
+}
+
+func (s registerSettingsStub) GetEmailVerificationEnabled(bool) (bool, error) {
+	return s.emailVerification, nil
+}
+
+type registerAuthStub struct {
+	calls int
+}
+
+func (s *registerAuthStub) Register(context.Context, string, string, string, string, bool, bool) (*userdomain.User, string, time.Time, error) {
+	s.calls++
+	return &userdomain.User{ID: 1, Email: "new@example.com"}, "token", time.Now().Add(time.Hour), nil
+}
+
+func (s *registerAuthStub) LoginStep1(context.Context, string, string, bool) (*AuthLoginResult, error) {
+	return nil, errors.New("not implemented")
+}
+
+type registerCaptchaStub struct {
+	err        error
+	scene      string
+	payload    captchahttp.CaptchaPayloadRequest
+	clientIP   string
+	verifyCall int
+}
+
+func (s *registerCaptchaStub) Verify(scene string, payload captchahttp.CaptchaPayloadRequest, clientIP string) error {
+	s.verifyCall++
+	s.scene = scene
+	s.payload = payload
+	s.clientIP = clientIP
+	return s.err
+}
+
+func TestUserRegisterRequiresSubmitCaptcha(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	auth := &registerAuthStub{}
+	verifier := &registerCaptchaStub{err: captchacontract.ErrRequired}
+	handler := NewUserLoginHandler(registerSettingsStub{registrationEnabled: true}, auth, verifier, nil)
+	router := gin.New()
+	router.POST("/register", handler.UserRegister)
+
+	request := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{"email":"new@example.com","password":"Passw0rd!","agreement_accepted":true}`))
+	request.Header.Set("Content-Type", "application/json")
+	request.RemoteAddr = "203.0.113.9:1234"
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if verifier.verifyCall != 1 || verifier.scene != constants.CaptchaSceneRegister {
+		t.Fatalf("captcha scene mismatch: %#v", verifier)
+	}
+	if verifier.clientIP != "203.0.113.9" {
+		t.Fatalf("unexpected client ip: %q", verifier.clientIP)
+	}
+	if auth.calls != 0 {
+		t.Fatalf("register must not be called when captcha fails, calls=%d", auth.calls)
+	}
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"status_code":400`) {
+		t.Fatalf("unexpected response: %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestUserRegisterPassesCaptchaTokenAndCreatesUser(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	auth := &registerAuthStub{}
+	verifier := &registerCaptchaStub{}
+	handler := NewUserLoginHandler(registerSettingsStub{registrationEnabled: true}, auth, verifier, nil)
+	router := gin.New()
+	router.POST("/register", handler.UserRegister)
+
+	request := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{"email":"new@example.com","password":"Passw0rd!","agreement_accepted":true,"captcha_payload":{"turnstile_token":"turnstile-token"}}`))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if verifier.payload.TurnstileToken != "turnstile-token" {
+		t.Fatalf("captcha payload not passed: %#v", verifier.payload)
+	}
+	if auth.calls != 1 {
+		t.Fatalf("register calls want 1 got %d", auth.calls)
+	}
+	if response.Code != http.StatusOK {
+		t.Fatalf("unexpected status: %d %s", response.Code, response.Body.String())
+	}
+	var body struct {
+		Data struct {
+			Token string `json:"token"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Token != "token" {
+		t.Fatalf("unexpected token: %s", response.Body.String())
+	}
+}
+
+func TestUserRegisterMapsCaptchaErrors(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	cases := []struct {
+		err        error
+		statusCode int
+	}{
+		{captchacontract.ErrInvalid, 400},
+		{captchacontract.ErrConfigInvalid, 500},
+		{errors.New("turnstile timeout"), 500},
+	}
+	for _, tc := range cases {
+		auth := &registerAuthStub{}
+		handler := NewUserLoginHandler(registerSettingsStub{registrationEnabled: true}, auth, &registerCaptchaStub{err: tc.err}, nil)
+		router := gin.New()
+		router.POST("/register", handler.UserRegister)
+
+		request := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{"email":"new@example.com","password":"Passw0rd!","agreement_accepted":true}`))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+
+		if auth.calls != 0 {
+			t.Fatalf("%v: register must not be called", tc.err)
+		}
+		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), fmt.Sprintf(`"status_code":%d`, tc.statusCode)) {
+			t.Fatalf("%v: unexpected response %d %s", tc.err, response.Code, response.Body.String())
 		}
 	}
 }

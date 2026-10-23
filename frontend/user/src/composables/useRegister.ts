@@ -43,11 +43,19 @@ export function useRegister() {
   const turnstileToken = ref('')
   const imageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
   const turnstileRef = ref<InstanceType<typeof TurnstileCaptcha> | null>(null)
+
+  // 注册提交验证与“发送邮件验证码”使用完全独立的验证码状态，
+  // Turnstile token 是一次性的，绝不能复用。
+  const registerCaptchaPayload = ref<CaptchaPayload>({})
+  const registerTurnstileToken = ref('')
+  const registerImageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
+  const registerTurnstileRef = ref<InstanceType<typeof TurnstileCaptcha> | null>(null)
   let timer: number | undefined
 
   const captchaConfig = computed(() => appStore.config?.captcha || null)
   const captchaProvider = computed(() => String(captchaConfig.value?.provider || 'none'))
   const sendCodeCaptchaEnabled = computed(() => !!captchaConfig.value?.scenes?.register_send_code && captchaProvider.value !== 'none')
+  const registerCaptchaEnabled = computed(() => !!captchaConfig.value?.scenes?.register && captchaProvider.value !== 'none')
   const turnstileSiteKey = computed(() => String(captchaConfig.value?.turnstile?.site_key || ''))
   const registrationEnabled = computed(() => appStore.config?.registration_enabled !== false)
   const emailVerificationEnabled = computed(() => appStore.config?.email_verification_enabled !== false)
@@ -150,6 +158,28 @@ export function useRegister() {
     return undefined
   }
 
+  const getRegisterCaptchaPayload = (): CaptchaPayload | undefined => {
+    if (!registerCaptchaEnabled.value) return undefined
+    if (captchaProvider.value === 'image') {
+      return {
+        captcha_id: registerCaptchaPayload.value.captcha_id || '',
+        captcha_code: registerCaptchaPayload.value.captcha_code || '',
+      }
+    }
+    if (captchaProvider.value === 'turnstile') {
+      return {
+        turnstile_token: registerTurnstileToken.value,
+      }
+    }
+    return undefined
+  }
+
+  const handleRegisterCaptchaConfigStale = async () => {
+    await appStore.loadConfig(true)
+    registerCaptchaPayload.value = {}
+    registerTurnstileToken.value = ''
+  }
+
   const handleCaptchaConfigStale = async () => {
     await appStore.loadConfig(true)
     captchaPayload.value = {}
@@ -220,6 +250,18 @@ export function useRegister() {
       error.value = t('auth.register.errors.agreementRequired')
       return
     }
+    if (registerCaptchaEnabled.value && captchaProvider.value === 'image') {
+      if (!registerCaptchaPayload.value.captcha_id || !registerCaptchaPayload.value.captcha_code) {
+        error.value = t('auth.common.captchaRequired')
+        return
+      }
+    }
+    if (registerCaptchaEnabled.value && captchaProvider.value === 'turnstile') {
+      if (!registerTurnstileToken.value) {
+        error.value = t('auth.common.captchaRequired')
+        return
+      }
+    }
     try {
       await userAuthStore.register({
         email: currentEmail,
@@ -227,10 +269,18 @@ export function useRegister() {
         code: emailVerificationEnabled.value ? code.value : '',
         agreement_accepted: agreed.value,
         invite_code: inviteOnlyEnabled.value ? inviteCode.value.trim() : undefined,
+        captcha_payload: getRegisterCaptchaPayload(),
       })
       router.push('/me/orders')
     } catch (err: any) {
       error.value = err.message || t('auth.register.errors.registerFailed')
+      if (registerCaptchaEnabled.value && captchaProvider.value === 'image') {
+        registerImageCaptchaRef.value?.refresh()
+      }
+      if (registerCaptchaEnabled.value && captchaProvider.value === 'turnstile') {
+        registerTurnstileRef.value?.reset()
+        registerTurnstileToken.value = ''
+      }
     }
   }
 
@@ -262,9 +312,16 @@ export function useRegister() {
     turnstileToken,
     imageCaptchaRef,
     turnstileRef,
+    registerCaptchaPayload,
+    registerTurnstileToken,
+    registerImageCaptchaRef,
+    registerTurnstileRef,
     captchaProvider,
     sendCodeCaptchaEnabled,
+    registerCaptchaEnabled,
     turnstileSiteKey,
+    getRegisterCaptchaPayload,
+    handleRegisterCaptchaConfigStale,
     registrationEnabled,
     emailVerificationEnabled,
     emailDomainAllowlistEnabled,

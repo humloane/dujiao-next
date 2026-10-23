@@ -55,6 +55,7 @@ export type {
 // Re-export domain APIs
 export { productAPI, postAPI, bannerAPI, categoryAPI, memberLevelAPI } from './product'
 export { userAuthAPI, captchaAPI, configAPI } from './auth'
+export type { RegisterPayload } from './auth'
 export { userProfileAPI } from './user'
 export { userOrderAPI, guestOrderAPI, paymentAPI } from './order'
 export { walletAPI, giftCardAPI } from './wallet'

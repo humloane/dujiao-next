@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { userAuthAPI } from '../api'
+import { userAuthAPI, type RegisterPayload } from '../api'
 
 export const useUserAuthStore = defineStore('user-auth', () => {
     const router = useRouter()
@@ -55,7 +55,7 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         }
     }
 
-    const register = async (payload: any) => {
+    const register = async (payload: RegisterPayload) => {
         loading.value = true
         try {
             const response = await userAuthAPI.register(payload)

@@ -1,10 +1,19 @@
 import { api, userApi } from './client'
-import type { GoogleCredentialPayload, TelegramAuthPayload, TelegramMiniAppAuthPayload } from './types'
+import type { CaptchaPayload, GoogleCredentialPayload, TelegramAuthPayload, TelegramMiniAppAuthPayload } from './types'
 import { GOOGLE_REDIRECT_API_PATHS } from '../utils/googleRedirect'
+
+export interface RegisterPayload {
+    email: string
+    password: string
+    code?: string
+    invite_code?: string
+    agreement_accepted: boolean
+    captcha_payload?: CaptchaPayload
+}
 
 export const userAuthAPI = {
     sendVerifyCode: (data: any) => userApi.post('/auth/send-verify-code', data),
-    register: (data: any) => userApi.post('/auth/register', data),
+    register: (data: RegisterPayload) => userApi.post('/auth/register', data),
     login: (data: any) => userApi.post('/auth/login', data),
     verify2FA: (data: { challenge_token: string; code?: string; recovery_code?: string }) =>
         userApi.post('/auth/login/verify-2fa', data),

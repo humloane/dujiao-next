@@ -178,6 +178,7 @@ type CaptchaConfig struct {
 // CaptchaSceneConfig 验证码场景开关
 type CaptchaSceneConfig struct {
 	Login            bool `mapstructure:"login"`
+	Register         bool `mapstructure:"register"`
 	RegisterSendCode bool `mapstructure:"register_send_code"`
 	ResetSendCode    bool `mapstructure:"reset_send_code"`
 	GuestCreateOrder bool `mapstructure:"guest_create_order"`

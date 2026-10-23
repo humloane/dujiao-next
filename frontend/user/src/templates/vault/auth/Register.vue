@@ -168,6 +168,25 @@
               <AlertDescription>{{ error }}</AlertDescription>
             </Alert>
 
+            <div v-if="registerCaptchaEnabled">
+              <label class="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                <ShieldCheck class="h-3.5 w-3.5 opacity-70" /> {{ t('auth.register.registerCaptchaLabel') }}
+              </label>
+              <ImageCaptcha
+                v-if="captchaProvider === 'image'"
+                ref="registerImageCaptchaRef"
+                v-model="registerCaptchaPayload"
+                :disabled="userAuthStore.loading"
+                @config-stale="handleRegisterCaptchaConfigStale"
+              />
+              <TurnstileCaptcha
+                v-else-if="captchaProvider === 'turnstile'"
+                ref="registerTurnstileRef"
+                v-model="registerTurnstileToken"
+                :site-key="turnstileSiteKey"
+              />
+            </div>
+
             <Button type="submit" :disabled="userAuthStore.loading || !agreed" class="h-11 w-full rounded-full font-bold">
               <UserPlus v-if="!userAuthStore.loading" class="h-4 w-4" />
               {{ userAuthStore.loading ? t('auth.register.creating') : t('auth.register.create') }}
@@ -203,13 +222,16 @@ const {
   email, emailLocalPart, selectedEmailDomain, password, showPassword, code, agreed, inviteCode, inviteOnlyEnabled, loginLink,
   passwordStrength, error, sending, countdown,
   captchaPayload, turnstileToken, imageCaptchaRef, turnstileRef,
-  captchaProvider, sendCodeCaptchaEnabled, turnstileSiteKey,
+  registerCaptchaPayload, registerTurnstileToken, registerImageCaptchaRef, registerTurnstileRef,
+  captchaProvider, sendCodeCaptchaEnabled, registerCaptchaEnabled, turnstileSiteKey,
   registrationEnabled, emailVerificationEnabled,
   emailDomainAllowlistEnabled, allowedEmailDomains, allowedEmailDomainsText, emailDomainSelectionRequired,
-  touchRegistrationEmail, formValidation, handleCaptchaConfigStale, handleSendCode, handleRegister,
+  touchRegistrationEmail, formValidation, handleCaptchaConfigStale, handleRegisterCaptchaConfigStale, handleSendCode, handleRegister,
 } = useRegister()
 
-// imageCaptchaRef / turnstileRef 仅通过字符串模板 ref 绑定，显式标记避免 noUnusedLocals 误报。
+// refs 仅通过字符串模板 ref 绑定，显式标记避免 noUnusedLocals 误报。
 void imageCaptchaRef
 void turnstileRef
+void registerImageCaptchaRef
+void registerTurnstileRef
 </script>

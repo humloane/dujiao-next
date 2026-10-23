@@ -1038,6 +1038,7 @@
       "passwordLabel": "密码",
       "passwordPlaceholder": "设置登录密码",
       "codeLabel": "验证码",
+      "registerCaptchaLabel": "注册验证",
       "codePlaceholder": "输入邮箱验证码",
       "sendCode": "发送验证码",
       "create": "创建账号",

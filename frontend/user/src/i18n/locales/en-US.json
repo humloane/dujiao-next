@@ -1086,6 +1086,7 @@
       "passwordLabel": "Password",
       "passwordPlaceholder": "Set login password",
       "codeLabel": "Verification code",
+      "registerCaptchaLabel": "Registration verification",
       "codePlaceholder": "Enter email code",
       "sendCode": "Send code",
       "create": "Create account",

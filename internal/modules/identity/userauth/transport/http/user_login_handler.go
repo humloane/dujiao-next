@@ -55,11 +55,12 @@ func NewUserLoginHandler(settings UserLoginSettings, auth UserLoginAuth, captcha
 
 // UserRegisterRequest 注册请求。
 type UserRegisterRequest struct {
-	Email             string `json:"email" binding:"required"`
-	Password          string `json:"password" binding:"required"`
-	Code              string `json:"code"`
-	InviteCode        string `json:"invite_code"`
-	AgreementAccepted bool   `json:"agreement_accepted"`
+	Email             string                            `json:"email" binding:"required"`
+	Password          string                            `json:"password" binding:"required"`
+	Code              string                            `json:"code"`
+	InviteCode        string                            `json:"invite_code"`
+	AgreementAccepted bool                              `json:"agreement_accepted"`
+	CaptchaPayload    captchahttp.CaptchaPayloadRequest `json:"captcha_payload"`
 }
 
 // UserLoginRequest 登录请求。
@@ -98,6 +99,23 @@ func (h *UserLoginHandler) UserRegister(c *gin.Context) {
 	if err != nil {
 		ginutil.RespondError(c, response.CodeInternal, "error.register_failed", err)
 		return
+	}
+
+	// 注册提交验证必须在创建用户/消耗邮箱验证码之前完成。
+	if h.captcha != nil {
+		if captchaErr := h.captcha.Verify(constants.CaptchaSceneRegister, req.CaptchaPayload, c.ClientIP()); captchaErr != nil {
+			switch {
+			case errors.Is(captchaErr, captcha.ErrRequired):
+				ginutil.RespondError(c, response.CodeBadRequest, "error.captcha_required", nil)
+			case errors.Is(captchaErr, captcha.ErrInvalid):
+				ginutil.RespondError(c, response.CodeBadRequest, "error.captcha_invalid", nil)
+			case errors.Is(captchaErr, captcha.ErrConfigInvalid):
+				ginutil.RespondError(c, response.CodeInternal, "error.captcha_config_invalid", captchaErr)
+			default:
+				ginutil.RespondError(c, response.CodeInternal, "error.captcha_verify_failed", captchaErr)
+			}
+			return
+		}
 	}
 
 	user, token, expiresAt, err := h.auth.Register(c.Request.Context(), req.Email, req.Password, req.Code, req.InviteCode, req.AgreementAccepted, emailVerificationEnabled)
