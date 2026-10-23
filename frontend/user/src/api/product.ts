@@ -8,6 +8,7 @@ export const productAPI = {
 
 export const postAPI = {
     list: (params?: any) => api.get('/public/posts', { params }),
+    categories: () => api.get('/public/post-categories'),
     detail: (slug: string, options?: Record<string, any>) => api.get(`/public/posts/${slug}`, options),
 }
 

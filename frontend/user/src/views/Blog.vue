@@ -24,6 +24,32 @@
         </div>
       </div>
 
+      <!-- Category Filter -->
+      <div v-if="categories.length > 0" class="-mx-4 mb-10 overflow-x-auto px-4 pb-1">
+        <div class="mx-auto flex min-w-max items-center justify-center gap-2">
+          <button
+            type="button"
+            class="shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors"
+            :class="categoryID === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground'"
+            :aria-pressed="categoryID === null"
+            @click="selectCategory(null)"
+          >
+            {{ t('blog.allCategories') }}
+          </button>
+          <button
+            v-for="category in categories"
+            :key="category.id"
+            type="button"
+            class="shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors"
+            :class="categoryID === category.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground'"
+            :aria-pressed="categoryID === category.id"
+            @click="selectCategory(category.id)"
+          >
+            {{ getLocalizedText(category.name) || category.slug }}
+          </button>
+        </div>
+      </div>
+
       <!-- Loading State -->
       <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div v-for="i in 6" :key="i"
@@ -103,7 +129,7 @@ import { usePostList } from '../composables/usePostList'
 const { t } = useI18n()
 
 const {
-  loading, posts, currentPage, totalPages, searchKeyword,
+  loading, posts, currentPage, totalPages, searchKeyword, categories, categoryID, selectCategory,
   getLocalizedText, getPostTitle, getPostSummary, formatDate, goToPost, changePage,
 } = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog', description: () => t('blog.seoDescription') })
 </script>

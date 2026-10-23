@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label'
 import { useAdminAuthStore } from '@/stores/auth'
 import { adminAPI, type CaptchaPayload } from '@/api/admin'
 import { applySiteIcon } from '@/utils/favicon'
+import { resolveAdminBrandName } from '@/utils/brand'
 import ImageCaptcha from '@/components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '@/components/captcha/TurnstileCaptcha.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const authStore = useAdminAuthStore()
 
@@ -166,13 +167,12 @@ const loadCaptchaConfig = async () => {
     const payload = res.data?.data as any
     applySiteIcon(payload?.brand?.site_icon)
     captchaConfig.value = payload?.captcha || null
-    const site = payload?.brand?.site_name
-    if (typeof site === 'string' && site.trim()) {
-      siteName.value = site.trim()
-      document.title = `${siteName.value} Admin`
-    }
+    const resolvedBrand = resolveAdminBrandName(payload, String(locale.value || ''))
+    siteName.value = resolvedBrand
+    document.title = resolvedBrand ? `${resolvedBrand} Admin` : 'Admin'
   } catch {
     captchaConfig.value = null
+    document.title = 'Admin'
   } finally {
     loadingCaptcha.value = false
   }

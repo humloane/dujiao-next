@@ -63,12 +63,38 @@ export function usePostList(
   const totalPages = ref(0)
   const searchKeyword = ref('')
   const categoryID = ref<number | null>(null)
+  const categories = ref<Array<{ id: number; parent_id?: number; slug?: string; name?: unknown; icon?: string }>>([])
 
   const readCategoryFromRoute = () => {
     const parsed = Number(route.query.category_id)
     categoryID.value = Number.isFinite(parsed) && parsed > 0 ? parsed : null
   }
   readCategoryFromRoute()
+
+  const loadCategories = async () => {
+    if (type !== 'blog') return
+    try {
+      const response = await postAPI.categories()
+      categories.value = Array.isArray(response.data.data) ? response.data.data : []
+    } catch {
+      // 分类失败不阻塞文章列表，也不弹错误提示。
+      categories.value = []
+    }
+  }
+
+  const selectCategory = (id: number | null) => {
+    const next = id && id > 0 ? id : null
+    const currentParam = String(route.query.category_id || '')
+    if (next === categoryID.value && currentParam === (next ? String(next) : '')) return
+    categoryID.value = next
+    const query = { ...route.query }
+    if (next) {
+      query.category_id = String(next)
+    } else {
+      delete query.category_id
+    }
+    router.replace({ query })
+  }
 
   const getLocalizedText = (jsonData: any) => {
     if (!jsonData) return ''
@@ -144,7 +170,8 @@ export function usePostList(
   watch(() => route.query.category_id, readCategoryFromRoute)
 
   onMounted(() => {
-    loadPosts()
+    void loadCategories()
+    void loadPosts()
   })
 
   onUnmounted(() => {
@@ -159,6 +186,8 @@ export function usePostList(
     total,
     searchKeyword,
     categoryID,
+    categories,
+    selectCategory,
     getLocalizedText,
     getPostTitle,
     getPostSummary,

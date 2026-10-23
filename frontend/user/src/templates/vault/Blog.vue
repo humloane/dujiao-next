@@ -11,6 +11,32 @@
       <Button v-if="searchKeyword" type="button" variant="ghost" size="sm" class="absolute right-1.5 top-1/2 h-8 -translate-y-1/2 rounded-full" @click="searchKeyword = ''">{{ t('blog.searchClear') }}</Button>
     </div>
 
+    <!-- Category filter: single row, horizontally scrollable on mobile -->
+    <div v-if="categories.length > 0" class="-mx-1 mb-6 overflow-x-auto px-1 pb-1">
+      <div class="flex w-max items-center gap-2">
+        <button
+          type="button"
+          class="shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition"
+          :class="categoryID === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-hairline-strong hover:text-foreground'"
+          :aria-pressed="categoryID === null"
+          @click="selectCategory(null)"
+        >
+          {{ t('blog.allCategories') }}
+        </button>
+        <button
+          v-for="category in categories"
+          :key="category.id"
+          type="button"
+          class="shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition"
+          :class="categoryID === category.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-hairline-strong hover:text-foreground'"
+          :aria-pressed="categoryID === category.id"
+          @click="selectCategory(category.id)"
+        >
+          {{ getLocalizedText(category.name) || category.slug }}
+        </button>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
       <div v-for="i in 6" :key="i" class="h-[280px] rounded-xl border bg-card opacity-50"></div>
@@ -67,7 +93,7 @@ import { usePostList } from '../../composables/usePostList'
 const { t } = useI18n()
 
 const {
-  loading, posts, currentPage, totalPages, searchKeyword,
+  loading, posts, currentPage, totalPages, searchKeyword, categories, categoryID, selectCategory,
   getLocalizedText, getPostTitle, getPostSummary, formatDate, changePage,
 } = usePostList('blog', { title: () => t('nav.blog'), canonicalPath: '/blog', description: () => t('blog.seoDescription') })
 </script>

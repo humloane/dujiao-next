@@ -59,6 +59,7 @@ import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import { applySiteIcon } from '@/utils/favicon'
 import { adminUrl } from '@/utils/adminBase'
+import { brandInitials, resolveAdminBrandName } from '@/utils/brand'
 
 interface NavGroupItem {
   label: string
@@ -110,6 +111,7 @@ const isDark = ref(false)
 const appVersion = ref('')
 const siteUrl = ref('')
 const siteName = ref('')
+const collapsedBrandName = computed(() => brandInitials(siteName.value || t('admin.brand')))
 
 // 版本检测与一键升级的完整交互都在 SystemUpdateDialog 内，这里只负责开关
 const updateCheckOpen = ref(false)
@@ -740,9 +742,9 @@ onMounted(() => {
     if (typeof url === 'string' && url) {
       siteUrl.value = url
     }
-    const name = payload?.brand?.site_name
-    if (typeof name === 'string' && name.trim()) {
-      siteName.value = name.trim()
+    const name = resolveAdminBrandName(payload, String(locale.value || ''))
+    if (name) {
+      siteName.value = name
     }
   }).catch(() => {})
 })
@@ -765,7 +767,7 @@ onBeforeUnmount(() => {
             {{ siteName || t('admin.brand') }}
           </div>
           <div v-if="!sidebarCollapsed" class="text-xs text-muted-foreground mt-1">{{ t('admin.layout.controlRoom') }}</div>
-          <div v-if="sidebarCollapsed" class="text-lg font-semibold tracking-tight text-center">D&J</div>
+          <div v-if="sidebarCollapsed" class="text-lg font-semibold tracking-tight text-center">{{ collapsedBrandName }}</div>
         </div>
         <div v-if="!sidebarCollapsed" class="px-3 pb-2">
           <Input

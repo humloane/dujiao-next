@@ -118,7 +118,8 @@ func (h *PublicHandler) GetProducts(c *gin.Context) {
 		lineType = c.Query("line_type")
 	}
 	filter := productcontract.PublicFilter{
-		Country:  c.Query("country"),
+		Country: c.Query("country"),
+		// scenario 仅为旧客户端兼容保留；前台已移除场景筛选，不要在新代码中使用。
 		Scenario: c.Query("scenario"),
 		IPType:   c.Query("ip_type"),
 		LineType: lineType,

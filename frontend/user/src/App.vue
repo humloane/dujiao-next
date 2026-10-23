@@ -129,7 +129,7 @@ onUnmounted(() => {
 }
 
 /* Chatwoot 通过 site_config.scripts 注入，气泡容器不在 Vue 模板里。
-   推荐同时在 Chatwoot 初始化参数里设置 position: 'left'；这里只做移动端兜底。 */
+   推荐同时在 Chatwoot 初始化参数里设置 position: 'right'；这里只做移动端兜底。 */
 @media (max-width: 640px) {
   #chatwoot-container {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 72px) !important;

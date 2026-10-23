@@ -141,6 +141,7 @@ func (s *Service) collectURLs(ctx context.Context, baseURL string) ([]domain.URL
 	entries := make([]domain.URL, 0, 64)
 
 	// 1. 静态页面
+	// 新增 LP 必须同步这里；当前落地页来自 static lpcontent，sitemap 没有配置/数据库读取入口。
 	staticPages := []struct {
 		Path       string
 		ChangeFreq string

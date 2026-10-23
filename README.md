@@ -258,6 +258,9 @@ go run ./cmd/backfill-product-meta                 # dry-run, prints planned cha
 go run ./cmd/backfill-product-meta -dry-run=false  # apply
 ```
 
+`scenario` remains accepted by the public product list API for older clients only; the
+storefront no longer exposes scenario filters and new code should not depend on it.
+
 Backfill multilingual SEO copy for products/categories, assign post categories and
 clean outdated region copy in notices/banners/site config with:
 
@@ -280,6 +283,13 @@ go run ./cmd/dedupe-product-content -apply           # apply
 go run ./cmd/dedupe-product-content -migrate         # dry-run + allow schema migration
 go run ./cmd/dedupe-product-content -report=dedupe.csv
 ```
+
+### Release checklist
+
+- Run `scripts/optimize-images.sh uploads --apply` after deploy or after bulk image uploads
+  (image variants are not generated automatically).
+- When adding or removing a landing page, update the hard-coded LP list in
+  `internal/modules/sitemap/application/service.go` and rebuild/restart the binary.
 
 ### Images and security headers
 

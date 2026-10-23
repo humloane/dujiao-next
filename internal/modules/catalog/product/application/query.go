@@ -141,6 +141,7 @@ func buildPublicListFilter(input productcontract.PublicFilter) productcontract.L
 		IPType:   productdomain.NormalizeIPType(input.IPType),
 		LineType: productdomain.NormalizeLineType(input.LineType),
 	}
+	// scenario 仅为旧客户端兼容保留；前台已移除场景筛选，不要在新代码中使用。
 	if scenarios := productdomain.NormalizeScenarios([]string{input.Scenario}); len(scenarios) > 0 {
 		filter.Scenario = scenarios[0]
 	}

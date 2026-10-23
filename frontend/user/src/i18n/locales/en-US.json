@@ -245,6 +245,7 @@
   },
   "blog": {
     "subtitle": "Latest articles and updates",
+    "allCategories": "All categories",
     "seoDescription": "Guides on cross-border networking, static residential IPs and live operations: route selection, node maintenance, device setup, payment and delivery.",
     "readMore": "Read More",
     "empty": "No articles",
