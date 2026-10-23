@@ -95,6 +95,10 @@
   "checkoutSteps": {
     "label": "購買流程進度"
   },
+  "chatwoot": {
+    "online": "線上客服",
+    "consult": "諮詢客服"
+  },
   "footer": {
     "description": "專業的線上工作室，為您提供優質的產品和服務。",
     "quickLinks": "快速連結",

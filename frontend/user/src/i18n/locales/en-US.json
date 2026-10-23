@@ -95,6 +95,10 @@
   "checkoutSteps": {
     "label": "Checkout progress"
   },
+  "chatwoot": {
+    "online": "Online Support",
+    "consult": "Ask Support"
+  },
   "footer": {
     "description": "Professional online studio providing quality products and services.",
     "quickLinks": "Quick Links",

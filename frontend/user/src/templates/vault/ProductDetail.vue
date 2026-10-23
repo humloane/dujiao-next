@@ -179,6 +179,16 @@
             </template>
           </div>
 
+          <Button
+            type="button"
+            variant="outline"
+            class="mt-3 h-11 w-full rounded-full text-sm font-bold"
+            @click="openChatwoot"
+          >
+            <MessageCircle class="h-4 w-4" />
+            {{ t('chatwoot.consult') }}
+          </Button>
+
           <div v-if="deliveryReassurance" class="mt-4 flex items-center gap-3 rounded-md bg-[color:var(--teal-soft)] px-[18px] py-3.5 text-[color:var(--teal-strong)]">
             <TicketCheck class="h-[22px] w-[22px] flex-none" />
             <span class="text-sm font-semibold">{{ deliveryReassurance }}</span>
@@ -250,11 +260,12 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  AlertCircle, ArrowLeft, ChevronRight, Lock, Minus, Package, Pencil, Plus,
+  AlertCircle, ArrowLeft, ChevronRight, Lock, MessageCircle, Minus, Package, Pencil, Plus,
   RotateCw, ShoppingCart, Tag, TicketCheck, UserPlus, Zap,
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { processHtmlForDisplay } from '../../utils/content'
+import { openChatwoot } from '../../utils/chatwoot'
 import { useProductDetail } from '../../composables/useProductDetail'
 import VaultProductMobileBar from './components/VaultProductMobileBar.vue'
 import ProductMetaInfo from '../../components/ProductMetaInfo.vue'

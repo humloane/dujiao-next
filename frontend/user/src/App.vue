@@ -38,24 +38,27 @@
     </template>
 
     <Loading :loading="appStore.loading" />
+    <ChatwootFab />
     <Toast />
     <ConfirmDialog />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onUnmounted, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from './stores/app'
 import { getActiveTemplate } from './templates/registry'
 import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
+import ChatwootFab from './components/ChatwootFab.vue'
 import Loading from './components/Loading.vue'
 import Toast from './components/Toast.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import BackToTop from './components/BackToTop.vue'
 import MobileBottomNav from './components/MobileBottomNav.vue'
+import { hideNativeChatwootLauncher, openChatwoot } from './utils/chatwoot'
 
 // vault 外壳按需加载，classic 用户不会拉取其 chunk/样式
 const VaultLayout = defineAsyncComponent(() => import('./templates/vault/layout/VaultLayout.vue'))
@@ -74,8 +77,38 @@ const chatwootHidden = computed(() => route.path.startsWith('/checkout') || rout
 watch(chatwootHidden, (hidden) => {
   document.body.classList.toggle('chatwoot-hidden', hidden)
 }, { immediate: true })
+
+// v-html 商品内容/运营位里可以用 <a href="#chatwoot" data-chatwoot> 打开客服。
+const handleChatwootTrigger = (event: MouseEvent) => {
+  const target = event.target as Element | null
+  if (!target || typeof target.closest !== 'function') return
+  const trigger = target.closest('a[href="#chatwoot"], [data-chatwoot]')
+  if (!trigger) return
+  event.preventDefault()
+  openChatwoot()
+}
+
+// Chatwoot 脚本异步加载：确认可用后再隐藏原生气泡，避免加载前把唯一入口藏掉。
+let nativeLauncherTimer: number | undefined
+let nativeLauncherAttempts = 0
+const hideNativeLauncherWhenReady = () => {
+  if (hideNativeChatwootLauncher()) return
+  nativeLauncherAttempts += 1
+  if (nativeLauncherAttempts <= 30) {
+    nativeLauncherTimer = window.setTimeout(hideNativeLauncherWhenReady, 500)
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleChatwootTrigger)
+  hideNativeLauncherWhenReady()
+})
+
 onUnmounted(() => {
+  document.removeEventListener('click', handleChatwootTrigger)
+  if (nativeLauncherTimer) window.clearTimeout(nativeLauncherTimer)
   document.body.classList.remove('chatwoot-hidden')
+  document.body.classList.remove('chatwoot-native-hidden')
 })
 </script>
 
@@ -103,6 +136,23 @@ onUnmounted(() => {
 }
 body.chatwoot-hidden #chatwoot-container,
 body.chatwoot-hidden .woot-widget-bubble {
+  display: none !important;
+}
+
+/* 自定义客服按钮固定右下角；把“回到顶部”上移，避免两个悬浮按钮重叠。 */
+@media (min-width: 768px) {
+  .back-to-top {
+    bottom: 6rem !important;
+  }
+}
+@media (max-width: 767px) {
+  .back-to-top {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px) + 5rem) !important;
+  }
+}
+
+/* 原生 launcher 只在 Chatwoot 确认加载后被隐藏；保留关闭按钮（woot--close）。 */
+body.chatwoot-native-hidden .woot-widget-bubble:not(.woot--close) {
   display: none !important;
 }
 </style>

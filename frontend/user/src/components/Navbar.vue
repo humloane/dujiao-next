@@ -78,6 +78,12 @@
           {{ t('navbar.logout') }}
         </Button>
         <!-- Theme Switcher -->
+        <Button variant="ghost" size="sm"
+          class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex"
+          @click="openChatwoot()">
+          <Headphones class="w-4 h-4 shrink-0 opacity-70" />
+          {{ t('chatwoot.online') }}
+        </Button>
         <Button variant="ghost" size="icon" class="text-muted-foreground" @click="toggleTheme">
           <Sun v-if="theme === 'dark'" class="w-4 h-4" />
           <Moon v-else class="w-4 h-4" />
@@ -203,6 +209,15 @@
           </a>
 
           <button
+            type="button"
+            class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-foreground"
+            @click="openChatwoot(); showMobileMenu = false"
+          >
+            <Headphones class="h-5 w-5 shrink-0 opacity-70" />
+            {{ t('chatwoot.online') }}
+          </button>
+
+          <button
             v-if="userAuthStore.isAuthenticated"
             type="button"
             class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-destructive"
@@ -245,8 +260,9 @@ import { getImageUrl } from '../utils/image'
 import { useNavConfig } from '../composables/useNavConfig'
 import {
   Sun, Moon, ShoppingCart, ClipboardList, LogIn, User, LogOut, Languages,
-  EllipsisVertical, X, Send,
+  EllipsisVertical, X, Send, Headphones,
 } from 'lucide-vue-next'
+import { openChatwoot } from '../utils/chatwoot'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 

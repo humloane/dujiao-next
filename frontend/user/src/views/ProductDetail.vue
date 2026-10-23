@@ -315,6 +315,10 @@
                 <div v-if="deliveryReassurance" class="rounded-xl bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
                   {{ deliveryReassurance }}
                 </div>
+                <Button type="button" variant="outline" class="w-full h-11 font-bold" @click="openChatwoot">
+                  <MessageCircle class="h-4 w-4" />
+                  {{ t('chatwoot.consult') }}
+                </Button>
 
               </div>
             </div>
@@ -418,9 +422,10 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Lock, Minus, Pencil, Plus, RotateCw, Tag, UserPlus, Zap } from 'lucide-vue-next'
+import { ArrowLeft, Lock, MessageCircle, Minus, Pencil, Plus, RotateCw, Tag, UserPlus, Zap } from 'lucide-vue-next'
 import { getImageUrl } from '../utils/image'
 import { processHtmlForDisplay } from '../utils/content'
+import { openChatwoot } from '../utils/chatwoot'
 import { useProductDetail } from '../composables/useProductDetail'
 import ProductImageGallery from '../components/product/ProductImageGallery.vue'
 import ProductMetaInfo from '../components/ProductMetaInfo.vue'

@@ -81,6 +81,12 @@
               <Headphones class="w-5 h-5 text-violet-400" />
               <span>{{ t('footer.supportUrl') }}</span>
             </a>
+            <button type="button"
+              class="flex w-full items-center space-x-3 text-sm hover:text-gray-900 dark:hover:text-white transition-colors p-3 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10"
+              @click="openChatwoot">
+              <Headphones class="w-5 h-5 text-violet-400" />
+              <span>{{ t('chatwoot.online') }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -119,6 +125,7 @@ import { Home, LayoutGrid, Newspaper, Info, Mail, Headphones } from 'lucide-vue-
 import { useAppStore } from '../stores/app'
 import { getImageUrl } from '../utils/image'
 import { getLocalizedText } from '../utils/resellerSiteConfig'
+import { openChatwoot } from '../utils/chatwoot'
 
 const { t } = useI18n()
 const appStore = useAppStore()
