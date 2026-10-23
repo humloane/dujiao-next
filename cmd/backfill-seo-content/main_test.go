@@ -1,12 +1,17 @@
 package main
 
 import (
+	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	productdomain "github.com/dujiao-next/internal/modules/catalog/product/domain"
 	contentdomain "github.com/dujiao-next/internal/modules/content/domain"
+	"github.com/dujiao-next/internal/platform/database/gormdb"
 	"github.com/dujiao-next/internal/shared/jsonmap"
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
 )
 
 func TestProductSEOTitle(t *testing.T) {
@@ -83,4 +88,48 @@ func TestReplaceRegionPhrases(t *testing.T) {
 	if !strings.Contains(got, "全球 16 个地区") {
 		t.Fatalf("unexpected replacement: %q", got)
 	}
+}
+
+func TestMigrateOnlyWhenRequested(t *testing.T) {
+	oldDB := gormdb.DB
+	defer func() { gormdb.DB = oldDB }()
+
+	db, err := gorm.Open(sqlite.Open(filepath.Join(t.TempDir(), "schema.db")), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	gormdb.DB = db
+
+	if err := migrateIfRequested(false, false); err != nil {
+		t.Fatalf("dry-run should not migrate: %v", err)
+	}
+	if db.Migrator().HasTable("products") {
+		t.Fatal("dry-run created products table")
+	}
+
+	if err := migrateIfRequested(true, false); err != nil {
+		t.Fatalf("apply migration failed: %v", err)
+	}
+	if !db.Migrator().HasTable("products") {
+		t.Fatal("apply did not create products table")
+	}
+}
+
+func TestFailureExitCode(t *testing.T) {
+	operationErrors = []error{errors.New("update failed")}
+	if got := failureExitCode(true, false); got != 1 {
+		t.Fatalf("apply failure exit = %d, want 1", got)
+	}
+	if got := failureExitCode(false, false); got != 1 {
+		t.Fatalf("ordinary dry-run failure exit = %d, want 1", got)
+	}
+
+	operationErrors = []error{errors.New("no such table: products")}
+	if got := failureExitCode(false, false); got != 2 {
+		t.Fatalf("missing schema dry-run exit = %d, want 2", got)
+	}
+	if got := failureExitCode(false, true); got != 1 {
+		t.Fatalf("migrate dry-run failure exit = %d, want 1", got)
+	}
+	operationErrors = nil
 }

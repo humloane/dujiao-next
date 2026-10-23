@@ -9,6 +9,7 @@ package main
 
 import (
 	"encoding/csv"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,57 @@ import (
 )
 
 var locales = []string{"zh-CN", "zh-TW", "en-US"}
+var operationErrors []error
+
+func recordOperationError(err error) {
+	if err == nil {
+		return
+	}
+	operationErrors = append(operationErrors, err)
+	fmt.Fprintf(os.Stderr, "%v\n", err)
+}
+
+func migrateIfRequested(apply, migrate bool) error {
+	if !apply && !migrate {
+		return nil
+	}
+	return databasemigrations.AutoMigrate()
+}
+
+func isMissingSchemaError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "no such table") ||
+		strings.Contains(message, "no such column") ||
+		strings.Contains(message, "does not exist") ||
+		strings.Contains(message, "undefined column")
+}
+
+func failureExitCode(apply, migrate bool) int {
+	if len(operationErrors) == 0 {
+		return 0
+	}
+	if !apply && !migrate {
+		for _, err := range operationErrors {
+			if isMissingSchemaError(err) {
+				return 2
+			}
+		}
+	}
+	return 1
+}
+
+func printOperationErrors() {
+	if len(operationErrors) == 0 {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "\n共 %d 项操作失败：\n", len(operationErrors))
+	for _, err := range operationErrors {
+		fmt.Fprintf(os.Stderr, "- %v\n", err)
+	}
+}
 
 // 只处理这几类被重复写入的区块，避免误删其它正文。
 var dedupeSectionLabels = map[string]struct{}{
@@ -51,6 +103,7 @@ type change struct {
 
 func main() {
 	apply := flag.Bool("apply", false, "写入数据库；默认只做 dry-run")
+	migrate := flag.Bool("migrate", false, "允许执行数据库迁移；默认 dry-run 不迁移")
 	reportPath := flag.String("report", "", "把变更清单写入 CSV 路径（可选）")
 	flag.Parse()
 
@@ -63,11 +116,26 @@ func main() {
 	}, cfg.Server.Mode); err != nil {
 		fatalf("init db: %v", err)
 	}
-	if err := databasemigrations.AutoMigrate(); err != nil {
+	if err := migrateIfRequested(*apply, *migrate); err != nil {
 		fatalf("migrate db: %v", err)
 	}
 
-	changes := dedupeProducts(gormdb.DB, *apply)
+	operationErrors = nil
+	var changes []change
+	if *apply {
+		err := gormdb.DB.Transaction(func(tx *gorm.DB) error {
+			changes = dedupeProducts(tx, true)
+			if len(operationErrors) > 0 {
+				return errors.Join(operationErrors...)
+			}
+			return nil
+		})
+		if err != nil && len(operationErrors) == 0 {
+			recordOperationError(err)
+		}
+	} else {
+		changes = dedupeProducts(gormdb.DB, false)
+	}
 	fmt.Printf("\n共 %d 项变更（apply=%v）\n", len(changes), *apply)
 	for i, item := range changes {
 		if i >= 40 {
@@ -82,6 +150,18 @@ func main() {
 		}
 		fmt.Printf("变更清单已写入 %s\n", *reportPath)
 	}
+	printOperationErrors()
+	if len(operationErrors) > 0 {
+		if !*apply && !*migrate {
+			for _, err := range operationErrors {
+				if isMissingSchemaError(err) {
+					fmt.Fprintln(os.Stderr, "数据库表/字段不存在；dry-run 不自动迁移，请确认备份后加 -migrate 或 -apply。")
+					break
+				}
+			}
+		}
+		os.Exit(failureExitCode(*apply, *migrate))
+	}
 	if !*apply {
 		fmt.Println("\n这是 dry-run；确认无误后加 -apply 执行。")
 	}
@@ -91,7 +171,7 @@ func dedupeProducts(db *gorm.DB, apply bool) []change {
 	store := productgormstore.NewProductStore(db)
 	products, _, err := store.List(productcontract.ListFilter{Page: 1, PageSize: 100000})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list products: %v\n", err)
+		recordOperationError(fmt.Errorf("list products: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(products))
@@ -116,7 +196,7 @@ func dedupeProducts(db *gorm.DB, apply bool) []change {
 			continue
 		}
 		if err := store.QuickUpdate(strconv.FormatUint(uint64(product.ID), 10), map[string]interface{}{"content_json": jsonmap.JSON(toAnyMap(contents))}); err != nil {
-			fmt.Fprintf(os.Stderr, "update product %s: %v\n", product.Slug, err)
+			recordOperationError(fmt.Errorf("update product %s: %w", product.Slug, err))
 		}
 	}
 	return changes

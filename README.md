@@ -262,19 +262,22 @@ Backfill multilingual SEO copy for products/categories, assign post categories a
 clean outdated region copy in notices/banners/site config with:
 
 ```bash
-go run ./cmd/backfill-seo-content                     # dry-run
+go run ./cmd/backfill-seo-content                     # dry-run (read-only)
 go run ./cmd/backfill-seo-content -apply              # apply
+go run ./cmd/backfill-seo-content -migrate             # dry-run + allow schema migration
 go run ./cmd/backfill-seo-content -report=seo.csv     # export the full change list
 ```
 
 > `seo_meta.title` 只写页面主题，不包含品牌；前台会自动追加一次站点名。
-> The command is safe to re-run (idempotent).
+> The command is safe to re-run (idempotent). Dry-run never runs AutoMigrate unless `-migrate` is passed;
+> if the schema is missing, it exits with code 2 instead of repairing it automatically.
 
 Clean duplicated product content blocks (`核心亮点` / `适用场景` / `交付说明`) with:
 
 ```bash
-go run ./cmd/dedupe-product-content                  # dry-run
+go run ./cmd/dedupe-product-content                  # dry-run (read-only)
 go run ./cmd/dedupe-product-content -apply           # apply
+go run ./cmd/dedupe-product-content -migrate         # dry-run + allow schema migration
 go run ./cmd/dedupe-product-content -report=dedupe.csv
 ```
 

@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -37,6 +38,58 @@ import (
 )
 
 var locales = []string{"zh-CN", "zh-TW", "en-US"}
+
+var operationErrors []error
+
+func recordOperationError(err error) {
+	if err == nil {
+		return
+	}
+	operationErrors = append(operationErrors, err)
+	fmt.Fprintf(os.Stderr, "%v\n", err)
+}
+
+func migrateIfRequested(apply, migrate bool) error {
+	if !apply && !migrate {
+		return nil
+	}
+	return databasemigrations.AutoMigrate()
+}
+
+func isMissingSchemaError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "no such table") ||
+		strings.Contains(message, "no such column") ||
+		strings.Contains(message, "does not exist") ||
+		strings.Contains(message, "undefined column")
+}
+
+func failureExitCode(apply, migrate bool) int {
+	if len(operationErrors) == 0 {
+		return 0
+	}
+	if !apply && !migrate {
+		for _, err := range operationErrors {
+			if isMissingSchemaError(err) {
+				return 2
+			}
+		}
+	}
+	return 1
+}
+
+func printOperationErrors() {
+	if len(operationErrors) == 0 {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "\n共 %d 项操作失败：\n", len(operationErrors))
+	for _, err := range operationErrors {
+		fmt.Fprintf(os.Stderr, "- %v\n", err)
+	}
+}
 
 // 在售的 16 个地区 + 英国（GB）。
 var regionNames = map[string][3]string{
@@ -85,6 +138,7 @@ type change struct {
 
 func main() {
 	apply := flag.Bool("apply", false, "写入数据库；默认只做 dry-run")
+	migrate := flag.Bool("migrate", false, "允许执行数据库迁移；默认 dry-run 不迁移")
 	reportPath := flag.String("report", "", "把变更清单写入 CSV 路径（可选）")
 	flag.Parse()
 
@@ -97,7 +151,7 @@ func main() {
 	}, cfg.Server.Mode); err != nil {
 		fatalf("init db: %v", err)
 	}
-	if err := databasemigrations.AutoMigrate(); err != nil {
+	if err := migrateIfRequested(*apply, *migrate); err != nil {
 		fatalf("migrate db: %v", err)
 	}
 	db := gormdb.DB
@@ -105,23 +159,44 @@ func main() {
 	settingsStore := settingsgormstore.New(db)
 	siteConfig, _, err := settingsStore.GetByKey(constants.SettingKeySiteConfig)
 	if err != nil {
-		fatalf("load site config: %v", err)
+		recordOperationError(fmt.Errorf("load site config: %w", err))
+		printOperationErrors()
+		os.Exit(failureExitCode(*apply, *migrate))
 	}
 	brandByLocale := map[string]string{}
 	for _, loc := range locales {
 		brandByLocale[loc] = seoBrand(siteConfig, loc)
 	}
 
-	changes := make([]change, 0, 128)
 	ctx := context.Background()
+	operationErrors = nil
+	run := func(tx *gorm.DB) []change {
+		changes := make([]change, 0, 128)
+		changes = append(changes, backfillProducts(tx, brandByLocale, *apply)...)
+		changes = append(changes, backfillCategories(tx, brandByLocale, *apply)...)
+		changes = append(changes, ensurePostCategories(tx, ctx, *apply)...)
+		changes = append(changes, assignPostCategories(tx, ctx, *apply)...)
+		changes = append(changes, cleanNotices(tx, ctx, *apply)...)
+		changes = append(changes, cleanBanners(tx, ctx, *apply)...)
+		changes = append(changes, cleanSiteCopy(settingsgormstore.New(tx), siteConfig, *apply)...)
+		return changes
+	}
 
-	changes = append(changes, backfillProducts(db, brandByLocale, *apply)...)
-	changes = append(changes, backfillCategories(db, brandByLocale, *apply)...)
-	changes = append(changes, ensurePostCategories(db, ctx, *apply)...)
-	changes = append(changes, assignPostCategories(db, ctx, *apply)...)
-	changes = append(changes, cleanNotices(db, ctx, *apply)...)
-	changes = append(changes, cleanBanners(db, ctx, *apply)...)
-	changes = append(changes, cleanSiteCopy(settingsStore, siteConfig, *apply)...)
+	var changes []change
+	if *apply {
+		err := db.Transaction(func(tx *gorm.DB) error {
+			changes = run(tx)
+			if len(operationErrors) > 0 {
+				return errors.Join(operationErrors...)
+			}
+			return nil
+		})
+		if err != nil && len(operationErrors) == 0 {
+			recordOperationError(err)
+		}
+	} else {
+		changes = run(db)
+	}
 
 	fmt.Printf("\n共 %d 项变更（apply=%v）\n", len(changes), *apply)
 	printChanges(changes)
@@ -130,6 +205,18 @@ func main() {
 			fatalf("write report: %v", err)
 		}
 		fmt.Printf("变更清单已写入 %s\n", *reportPath)
+	}
+	printOperationErrors()
+	if len(operationErrors) > 0 {
+		if !*apply && !*migrate {
+			for _, err := range operationErrors {
+				if isMissingSchemaError(err) {
+					fmt.Fprintln(os.Stderr, "数据库表/字段不存在；dry-run 不自动迁移，请确认备份后加 -migrate 或 -apply。")
+					break
+				}
+			}
+		}
+		os.Exit(failureExitCode(*apply, *migrate))
 	}
 	if !*apply {
 		fmt.Println("\n这是 dry-run；确认无误后加 -apply 执行。")
@@ -142,7 +229,7 @@ func backfillProducts(db *gorm.DB, brand map[string]string, apply bool) []change
 	store := productgormstore.NewProductStore(db)
 	products, _, err := store.List(productcontract.ListFilter{Page: 1, PageSize: 100000})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list products: %v\n", err)
+		recordOperationError(fmt.Errorf("list products: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(products)*3)
@@ -181,7 +268,7 @@ func backfillProducts(db *gorm.DB, brand map[string]string, apply bool) []change
 		seo["keywords"] = keywords
 		if apply {
 			if err := store.QuickUpdate(strconv.FormatUint(uint64(product.ID), 10), map[string]interface{}{"seo_meta_json": jsonmap.JSON(seo)}); err != nil {
-				fmt.Fprintf(os.Stderr, "update product %s: %v\n", product.Slug, err)
+				recordOperationError(fmt.Errorf("update product %s: %w", product.Slug, err))
 			}
 		}
 	}
@@ -192,13 +279,16 @@ func backfillCategories(db *gorm.DB, brand map[string]string, apply bool) []chan
 	store := categorygormstore.NewCategoryStore(db)
 	categories, err := store.List()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list categories: %v\n", err)
+		recordOperationError(fmt.Errorf("list categories: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(categories)*3)
 	for i := range categories {
 		category := &categories[i]
-		count, _ := store.CountActiveProducts(strconv.FormatUint(uint64(category.ID), 10))
+		count, err := store.CountActiveProducts(strconv.FormatUint(uint64(category.ID), 10))
+		if err != nil {
+			recordOperationError(fmt.Errorf("count category products %s: %w", category.Slug, err))
+		}
 		descriptions := stringMap(category.DescriptionJSON)
 		seo := copyJSONMap(category.SeoMetaJSON)
 		titles := stringMap(seo["title"])
@@ -242,7 +332,7 @@ func backfillCategories(db *gorm.DB, brand map[string]string, apply bool) []chan
 		category.SeoMetaJSON = jsonmap.JSON(seo)
 		if apply {
 			if err := store.Update(category); err != nil {
-				fmt.Fprintf(os.Stderr, "update category %s: %v\n", category.Slug, err)
+				recordOperationError(fmt.Errorf("update category %s: %w", category.Slug, err))
 			}
 		}
 	}
@@ -266,7 +356,7 @@ func ensurePostCategories(db *gorm.DB, ctx context.Context, apply bool) []change
 	store := contentgormstore.NewPostCategoryStore(db)
 	existing, err := store.ListAll(ctx, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list post categories: %v\n", err)
+		recordOperationError(fmt.Errorf("list post categories: %w", err))
 		return nil
 	}
 	bySlug := make(map[string]struct{}, len(existing))
@@ -289,7 +379,7 @@ func ensurePostCategories(db *gorm.DB, ctx context.Context, apply bool) []change
 			SortOrder: def.Sort,
 		}
 		if err := store.Create(ctx, category); err != nil {
-			fmt.Fprintf(os.Stderr, "create post category %s: %v\n", def.Slug, err)
+			recordOperationError(fmt.Errorf("create post category %s: %w", def.Slug, err))
 		}
 	}
 	return changes
@@ -299,7 +389,7 @@ func assignPostCategories(db *gorm.DB, ctx context.Context, apply bool) []change
 	categoryStore := contentgormstore.NewPostCategoryStore(db)
 	categories, err := categoryStore.ListAll(ctx, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list post categories: %v\n", err)
+		recordOperationError(fmt.Errorf("list post categories: %w", err))
 		return nil
 	}
 	idBySlug := make(map[string]uint, len(categories))
@@ -310,7 +400,7 @@ func assignPostCategories(db *gorm.DB, ctx context.Context, apply bool) []change
 	store := contentgormstore.NewPostStore(db)
 	posts, _, err := store.List(ctx, contentcontract.PostQuery{Page: 1, PageSize: 100000})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list posts: %v\n", err)
+		recordOperationError(fmt.Errorf("list posts: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(posts))
@@ -334,7 +424,7 @@ func assignPostCategories(db *gorm.DB, ctx context.Context, apply bool) []change
 		categoryID := id
 		post.CategoryID = &categoryID
 		if err := store.Update(ctx, post); err != nil {
-			fmt.Fprintf(os.Stderr, "update post %s: %v\n", post.Slug, err)
+			recordOperationError(fmt.Errorf("update post %s: %w", post.Slug, err))
 		}
 	}
 	return changes
@@ -344,7 +434,7 @@ func cleanNotices(db *gorm.DB, ctx context.Context, apply bool) []change {
 	store := contentgormstore.NewPostStore(db)
 	posts, _, err := store.List(ctx, contentcontract.PostQuery{Page: 1, PageSize: 100000, Type: constants.PostTypeNotice})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list notice posts: %v\n", err)
+		recordOperationError(fmt.Errorf("list notice posts: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(posts))
@@ -376,7 +466,7 @@ func cleanNotices(db *gorm.DB, ctx context.Context, apply bool) []change {
 		post.ContentJSON = jsonmap.JSON(contents)
 		if apply {
 			if err := store.Update(ctx, post); err != nil {
-				fmt.Fprintf(os.Stderr, "update notice %s: %v\n", post.Slug, err)
+				recordOperationError(fmt.Errorf("update notice %s: %w", post.Slug, err))
 			}
 		}
 	}
@@ -387,7 +477,7 @@ func cleanBanners(db *gorm.DB, ctx context.Context, apply bool) []change {
 	store := contentgormstore.NewBannerStore(db)
 	banners, _, err := store.List(ctx, contentcontract.BannerQuery{Page: 1, PageSize: 10000})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "list banners: %v\n", err)
+		recordOperationError(fmt.Errorf("list banners: %w", err))
 		return nil
 	}
 	changes := make([]change, 0, len(banners))
@@ -419,7 +509,7 @@ func cleanBanners(db *gorm.DB, ctx context.Context, apply bool) []change {
 		banner.SubtitleJSON = jsonmap.JSON(subtitles)
 		if apply {
 			if err := store.Update(ctx, banner); err != nil {
-				fmt.Fprintf(os.Stderr, "update banner %s: %v\n", banner.Name, err)
+				recordOperationError(fmt.Errorf("update banner %s: %w", banner.Name, err))
 			}
 		}
 	}
@@ -477,7 +567,7 @@ func cleanSiteCopy(store *settingsgormstore.Store, siteConfig jsonmap.JSON, appl
 	}
 	if apply {
 		if _, err := store.Upsert(constants.SettingKeySiteConfig, jsonmap.JSON(updated)); err != nil {
-			fmt.Fprintf(os.Stderr, "update site config: %v\n", err)
+			recordOperationError(fmt.Errorf("update site config: %w", err))
 		}
 	}
 	return changes
