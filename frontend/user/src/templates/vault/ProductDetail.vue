@@ -24,7 +24,7 @@
         <!-- 图区 -->
         <div>
           <div class="relative grid h-[380px] place-items-center overflow-hidden rounded-xl" :class="images.length ? '' : 'bg-[linear-gradient(135deg,#7b74f2,var(--red))]'">
-            <img v-if="currentImage" :src="currentImage" :alt="getLocalizedText(product.title)" class="absolute inset-0 h-full w-full object-cover" />
+            <img v-if="currentImage" :src="currentImage" :srcset="mainSrcSet || undefined" sizes="(max-width: 1024px) 100vw, 560px" :alt="getLocalizedText(product.title)" class="absolute inset-0 h-full w-full object-cover" @error="mainVariantFailed = true" />
             <Package v-else class="h-[110px] w-[110px] text-white/95" />
           </div>
           <div v-if="images.length > 1" class="mt-3.5 flex flex-wrap gap-3">
@@ -35,7 +35,7 @@
               :class="img === currentImage ? 'border-primary' : 'border-border'"
               @click="currentImage = img"
             >
-              <img :src="img" :alt="`${idx + 1}`" loading="lazy" class="h-full w-full object-cover" />
+              <img :src="thumbnailSrc(img)" :alt="`${idx + 1}`" loading="lazy" class="h-full w-full object-cover" @error="handleThumbnailError(img)" />
             </button>
           </div>
         </div>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   AlertCircle, ArrowLeft, ChevronRight, Lock, MessageCircle, Minus, Package, Pencil, Plus,
@@ -266,6 +266,7 @@ import {
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { processHtmlForDisplay } from '../../utils/content'
+import { getImageVariantSrcSet, getImageVariantUrl } from '../../utils/image'
 import { openChatwoot } from '../../utils/chatwoot'
 import { useChatwootEntryVisible } from '../../composables/useChatwootEntry'
 import { useProductDetail } from '../../composables/useProductDetail'
@@ -317,6 +318,22 @@ const {
   mobileBarShowSkuPrice, mobileBarSkuPriceDisplay,
   mobileBarShowProductPromotionPrice, mobileBarProductPromotionPriceDisplay, mobileBarProductPriceDisplay,
 } = useProductDetail({ onLoaded: () => setupMobileBarObserver() })
+
+const mainVariantFailed = ref(false)
+const thumbnailVariantFailed = reactive<Record<string, boolean>>({})
+const mainSrcSet = computed(() => mainVariantFailed.value ? '' : getImageVariantSrcSet(currentImage.value))
+const thumbnailSrc = (image: string) => {
+  if (thumbnailVariantFailed[image]) return image
+  return getImageVariantUrl(image, 480) || image
+}
+const handleThumbnailError = (image: string) => {
+  // 变体缺失时只回退一次到原图，避免循环 404。
+  if (!thumbnailVariantFailed[image]) thumbnailVariantFailed[image] = true
+}
+watch(currentImage, () => { mainVariantFailed.value = false })
+watch(images, () => {
+  Object.keys(thumbnailVariantFailed).forEach((image) => delete thumbnailVariantFailed[image])
+}, { deep: true })
 
 const deliveryReassurance = computed(() => {
   const type = product.value?.fulfillment_type

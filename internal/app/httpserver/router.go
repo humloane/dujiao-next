@@ -253,6 +253,7 @@ func SetupRouter(cfg *config.Config, c *container.Container) *gin.Engine {
 	// 直接打开 /uploads/x.html 也不会在站点源下执行脚本；<img src> 引用不受影响。
 	// SVG 额外强制下载。
 	r.Group("/uploads", func(c *gin.Context) {
+		c.Header("Cache-Control", "public, max-age=2592000, immutable")
 		c.Header("Content-Security-Policy", "sandbox; script-src 'none'")
 		c.Header("X-Content-Type-Options", "nosniff")
 		if strings.EqualFold(path.Ext(c.Request.URL.Path), ".svg") {

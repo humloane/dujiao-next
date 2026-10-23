@@ -12,7 +12,7 @@
             @touchstart="onBannerTouchStart"
             @touchend="onBannerTouchEnd">
             <Transition name="banner-fade" mode="out-in">
-              <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
+              <img v-if="!bannerLoading && heroImage" :src="heroImage" :srcset="bannerSrcSet || undefined" sizes="100vw" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" @error="bannerVariantFailed = true" />
             </Transition>
             <div class="absolute inset-0 bg-black/50"></div>
             <div v-if="bannerLoading" class="relative flex min-h-[200px] flex-col justify-between p-5 sm:min-h-[240px] sm:p-6 md:min-h-[320px] md:p-10">
@@ -172,7 +172,7 @@
           @touchend="onBannerTouchEnd">
           <!-- Banner image with fade transition -->
           <Transition name="banner-fade" mode="out-in">
-            <img v-if="!bannerLoading && heroImage" :src="heroImage" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
+            <img v-if="!bannerLoading && heroImage" :src="heroImage" :srcset="bannerSrcSet || undefined" sizes="100vw" :key="heroImage" width="1800" height="480" fetchpriority="high" decoding="async" class="absolute inset-0 h-full w-full object-cover" @error="bannerVariantFailed = true" />
           </Transition>
           <div class="absolute inset-0 bg-black/50"></div>
 
@@ -350,12 +350,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight, ChevronLeft, ChevronRight, PackageOpen, Search, X } from 'lucide-vue-next'
 import { postAPI, productAPI } from '../api'
-import { getImageUrl } from '../utils/image'
+import { getImageUrl, getBannerSrcSet } from '../utils/image'
 import { useLocalized } from '../composables/useProduct'
 import { useBannerCarousel } from '../composables/useBannerCarousel'
 import { useProductList } from '../composables/useProductList'
@@ -422,6 +422,10 @@ const {
   onBannerTouchEnd,
   stopHeroAutoPlay,
 } = useBannerCarousel()
+
+const bannerVariantFailed = ref(false)
+const bannerSrcSet = computed(() => bannerVariantFailed.value ? '' : getBannerSrcSet(heroImage.value))
+watch(heroImage, () => { bannerVariantFailed.value = false })
 
 // ==================== List Mode ====================
 const {

@@ -21,6 +21,16 @@ export function getImageUrl(path: string | undefined | null): string {
     return `${apiBaseUrl}${normalizedPath}`
 }
 
+/** 生成单个宽度档的本地 WebP 变体 URL；非 uploads 图片或非法扩展名返回空串。 */
+export function getImageVariantUrl(path: string | undefined | null, width = 480): string {
+  if (!path) return ''
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:')) return ''
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  if (!/^\/uploads\/.+\.(png|jpe?g)$/i.test(normalized)) return ''
+  const base = normalized.replace(/\.(png|jpe?g)$/i, '')
+  return getImageUrl(`${base}-${width}.webp`)
+}
+
 /**
  * 生成商品图/横幅的 srcset：只对本地 uploads 下的 jpg/png 生效。
  * 变体由 scripts/optimize-images.sh 生成（-480/-800/-1200/-1800.webp），
@@ -34,8 +44,7 @@ export function getImageVariantSrcSet(
   if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:')) return ''
   const normalized = path.startsWith('/') ? path : `/${path}`
   if (!/^\/uploads\/.+\.(png|jpe?g)$/i.test(normalized)) return ''
-  const base = normalized.replace(/\.(png|jpe?g)$/i, '')
-  return widths.map((width) => `${getImageUrl(`${base}-${width}.webp`)} ${width}w`).join(', ')
+  return widths.map((width) => `${getImageVariantUrl(normalized, width)} ${width}w`).join(', ')
 }
 
 /** 首屏 banner 使用更大的 1800 档，避免 1440/2x 屏幕发虚。 */

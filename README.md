@@ -283,9 +283,15 @@ go run ./cmd/dedupe-product-content -report=dedupe.csv
 
 ### Images and security headers
 
+- **Image variants are not generated automatically (default plan B).** After every release or
+  upload batch, run `scripts/optimize-images.sh uploads --apply` on the server. The homepage
+  banner and product thumbnails reference WebP variants and fall back to the original image
+  when a variant is missing, but missing variants mean slower first loads and extra 404s.
 - Generate WebP variants for existing uploads (requires ImageMagick):
   `scripts/optimize-images.sh uploads --apply` (dry-run by default).
   Product cards use `srcset` and fall back to the original image if a variant is missing.
+- `/uploads/*` is served with `Cache-Control: public, max-age=2592000, immutable` at the
+  application layer; production Nginx may also set its own 30-day cache headers.
 - Include `deploy/nginx/security-headers.conf` in the site's Nginx `server {}` block
   (CSP is Report-Only until Chatwoot/payment domains are confirmed).
 - Enable admin 2FA and email captcha in the admin settings before going live.

@@ -16,16 +16,16 @@
       <div v-for="(image, index) in images" :key="index" @click="$emit('update:currentImage', image)"
         class="cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 shrink-0 w-16 h-16 md:w-auto md:h-auto md:aspect-square snap-start"
         :class="currentImage === image ? 'border-primary ring-1 ring-primary/40 opacity-100' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'">
-        <img :src="image" :alt="`Image ${index + 1}`" loading="lazy" class="w-full h-full object-cover" />
+        <img :src="thumbnailSrc(image)" :alt="`Image ${index + 1}`" loading="lazy" class="w-full h-full object-cover" @error="handleThumbnailError(image)" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Image as ImageIcon } from 'lucide-vue-next'
-import { getImageVariantSrcSet } from '../../utils/image'
+import { getImageVariantSrcSet, getImageVariantUrl } from '../../utils/image'
 
 const props = defineProps<{
   images: string[]
@@ -38,11 +38,25 @@ const emit = defineEmits<{
 }>()
 
 const variantFailed = ref(false)
+const thumbnailVariantFailed = reactive<Record<string, boolean>>({})
 const mainSrcSet = computed(() => variantFailed.value ? '' : getImageVariantSrcSet(props.currentImage))
+const thumbnailSrc = (image: string) => {
+  if (thumbnailVariantFailed[image]) return image
+  return getImageVariantUrl(image, 480) || image
+}
 const handleMainError = () => {
   if (mainSrcSet.value) variantFailed.value = true
 }
+const handleThumbnailError = (image: string) => {
+  // 变体缺失时只回退一次到原图，避免同一张图反复请求 404。
+  if (!thumbnailVariantFailed[image]) {
+    thumbnailVariantFailed[image] = true
+  }
+}
 watch(() => props.currentImage, () => { variantFailed.value = false })
+watch(() => props.images, () => {
+  Object.keys(thumbnailVariantFailed).forEach((image) => delete thumbnailVariantFailed[image])
+}, { deep: true })
 
 // Image touch swipe
 let touchStartX = 0
