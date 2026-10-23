@@ -57,13 +57,6 @@
             {{ t('navbar.guestOrders') }}
           </router-link>
         </Button>
-        <Button v-if="!userAuthStore.isAuthenticated" as-child variant="ghost" size="sm"
-          class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex">
-          <router-link to="/auth/login">
-            <LogIn class="w-4 h-4 shrink-0 opacity-70" />
-            {{ t('navbar.login') }}
-          </router-link>
-        </Button>
         <Button v-if="userAuthStore.isAuthenticated" as-child variant="ghost" size="sm"
           class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex">
           <router-link to="/me">
@@ -76,13 +69,6 @@
           @click="userAuthStore.logout()">
           <LogOut class="w-4 h-4 shrink-0 opacity-70" />
           {{ t('navbar.logout') }}
-        </Button>
-        <!-- Theme Switcher -->
-        <Button v-if="chatwootEntryVisible" variant="ghost" size="sm"
-          class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex"
-          @click="openChatwoot()">
-          <Headphones class="w-4 h-4 shrink-0 opacity-70" />
-          {{ t('chatwoot.online') }}
         </Button>
         <Button variant="ghost" size="icon" class="text-muted-foreground" @click="toggleTheme">
           <Sun v-if="theme === 'dark'" class="w-4 h-4" />
@@ -109,6 +95,21 @@
             </button>
           </PopoverContent>
         </Popover>
+
+        <!-- Chat Entry -->
+        <Button v-if="chatwootEntryVisible" variant="ghost" size="sm"
+          class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex"
+          @click="openChatwoot()">
+          <Headphones class="w-4 h-4 shrink-0 opacity-70" />
+          {{ t('chatwoot.online') }}
+        </Button>
+        <Button v-if="!userAuthStore.isAuthenticated" as-child variant="ghost" size="sm"
+          class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex">
+          <router-link to="/auth/login">
+            <LogIn class="w-4 h-4 shrink-0 opacity-70" />
+            {{ t('navbar.login') }}
+          </router-link>
+        </Button>
 
         <!-- Mobile Menu Button (more menu, not main nav) -->
         <Button variant="ghost" size="icon" class="text-muted-foreground [&_svg]:size-5 md:hidden"
