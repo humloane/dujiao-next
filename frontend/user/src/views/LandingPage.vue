@@ -562,16 +562,16 @@ const onTelegramClick = (section: string) => {
 }
 
 const openSupport = (section: string) => {
-  track('chatwoot_click', { landing: slug.value, section })
+  const source = `landing:${section}`
   if (isChatwootReady()) {
-    openChatwoot()
+    openChatwoot(source)
     return
   }
   if (telegramUrl.value) {
     window.open(telegramUrl.value, '_blank', 'noopener')
     return
   }
-  openChatwoot()
+  openChatwoot(source)
 }
 
 usePageSeo({

@@ -99,7 +99,7 @@
         <!-- Chat Entry -->
         <Button v-if="chatwootEntryVisible" variant="ghost" size="sm"
           class="hidden gap-1.5 whitespace-nowrap text-muted-foreground md:inline-flex"
-          @click="openChatwoot()">
+          @click="openChatwoot('nav')">
           <Headphones class="w-4 h-4 shrink-0 opacity-70" />
           {{ t('chatwoot.online') }}
         </Button>
@@ -213,7 +213,7 @@
             v-if="chatwootEntryVisible"
             type="button"
             class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-foreground"
-            @click="openChatwoot(); showMobileMenu = false"
+            @click="openChatwoot('nav'); showMobileMenu = false"
           >
             <Headphones class="h-5 w-5 shrink-0 opacity-70" />
             {{ t('chatwoot.online') }}

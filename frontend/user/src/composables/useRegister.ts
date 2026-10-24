@@ -9,6 +9,7 @@ import type { CaptchaPayload } from '../api'
 import ImageCaptcha from '../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../components/captcha/TurnstileCaptcha.vue'
 import { useFormValidation, getPasswordStrength } from './useFormValidation'
+import { track } from '../utils/analytics'
 
 /**
  * 用户注册页共享逻辑（classic + vault 双模板共用）。
@@ -270,6 +271,10 @@ export function useRegister() {
         agreement_accepted: agreed.value,
         invite_code: inviteOnlyEnabled.value ? inviteCode.value.trim() : undefined,
         captcha_payload: getRegisterCaptchaPayload(),
+      })
+      track('sign_up', {
+        method: 'email',
+        locale: appStore.locale,
       })
       router.push('/me/orders')
     } catch (err: any) {

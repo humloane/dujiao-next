@@ -16,6 +16,7 @@ import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 import { resolveSkuAvailableStock, resolveSkuStockDisplay, type PublicStockDisplay } from '../utils/publicStock'
 import { useLocalized, useProductLabels } from './useProduct'
 import { toast } from './useToast'
+import { track } from '../utils/analytics'
 
 /**
  * 商品详情页的全部业务逻辑（数据加载、SKU/数量、促销/会员/批发定价、库存约束、
@@ -452,6 +453,16 @@ export function useProductDetail(options: { onLoaded?: () => void } = {}) {
       return
     }
     cartStore.addItem(buildItemPayload(sku), quantity.value)
+    const analyticsParams: Record<string, unknown> = { quantity: quantity.value }
+    if (product.value.slug) analyticsParams.product_slug = product.value.slug
+    if (sku?.id !== undefined && sku?.id !== null && sku.id !== '') analyticsParams.sku_id = sku.id
+    const rawPrice = sku?.price_amount ?? product.value.price_amount
+    const price = Number(rawPrice)
+    if (rawPrice !== undefined && rawPrice !== null && rawPrice !== '' && Number.isFinite(price)) {
+      analyticsParams.price = price
+    }
+    if (siteCurrency.value) analyticsParams.currency = siteCurrency.value
+    track('add_to_cart', analyticsParams)
     toast.success(t('toast.addedToCart'))
   }
 

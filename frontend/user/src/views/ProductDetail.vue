@@ -315,7 +315,7 @@
                 <div v-if="deliveryReassurance" class="rounded-xl bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
                   {{ deliveryReassurance }}
                 </div>
-                <Button v-if="chatwootEntryVisible" type="button" variant="outline" class="w-full h-11 font-bold" @click="openChatwoot">
+                <Button v-if="chatwootEntryVisible" type="button" variant="outline" class="w-full h-11 font-bold" @click="openChatwoot('product')">
                   <MessageCircle class="h-4 w-4" />
                   {{ t('chatwoot.consult') }}
                 </Button>

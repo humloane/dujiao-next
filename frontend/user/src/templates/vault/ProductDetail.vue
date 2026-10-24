@@ -184,7 +184,7 @@
             type="button"
             variant="outline"
             class="mt-3 h-11 w-full rounded-full text-sm font-bold"
-            @click="openChatwoot"
+            @click="openChatwoot('product')"
           >
             <MessageCircle class="h-4 w-4" />
             {{ t('chatwoot.consult') }}

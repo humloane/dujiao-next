@@ -95,7 +95,7 @@ const handleChatwootTrigger = (event: MouseEvent) => {
   if (!trigger) return
   event.preventDefault()
   if (!chatwootEntryVisible.value) return
-  openChatwoot()
+  openChatwoot('content')
 }
 
 onMounted(() => {

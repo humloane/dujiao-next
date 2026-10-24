@@ -12,7 +12,7 @@ const visible = useChatwootEntryVisible()
 const isLanding = computed(() => route.name === 'landing-page')
 
 const handleClick = () => {
-  openChatwoot()
+  openChatwoot('fab')
 }
 </script>
 

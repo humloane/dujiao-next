@@ -1,3 +1,5 @@
+import { track } from './analytics.ts'
+
 interface ChatwootWidget {
   toggle?: (state?: 'open' | 'close') => void
 }
@@ -71,8 +73,10 @@ export const cancelChatwootRetry = () => {
  * 打开 Chatwoot 面板：脚本尚未加载时最多重试 10 次（每 300ms），
  * 未配置 Chatwoot 也不会抛错。
  */
-export const openChatwoot = (): boolean => {
+export const openChatwoot = (source = 'unknown'): boolean => {
   if (typeof window === 'undefined') return false
+  // 每次用户主动打开只上报一次；后续重试不再重复 track。
+  track('chatwoot_click', { source })
   cancelChatwootRetry()
   if (tryOpen()) return true
 

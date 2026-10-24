@@ -83,7 +83,7 @@
             </a>
             <button v-if="chatwootEntryVisible" type="button"
               class="flex w-full items-center space-x-3 text-sm hover:text-gray-900 dark:hover:text-white transition-colors p-3 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10"
-              @click="openChatwoot">
+              @click="openChatwoot('footer')">
               <Headphones class="w-5 h-5 text-violet-400" />
               <span>{{ t('chatwoot.online') }}</span>
             </button>

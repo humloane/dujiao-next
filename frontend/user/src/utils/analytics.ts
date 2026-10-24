@@ -3,6 +3,7 @@ declare global {
     dataLayer?: unknown[]
     gtag?: (...args: unknown[]) => void
     clarity?: (...args: unknown[]) => void
+    umami?: { track: (name: string, data?: Record<string, unknown>) => void }
   }
 }
 
@@ -54,6 +55,13 @@ export function track(name: string, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return
   if (window.gtag) window.gtag('event', name, params || {})
   if (window.clarity) window.clarity('event', name)
+  if (window.umami && typeof window.umami.track === 'function') {
+    try {
+      window.umami.track(name, params || {})
+    } catch {
+      // 统计脚本异常不能影响页面交互；未加载 Umami 时本来就无操作。
+    }
+  }
 }
 
 export function initTelegramClickTracking(): void {

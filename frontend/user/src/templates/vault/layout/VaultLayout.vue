@@ -57,7 +57,7 @@
             v-if="chatwootEntryVisible"
             type="button"
             class="inline-flex items-center gap-1.5 rounded-full border-2 border-hairline-strong px-3.5 py-1.5 text-[13px] font-bold text-foreground transition-colors hover:border-[color:var(--ink)] max-[900px]:hidden"
-            @click="openChatwoot"
+            @click="openChatwoot('nav')"
           >
             <Headphones class="h-[16px] w-[16px]" />
             {{ t('chatwoot.online') }}
@@ -160,7 +160,7 @@
               v-if="chatwootEntryVisible"
               type="button"
               class="flex min-h-14 w-full items-center gap-3 border-b px-4 text-left text-base text-foreground"
-              @click="openChatwoot(); closeMobileMenu()"
+              @click="openChatwoot('nav'); closeMobileMenu()"
             >
               <Headphones class="h-5 w-5 shrink-0 opacity-70" />
               {{ t('chatwoot.online') }}
@@ -226,7 +226,7 @@
           <a v-if="contact?.whatsapp" :href="contact.whatsapp" target="_blank" rel="noopener noreferrer" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><MessageCircle class="h-4 w-4" /> WhatsApp</a>
           <a v-if="contact?.email" :href="`mailto:${contact.email}`" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><Mail class="h-4 w-4" /> {{ t('footer.email') }}</a>
           <a v-if="contact?.support_url" :href="contact.support_url" :target="contact.support_url.startsWith('https://') ? '_blank' : undefined" rel="noopener noreferrer" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary"><Headphones class="h-4 w-4" /> {{ t('footer.supportUrl') }}</a>
-          <button v-if="chatwootEntryVisible" type="button" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary" @click="openChatwoot"><Headphones class="h-4 w-4" /> {{ t('chatwoot.online') }}</button>
+          <button v-if="chatwootEntryVisible" type="button" class="flex items-center gap-[7px] py-[5px] text-[14.5px] text-muted-foreground hover:text-primary" @click="openChatwoot('footer')"><Headphones class="h-4 w-4" /> {{ t('chatwoot.online') }}</button>
         </div>
         <div>
           <h4 class="mb-3 text-sm font-bold">{{ t('vault.footer.legal') }}</h4>
