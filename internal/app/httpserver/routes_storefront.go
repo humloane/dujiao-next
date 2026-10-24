@@ -349,6 +349,7 @@ func (r *seoResolver) buildMeta(req web.MetaRequest, locale string, site seoSite
 		Type:        "website",
 		Locale:      locale,
 		Path:        cleanPath,
+		Brand:       site.Name,
 	}
 	if meta.Title == "" {
 		meta.Title = site.Name

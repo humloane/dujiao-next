@@ -81,6 +81,55 @@ func TestInjectMetaHTMLWritesRobotsNoindex(t *testing.T) {
 	}
 }
 
+func TestInjectMetaHTMLReplacesBootBrand(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div class="boot-skeleton__brand"><!--boot-brand-start-->Dujiao-Next<!--boot-brand-end--></div></body></html>`)
+	meta := &PageMeta{
+		Title: "首页",
+		Brand: "霓途 Neaixt",
+	}
+
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `<!--boot-brand-start-->霓途 Neaixt<!--boot-brand-end-->`) {
+		t.Fatalf("boot brand not injected: %s", body)
+	}
+	if strings.Contains(body, "Dujiao-Next") {
+		t.Fatalf("default product brand must not remain: %s", body)
+	}
+}
+
+func TestInjectMetaHTMLEmptyBrandClearsBootBrand(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div class="boot-skeleton__brand"><!--boot-brand-start-->Dujiao-Next<!--boot-brand-end--></div></body></html>`)
+	meta := &PageMeta{Title: "首页"}
+
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `<!--boot-brand-start--><!--boot-brand-end-->`) {
+		t.Fatalf("boot brand should be empty: %s", body)
+	}
+	if strings.Contains(body, "Dujiao-Next") {
+		t.Fatalf("empty brand must not fall back to product name: %s", body)
+	}
+}
+
+func TestInjectMetaHTMLEscapesBootBrand(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div class="boot-skeleton__brand"><!--boot-brand-start-->Dujiao-Next<!--boot-brand-end--></div></body></html>`)
+	meta := &PageMeta{Title: "首页", Brand: `霓途 & Neaixt <Studio>`}
+
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `霓途 &amp; Neaixt &lt;Studio&gt;`) {
+		t.Fatalf("boot brand was not escaped: %s", body)
+	}
+}
+
+func TestInjectMetaHTMLKeepsLegacyBootSkeletonWithoutBrandMarkers(t *testing.T) {
+	index := []byte(`<html><head><title></title></head><body><div class="boot-skeleton__brand">Dujiao-Next</div></body></html>`)
+	meta := &PageMeta{Title: "首页", Brand: "霓途 Neaixt"}
+
+	body := string(injectMetaHTML(index, meta))
+	if !strings.Contains(body, `<div class="boot-skeleton__brand">Dujiao-Next</div>`) {
+		t.Fatalf("legacy boot skeleton should remain unchanged: %s", body)
+	}
+}
+
 func TestInjectMetaHTMLWritesBodySnapshot(t *testing.T) {
 	index := []byte(`<html><head><title></title></head><body><div id="app"></div></body></html>`)
 	meta := &PageMeta{

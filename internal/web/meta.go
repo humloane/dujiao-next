@@ -32,6 +32,8 @@ type PageMeta struct {
 	Path string
 	// BodyHTML 是不依赖 JS 的正文摘要，写入 <div id="app"> 内。
 	BodyHTML string
+	// Brand 是站点品牌名，用于首屏骨架；为空时骨架品牌区不显示文字。
+	Brand string
 }
 
 // MetaRequest 是解析页面元数据所需的请求上下文。
@@ -88,6 +90,20 @@ func injectMetaHTML(index []byte, meta *PageMeta) []byte {
 	} else {
 		result = bytes.Replace(result, []byte("</head>"), append(newTitle, []byte("</head>")...), 1)
 	}
+
+	// 首屏骨架在 JS 加载前就可见，品牌名必须由服务端注入，不能用构建期默认名。
+	// 没有标记的旧入口 HTML 保持原样，方便滚动升级时继续使用旧 frontend 产物。
+	brand := strings.TrimSpace(meta.Brand)
+	replacement := ""
+	if brand != "" {
+		replacement = html.EscapeString(brand)
+	}
+	result = replaceBetween(
+		result,
+		[]byte("<!--boot-brand-start-->"),
+		[]byte("<!--boot-brand-end-->"),
+		[]byte(replacement),
+	)
 
 	var head strings.Builder
 	writeMetaTag := func(name, content string) {
@@ -172,6 +188,27 @@ func injectMetaHTML(index []byte, meta *PageMeta) []byte {
 		}
 	}
 
+	return result
+}
+
+// replaceBetween 只替换 start/end 标记之间的内容，保留标记本身。
+// 任一标记缺失时返回原文，确保旧入口 HTML 不受影响。
+func replaceBetween(content, start, end, replacement []byte) []byte {
+	startIndex := bytes.Index(content, start)
+	if startIndex < 0 {
+		return content
+	}
+	contentStart := startIndex + len(start)
+	endIndex := bytes.Index(content[contentStart:], end)
+	if endIndex < 0 {
+		return content
+	}
+	contentEnd := contentStart + endIndex
+
+	result := make([]byte, 0, len(content)-(contentEnd-contentStart)+len(replacement))
+	result = append(result, content[:contentStart]...)
+	result = append(result, replacement...)
+	result = append(result, content[contentEnd:]...)
 	return result
 }
 
