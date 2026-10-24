@@ -70,13 +70,31 @@ export function trackGoogleAdsConversion(params: {
   value?: number
   currency?: string
   transactionId?: string
-}): void {
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
-  window.gtag('event', 'conversion', {
-    send_to: params.sendTo,
-    value: params.value ?? 0,
-    currency: params.currency || 'CNY',
-    transaction_id: params.transactionId || '',
+}): Promise<void> {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    return Promise.resolve()
+  }
+  const gtag = window.gtag
+  return new Promise<void>((resolve) => {
+    let settled = false
+    const done = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+    try {
+      gtag('event', 'conversion', {
+        send_to: params.sendTo,
+        value: params.value ?? 0,
+        currency: params.currency || 'CNY',
+        transaction_id: params.transactionId || '',
+        event_callback: done,
+      })
+    } catch {
+      done()
+      return
+    }
+    window.setTimeout(done, 800)
   })
 }
 

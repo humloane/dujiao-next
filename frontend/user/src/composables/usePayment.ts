@@ -26,6 +26,26 @@ import QRCode from 'qrcode'
 import { type PageAlert } from '../utils/alerts'
 import { loadGuestOrderAuth, saveGuestOrderAuth } from '../utils/guestOrderAuth'
 
+const PURCHASE_TRACKED_PREFIX = 'neaixt:purchase_tracked:'
+
+function isPurchaseTracked(orderNo?: string): boolean {
+  if (!orderNo || typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(PURCHASE_TRACKED_PREFIX + orderNo) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markPurchaseTracked(orderNo?: string): void {
+  if (!orderNo || typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(PURCHASE_TRACKED_PREFIX + orderNo, '1')
+  } catch {
+    // 隐私模式下 localStorage 可能不可用，忽略
+  }
+}
+
 /**
  * 支付页共享逻辑（classic + vault 双模板共用）。
  * 完整保留原 views/Payment.vue 的行为，仅抽离为 composable。
@@ -1225,7 +1245,7 @@ export function usePayment() {
 
   watch(
     () => order.value?.status,
-    (status) => {
+    async (status) => {
       if (!status) return
       if (status === 'canceled') {
         error.value = t('payment.orderCanceled')
@@ -1240,18 +1260,21 @@ export function usePayment() {
       }
       stopPolling()
       stopCountdown()
-      if (!purchaseTracked.value) {
+      const orderNo = String(order.value?.order_no || '').trim()
+      if (!purchaseTracked.value && !isPurchaseTracked(orderNo)) {
         purchaseTracked.value = true
+        markPurchaseTracked(orderNo)
         track('purchase', {
-          transaction_id: order.value?.order_no,
+          transaction_id: orderNo,
           value: order.value?.total_amount,
           currency: order.value?.currency,
         })
-        trackGoogleAdsConversion({
+        // gtag 异步发送；最多等待 800ms，避免立即跳转导致转化请求被取消。
+        await trackGoogleAdsConversion({
           sendTo: 'AW-18534409301/WWOACJOa9qcdENXI8oVF',
           value: Number(order.value?.total_amount || 0),
           currency: order.value?.currency || 'CNY',
-          transactionId: order.value?.order_no || '',
+          transactionId: orderNo,
         })
       }
       if (shouldRedirect(status)) {
