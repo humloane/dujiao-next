@@ -152,6 +152,7 @@
     font-weight: 700;
     line-height: 1;
     text-align: center;
+    cursor: pointer;
     transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease, background-color 160ms ease;
   }
 
@@ -368,6 +369,101 @@
     font-size: var(--lp-text-base);
     line-height: var(--lp-leading);
     color: var(--lp-ink-muted);
+  }
+
+  .lp-telegram-link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding-inline: 0.25rem;
+    color: var(--lp-cyan);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+    transition: opacity 160ms ease;
+  }
+
+  .lp-telegram-link:hover {
+    opacity: 0.82;
+  }
+
+  .lp-related {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .lp-related {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 2rem;
+    }
+  }
+
+  .lp-related__link {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-btn);
+    background-color: var(--lp-panel);
+    padding: 0.75rem 1rem;
+    color: var(--lp-ink);
+    font-size: var(--lp-text-base);
+    font-weight: 600;
+    transition: border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .lp-related__link:hover {
+    border-color: var(--lp-cyan);
+    background-color: var(--lp-panel-soft);
+  }
+
+  .lp-footer {
+    border-top: 1px solid var(--lp-border);
+    background-color: var(--lp-bg);
+  }
+
+  .lp-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 2rem;
+  }
+
+  .lp-footer__brand {
+    color: var(--lp-ink);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .lp-footer__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .lp-footer__nav a {
+    color: var(--lp-ink-muted);
+  }
+
+  .lp-footer__nav a:hover {
+    color: var(--lp-ink);
+  }
+
+  @media (max-width: 767px) {
+    .lp-footer__inner {
+      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .lp-final {

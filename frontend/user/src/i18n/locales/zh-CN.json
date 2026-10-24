@@ -1814,10 +1814,26 @@
       "consult": "Telegram 咨询"
     },
     "cta": {
-      "consult": "Telegram 咨询",
+      "consult": "在线咨询",
       "viewProducts": "查看产品与价格",
       "quote": "获取报价",
       "finalFallback": "先测试，再决定长期方案。"
+    },
+    "related": {
+      "title": "相关内容",
+      "usResidentialProduct": "美国静态住宅 IP 商品",
+      "usIpCategory": "美国 IP 分类",
+      "usResidentialGuide": "美国静态住宅 IP 指南",
+      "tiktokNetworkSetup": "TikTok 直播网络搭建",
+      "tiktokDroppingChecklist": "直播掉线排查清单",
+      "allProducts": "全部商品",
+      "ieplGuide": "什么是 IEPL 专线",
+      "ieplProduct": "IEPL 商品示例",
+      "asiaSelectionGuide": "亚洲住宅 IP 怎么选",
+      "jpIpCategory": "日本 IP 分类",
+      "sgIpCategory": "新加坡 IP 分类",
+      "about": "关于我们",
+      "storeIpIsolation": "跨境店铺 IP 隔离"
     },
     "sections": {
       "pains": "你可能正在经历",

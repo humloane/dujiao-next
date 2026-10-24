@@ -14,16 +14,24 @@
           <router-link to="/products" class="hidden text-sm font-semibold text-[color:var(--lp-ink-muted)] sm:inline-flex">
             {{ tx('nav.products') }}
           </router-link>
-          <a
-            :href="telegramUrl || '/about'"
-            :target="telegramUrl ? '_blank' : undefined"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             class="lp-btn lp-btn--ghost h-11 px-4 text-sm"
             :aria-label="tx('cta.consult')"
+            @click="openSupport('topbar')"
+          >
+            <MessageCircle class="h-4 w-4" aria-hidden="true" />
+            <span class="hidden sm:inline">{{ tx('cta.consult') }}</span>
+          </button>
+          <a
+            v-if="telegramUrl"
+            :href="telegramUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="lp-telegram-link text-sm"
             @click="onTelegramClick('topbar')"
           >
-            <Send class="h-4 w-4" aria-hidden="true" />
-            <span class="hidden sm:inline">{{ tx('cta.consult') }}</span>
+            Telegram
           </a>
         </div>
       </div>
@@ -42,16 +50,24 @@
             <h1 class="lp-h1">{{ text('title') }}</h1>
             <p class="lp-lead">{{ text('subtitle') }}</p>
 
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a
-                :href="telegramUrl || '/about'"
-                :target="telegramUrl ? '_blank' : undefined"
-                rel="noopener noreferrer"
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <button
+                type="button"
                 class="lp-btn lp-btn--primary lp-btn--block-mobile"
+                @click="openSupport('hero')"
+              >
+                <MessageCircle class="h-4 w-4" aria-hidden="true" />
+                {{ tx('cta.consult') }}
+              </button>
+              <a
+                v-if="telegramUrl"
+                :href="telegramUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="lp-telegram-link"
                 @click="onTelegramClick('hero')"
               >
-                <Send class="h-4 w-4" aria-hidden="true" />
-                {{ tx('cta.consult') }}
+                Telegram
               </a>
               <router-link to="/products" class="lp-btn lp-btn--ghost lp-btn--block-mobile">
                 {{ tx('cta.viewProducts') }}
@@ -246,14 +262,23 @@
                 <span class="min-w-0">{{ feature }}</span>
               </li>
             </ul>
-            <a
-              :href="telegramUrl || '/about'"
-              :target="telegramUrl ? '_blank' : undefined"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               class="lp-btn lp-btn--ghost lp-btn--block-mobile mt-5"
-              @click="onTelegramClick('pricing')"
+              @click="openSupport('mid')"
             >
+              <MessageCircle class="h-4 w-4" aria-hidden="true" />
               {{ tx('cta.quote') }}
+            </button>
+            <a
+              v-if="telegramUrl"
+              :href="telegramUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="lp-telegram-link mt-3 self-start"
+              @click="onTelegramClick('mid')"
+            >
+              Telegram
             </a>
           </article>
         </div>
@@ -298,21 +323,42 @@
       </div>
     </section>
 
-    <!-- ============ 12. FINAL CTA ============ -->
+    <!-- ============ 12. RELATED CONTENT ============ -->
+    <section v-if="relatedLinks.length > 0" class="lp-section lp-section--tint">
+      <div class="container">
+        <h2 class="lp-h2">{{ tx('related.title') }}</h2>
+        <nav class="lp-related" :aria-label="tx('related.title')">
+          <router-link v-for="link in relatedLinks" :key="link.to" :to="link.to" class="lp-related__link">
+            <span class="min-w-0">{{ tx(link.labelKey) }}</span>
+            <ArrowRight class="h-4 w-4 shrink-0" aria-hidden="true" />
+          </router-link>
+        </nav>
+      </div>
+    </section>
+
+    <!-- ============ 13. FINAL CTA ============ -->
     <section class="lp-final">
       <div class="container">
         <h2 class="lp-h2">{{ text('finalTitle') || tx('cta.finalFallback') }}</h2>
         <p class="lp-lead">{{ text('finalSubtitle') }}</p>
-        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            :href="telegramUrl || '/about'"
-            :target="telegramUrl ? '_blank' : undefined"
-            rel="noopener noreferrer"
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
             class="lp-btn lp-btn--primary lp-btn--block-mobile"
-            @click="onTelegramClick('final')"
+            @click="openSupport('bottom')"
           >
-            <Send class="h-4 w-4" aria-hidden="true" />
+            <MessageCircle class="h-4 w-4" aria-hidden="true" />
             {{ tx('cta.consult') }}
+          </button>
+          <a
+            v-if="telegramUrl"
+            :href="telegramUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="lp-telegram-link"
+            @click="onTelegramClick('bottom')"
+          >
+            Telegram
           </a>
           <router-link to="/products" class="lp-btn lp-btn--ghost lp-btn--block-mobile">
             {{ tx('cta.viewProducts') }}
@@ -322,21 +368,39 @@
       </div>
     </section>
 
+    <!-- ============ 14. FOOTER ============ -->
+    <footer class="lp-footer">
+      <div class="container lp-footer__inner">
+        <router-link to="/" class="lp-footer__brand">{{ brandName }}</router-link>
+        <nav class="lp-footer__nav" :aria-label="t('footer.quickLinks')">
+          <router-link to="/about">{{ t('nav.about') }}</router-link>
+          <router-link to="/blog">{{ t('nav.blog') }}</router-link>
+          <router-link to="/notice">{{ t('nav.notice') }}</router-link>
+          <router-link to="/terms">{{ t('footer.terms') }}</router-link>
+          <router-link to="/privacy">{{ t('footer.privacy') }}</router-link>
+        </nav>
+      </div>
+    </footer>
+
     <!-- Mobile sticky CTA: replaces the bottom nav on landing pages -->
     <div class="lp-sticky-cta md:hidden">
-      <a
-        :href="telegramUrl || '/about'"
-        :target="telegramUrl ? '_blank' : undefined"
-        rel="noopener noreferrer"
-        class="lp-btn lp-btn--primary flex-1"
-        @click="onTelegramClick('sticky')"
-      >
-        <Send class="h-4 w-4" aria-hidden="true" />
+      <button type="button" class="lp-btn lp-btn--primary flex-1" @click="openSupport('sticky')">
+        <MessageCircle class="h-4 w-4" aria-hidden="true" />
         {{ tx('cta.consult') }}
-      </a>
+      </button>
       <router-link to="/products" class="lp-btn lp-btn--ghost flex-1">
         {{ tx('cta.viewProducts') }}
       </router-link>
+      <a
+        v-if="telegramUrl"
+        :href="telegramUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="lp-telegram-link shrink-0 text-[13px]"
+        @click="onTelegramClick('sticky')"
+      >
+        Telegram
+      </a>
     </div>
   </div>
 
@@ -356,11 +420,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { ArrowRight, Check, ChevronDown, Send } from 'lucide-vue-next'
+import { ArrowRight, Check, ChevronDown, MessageCircle } from 'lucide-vue-next'
 import { useAppStore } from '../stores/app'
 import { getImageUrl } from '../utils/image'
 import { usePageSeo } from '../composables/usePageSeo'
 import { track } from '../utils/analytics'
+import { isChatwootReady, openChatwoot } from '../utils/chatwoot'
 
 const LANDING_SLUGS = [
   'us-residential-ip',
@@ -370,6 +435,35 @@ const LANDING_SLUGS = [
   'enterprise',
 ] as const
 
+// 只包含线上已确认存在的商品、分类与博客路径，避免落地页继续成为孤岛。
+const RELATED_LINKS: Record<string, { labelKey: string; to: string }[]> = {
+  'us-residential-ip': [
+    { labelKey: 'related.usResidentialProduct', to: '/products/US-Residential-IP' },
+    { labelKey: 'related.usIpCategory', to: '/categories/US-IP' },
+    { labelKey: 'related.usResidentialGuide', to: '/blog/us-static-residential-ip-guide' },
+  ],
+  'tiktok-live-ip': [
+    { labelKey: 'related.tiktokNetworkSetup', to: '/blog/tiktok-live-network-setup' },
+    { labelKey: 'related.tiktokDroppingChecklist', to: '/blog/tiktok-live-dropping-checklist' },
+    { labelKey: 'related.allProducts', to: '/products' },
+  ],
+  iepl: [
+    { labelKey: 'related.ieplGuide', to: '/blog/what-is-iepl-dedicated-line' },
+    { labelKey: 'related.ieplProduct', to: '/products/AE-Residential-IEPL' },
+    { labelKey: 'related.allProducts', to: '/products' },
+  ],
+  'asia-ip': [
+    { labelKey: 'related.asiaSelectionGuide', to: '/blog/asia-residential-ip-selection' },
+    { labelKey: 'related.jpIpCategory', to: '/categories/JP-IP' },
+    { labelKey: 'related.sgIpCategory', to: '/categories/SG-IP' },
+  ],
+  enterprise: [
+    { labelKey: 'related.about', to: '/about' },
+    { labelKey: 'related.storeIpIsolation', to: '/blog/cross-border-store-ip-isolation' },
+    { labelKey: 'related.allProducts', to: '/products' },
+  ],
+}
+
 const route = useRoute()
 const { t, tm } = useI18n()
 const appStore = useAppStore()
@@ -377,6 +471,7 @@ const appStore = useAppStore()
 const slug = computed(() => String(route.params.slug || ''))
 const isValid = computed(() => (LANDING_SLUGS as readonly string[]).includes(slug.value))
 const pageKey = computed(() => `landing.pages.${slug.value}`)
+const relatedLinks = computed(() => RELATED_LINKS[slug.value] || [])
 
 const tx = (path: string) => String(t(`landing.${path}`) || '')
 const text = (field: string) => String(t(`${pageKey.value}.${field}`) || '')
@@ -464,6 +559,19 @@ const pad = (index: number) => String(index + 1).padStart(2, '0')
 
 const onTelegramClick = (section: string) => {
   track('telegram_click', { landing: slug.value, section })
+}
+
+const openSupport = (section: string) => {
+  track('chatwoot_click', { landing: slug.value, section })
+  if (isChatwootReady()) {
+    openChatwoot()
+    return
+  }
+  if (telegramUrl.value) {
+    window.open(telegramUrl.value, '_blank', 'noopener')
+    return
+  }
+  openChatwoot()
 }
 
 usePageSeo({

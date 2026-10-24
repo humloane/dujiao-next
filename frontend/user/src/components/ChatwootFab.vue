@@ -1,11 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { MessageCircle } from 'lucide-vue-next'
 import { openChatwoot } from '../utils/chatwoot'
 import { useChatwootEntryVisible } from '../composables/useChatwootEntry'
 
 const { t } = useI18n()
+const route = useRoute()
 const visible = useChatwootEntryVisible()
+const isLanding = computed(() => route.name === 'landing-page')
 
 const handleClick = () => {
   openChatwoot()
@@ -17,6 +21,7 @@ const handleClick = () => {
     v-if="visible"
     type="button"
     class="chatwoot-fab"
+    :class="{ 'chatwoot-fab--landing': isLanding }"
     :aria-label="t('chatwoot.online')"
     @click="handleClick"
   >
@@ -87,6 +92,10 @@ const handleClick = () => {
   .chatwoot-fab__icon {
     width: 26px;
     height: 26px;
+  }
+
+  .chatwoot-fab--landing {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
   }
 }
 

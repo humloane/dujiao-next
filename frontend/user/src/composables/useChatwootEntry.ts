@@ -2,9 +2,8 @@ import { computed, watch, type ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatwootState } from './useChatwootState.ts'
 
-export const isChatwootEntryPathVisible = (path: string, routeName?: unknown): boolean => {
+export const isChatwootEntryPathVisible = (path: string): boolean => {
   if (path.startsWith('/checkout') || path.startsWith('/pay')) return false
-  if (routeName === 'landing-page') return false
   return true
 }
 
@@ -18,15 +17,15 @@ export const useChatwootEntryVisible = () => {
   const { ready } = useChatwootState()
   const visible = computed(() => {
     if (!ready.value) return false
-    return isChatwootEntryPathVisible(route.path, route.name)
+    return isChatwootEntryPathVisible(route.path)
   })
 
   // 原生 launcher 在「自定义入口接管」或「当前页面明确不应有客服入口」时隐藏：
-  // - 正常页：ready 后自定义胶囊出现，隐藏原生圆球，避免两个入口重叠；
-  // - checkout/pay/landing：从路由进入起就隐藏原生圆球，保证 0 入口；
+  // - 正常页/落地页：ready 后自定义入口出现，隐藏原生圆球，避免两个入口重叠；
+  // - checkout/pay：从路由进入起就隐藏原生圆球，保证 0 入口；
   // - ready 前：不隐藏，原生圆球作为短暂兜底，自定义入口尚未出现。
   const shouldHideNativeLauncher = computed(() =>
-    !isChatwootEntryPathVisible(route.path, route.name) || visible.value,
+    !isChatwootEntryPathVisible(route.path) || visible.value,
   )
 
   watch(shouldHideNativeLauncher, (hidden) => {

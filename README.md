@@ -290,6 +290,9 @@ go run ./cmd/dedupe-product-content -report=dedupe.csv
   (image variants are not generated automatically).
 - When adding or removing a landing page, update the hard-coded LP list in
   `internal/modules/sitemap/application/service.go` and rebuild/restart the binary.
+- Review landing-page indexing in Search Console 30 days after launch. If an LP still has zero
+  impressions, add `noindex` and remove it from the sitemap; when no paid traffic is planned,
+  merge `/lp/us-residential-ip` into `/categories/US-IP` instead of competing with the product page.
 
 ### Images and security headers
 

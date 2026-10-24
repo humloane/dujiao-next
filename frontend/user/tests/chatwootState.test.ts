@@ -63,10 +63,10 @@ test('chatwoot polling covers ready at 0, 9.9, 10.1, 12 and 15 seconds', async (
   }
 })
 
-test('chatwoot entry visibility excludes checkout, pay and landing pages', () => {
+test('chatwoot entry visibility excludes checkout and pay but allows landing pages', () => {
   assert.equal(entryModule.isChatwootEntryPathVisible('/checkout'), false)
   assert.equal(entryModule.isChatwootEntryPathVisible('/pay/1'), false)
-  assert.equal(entryModule.isChatwootEntryPathVisible('/lp/x', 'landing-page'), false)
+  assert.equal(entryModule.isChatwootEntryPathVisible('/lp/x'), true)
   assert.equal(entryModule.isChatwootEntryPathVisible('/'), true)
   assert.equal(entryModule.isChatwootEntryPathVisible('/products/x'), true)
 })

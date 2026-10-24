@@ -1814,10 +1814,26 @@
       "consult": "Telegram support"
     },
     "cta": {
-      "consult": "Telegram support",
+      "consult": "Chat with us",
       "viewProducts": "View products & pricing",
       "quote": "Get a quote",
       "finalFallback": "Test first, then choose a long-term plan."
+    },
+    "related": {
+      "title": "Related content",
+      "usResidentialProduct": "US static residential IP product",
+      "usIpCategory": "US IP category",
+      "usResidentialGuide": "US static residential IP guide",
+      "tiktokNetworkSetup": "TikTok live network setup",
+      "tiktokDroppingChecklist": "TikTok live disconnection checklist",
+      "allProducts": "All products",
+      "ieplGuide": "What is an IEPL dedicated line",
+      "ieplProduct": "IEPL product example",
+      "asiaSelectionGuide": "How to choose Asian residential IPs",
+      "jpIpCategory": "Japan IP category",
+      "sgIpCategory": "Singapore IP category",
+      "about": "About us",
+      "storeIpIsolation": "Cross-border store IP isolation"
     },
     "sections": {
       "pains": "What you may be facing",

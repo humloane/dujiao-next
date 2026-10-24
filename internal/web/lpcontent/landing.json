@@ -6,10 +6,26 @@
       "consult": "Telegram support"
     },
     "cta": {
-      "consult": "Telegram support",
+      "consult": "Chat with us",
       "viewProducts": "View products \u0026 pricing",
       "quote": "Get a quote",
       "finalFallback": "Test first, then choose a long-term plan."
+    },
+    "related": {
+      "title": "Related content",
+      "usResidentialProduct": "US static residential IP product",
+      "usIpCategory": "US IP category",
+      "usResidentialGuide": "US static residential IP guide",
+      "tiktokNetworkSetup": "TikTok live network setup",
+      "tiktokDroppingChecklist": "TikTok live disconnection checklist",
+      "allProducts": "All products",
+      "ieplGuide": "What is an IEPL dedicated line",
+      "ieplProduct": "IEPL product example",
+      "asiaSelectionGuide": "How to choose Asian residential IPs",
+      "jpIpCategory": "Japan IP category",
+      "sgIpCategory": "Singapore IP category",
+      "about": "About us",
+      "storeIpIsolation": "Cross-border store IP isolation"
     },
     "sections": {
       "pains": "What you may be facing",
@@ -523,10 +539,26 @@
       "consult": "Telegram 咨询"
     },
     "cta": {
-      "consult": "Telegram 咨询",
+      "consult": "在线咨询",
       "viewProducts": "查看产品与价格",
       "quote": "获取报价",
       "finalFallback": "先测试，再决定长期方案。"
+    },
+    "related": {
+      "title": "相关内容",
+      "usResidentialProduct": "美国静态住宅 IP 商品",
+      "usIpCategory": "美国 IP 分类",
+      "usResidentialGuide": "美国静态住宅 IP 指南",
+      "tiktokNetworkSetup": "TikTok 直播网络搭建",
+      "tiktokDroppingChecklist": "直播掉线排查清单",
+      "allProducts": "全部商品",
+      "ieplGuide": "什么是 IEPL 专线",
+      "ieplProduct": "IEPL 商品示例",
+      "asiaSelectionGuide": "亚洲住宅 IP 怎么选",
+      "jpIpCategory": "日本 IP 分类",
+      "sgIpCategory": "新加坡 IP 分类",
+      "about": "关于我们",
+      "storeIpIsolation": "跨境店铺 IP 隔离"
     },
     "sections": {
       "pains": "你可能正在经历",
@@ -1040,10 +1072,26 @@
       "consult": "Telegram 諮詢"
     },
     "cta": {
-      "consult": "Telegram 諮詢",
+      "consult": "線上諮詢",
       "viewProducts": "查看產品與價格",
       "quote": "取得報價",
       "finalFallback": "先測試，再決定長期方案。"
+    },
+    "related": {
+      "title": "相關內容",
+      "usResidentialProduct": "美國靜態住宅 IP 商品",
+      "usIpCategory": "美國 IP 分類",
+      "usResidentialGuide": "美國靜態住宅 IP 指南",
+      "tiktokNetworkSetup": "TikTok 直播網路架設",
+      "tiktokDroppingChecklist": "直播斷線排查清單",
+      "allProducts": "全部商品",
+      "ieplGuide": "什麼是 IEPL 專線",
+      "ieplProduct": "IEPL 商品範例",
+      "asiaSelectionGuide": "亞洲住宅 IP 怎麼選",
+      "jpIpCategory": "日本 IP 分類",
+      "sgIpCategory": "新加坡 IP 分類",
+      "about": "關於我們",
+      "storeIpIsolation": "跨境店鋪 IP 隔離"
     },
     "sections": {
       "pains": "你可能正在經歷",
