@@ -93,9 +93,13 @@ const handleClick = () => {
     width: 26px;
     height: 26px;
   }
+}
 
+/* 落地页移动端已有吸底 CTA，全局 FAB 会与「查看产品与价格」重叠。
+   visible 仍为 true，原生圆球继续被隐藏，吸底栏的 Chatwoot CTA 不受影响。 */
+@media (max-width: 900px) {
   .chatwoot-fab--landing {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+    display: none;
   }
 }
 

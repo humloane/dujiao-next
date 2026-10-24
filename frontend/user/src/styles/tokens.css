@@ -484,4 +484,12 @@
     padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
     backdrop-filter: blur(14px);
   }
+
+  /* 与 ChatwootFab 的 @media (max-width: 900px) 对齐：
+     落地页 ≤900px 用吸底栏承接客服入口，>900px 由右下角 FAB 承接。 */
+  @media (min-width: 901px) {
+    .lp-sticky-cta {
+      display: none;
+    }
+  }
 }

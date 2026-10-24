@@ -383,7 +383,7 @@
     </footer>
 
     <!-- Mobile sticky CTA: replaces the bottom nav on landing pages -->
-    <div class="lp-sticky-cta md:hidden">
+    <div class="lp-sticky-cta">
       <button type="button" class="lp-btn lp-btn--primary flex-1" @click="openSupport('sticky')">
         <MessageCircle class="h-4 w-4" aria-hidden="true" />
         {{ tx('cta.consult') }}
