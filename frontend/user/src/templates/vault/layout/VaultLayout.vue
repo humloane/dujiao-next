@@ -38,17 +38,6 @@
             <span v-if="cartCount > 0" class="absolute -right-[3px] -top-[3px] grid h-[19px] min-w-[19px] place-items-center rounded-full bg-primary px-[5px] text-[11px] font-bold text-white">{{ cartCount }}</span>
           </RouterLink>
 
-          <!-- 在线客服（桌面） -->
-          <button
-            v-if="chatwootEntryVisible"
-            type="button"
-            class="inline-flex items-center gap-1.5 rounded-full border-2 border-hairline-strong px-3.5 py-1.5 text-[13px] font-bold text-foreground transition-colors hover:border-[color:var(--ink)] max-[900px]:hidden"
-            @click="openChatwoot"
-          >
-            <Headphones class="h-[16px] w-[16px]" />
-            {{ t('chatwoot.online') }}
-          </button>
-
           <!-- 语言切换 -->
           <div class="relative max-[900px]:hidden" ref="langEl">
             <button class="grid h-10 w-10 flex-none place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" type="button" :aria-label="t('navbar.selectLanguage')" @click="toggleLang">
@@ -62,6 +51,17 @@
               </button>
             </div>
           </div>
+
+          <!-- 在线客服（桌面） -->
+          <button
+            v-if="chatwootEntryVisible"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-full border-2 border-hairline-strong px-3.5 py-1.5 text-[13px] font-bold text-foreground transition-colors hover:border-[color:var(--ink)] max-[900px]:hidden"
+            @click="openChatwoot"
+          >
+            <Headphones class="h-[16px] w-[16px]" />
+            {{ t('chatwoot.online') }}
+          </button>
 
           <!-- 登录 / 个人中心 / 退出（桌面） -->
           <template v-if="userAuthStore.isAuthenticated">
