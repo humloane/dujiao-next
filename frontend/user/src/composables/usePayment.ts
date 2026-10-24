@@ -5,7 +5,7 @@ import { guestOrderAPI, paymentAPI, userOrderAPI, walletAPI } from '../api'
 import { useAppStore } from '../stores/app'
 import { useTelegramMiniAppStore } from '../stores/telegramMiniApp'
 import { orderStatusLabel } from '../utils/status'
-import { track } from '../utils/analytics'
+import { track, trackGoogleAdsConversion } from '../utils/analytics'
 import { fulfillmentTypeLabel } from '../utils/fulfillment'
 import { debounceAsync } from '../utils/debounce'
 import { copyText } from '../utils/clipboard'
@@ -1246,6 +1246,12 @@ export function usePayment() {
           transaction_id: order.value?.order_no,
           value: order.value?.total_amount,
           currency: order.value?.currency,
+        })
+        trackGoogleAdsConversion({
+          sendTo: 'AW-18534409301/WWOACJOa9qcdENXI8oVF',
+          value: Number(order.value?.total_amount || 0),
+          currency: order.value?.currency || 'CNY',
+          transactionId: order.value?.order_no || '',
         })
       }
       if (shouldRedirect(status)) {

@@ -64,6 +64,22 @@ export function track(name: string, params?: Record<string, unknown>): void {
   }
 }
 
+/** Google Ads 购买转化；未加载 gtag 时静默。只在订单支付成功后调用一次。 */
+export function trackGoogleAdsConversion(params: {
+  sendTo: string
+  value?: number
+  currency?: string
+  transactionId?: string
+}): void {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
+  window.gtag('event', 'conversion', {
+    send_to: params.sendTo,
+    value: params.value ?? 0,
+    currency: params.currency || 'CNY',
+    transaction_id: params.transactionId || '',
+  })
+}
+
 export function initTelegramClickTracking(): void {
   if (typeof document === 'undefined') return
   document.addEventListener(
